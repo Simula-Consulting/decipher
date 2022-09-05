@@ -16,7 +16,6 @@ def theta_mle(X, M):
     """
 
     O = (X != 0).astype(float)
-    
     return np.sum(O) / (2 * np.square(np.linalg.norm(O * (X - M))))
 
 

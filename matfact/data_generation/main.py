@@ -9,8 +9,8 @@ from scipy.stats import betabinom
 from masking import simulate_mask
 from gaussian_generator import float_matrix, discretise_matrix
 
-BASE_PATH = "/Users/sela/Desktop/matfact/"
-
+BASE_PATH = "/Users/thorvald/Documents/Decipher/decipher/matfact/"  # TODO: make generic
+BASE_PATH = "./"
 
 def censoring(X, missing=0):
 	"Truncate histories to have patterns similar to the real histories"

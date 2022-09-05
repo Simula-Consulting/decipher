@@ -17,7 +17,10 @@ from algorithms.utils import (initialize_basis,
                               finite_difference_matrix, 
                               laplacian_kernel_matrix)
 
-BASE_PATH = "/Users/sela/Desktop/matfact/"
+from mlflow import log_metric, log_param, log_artifacts
+
+BASE_PATH = "/Users/thorvald/Documents/Decipher/decipher/matfact/"  # TODO: make generic
+BASE_PATH = "./"
 
 
 def l2_regularizer(X, rank=5, lambda1=1.0, lambda2=1.0, weights=None, seed=42):
@@ -142,7 +145,8 @@ def main():
 
     # Estimate factor matrices U and V such that U @ V.T \approx X 
     # Results from the experiment are stored in the output
-    results = matrix_completion(cmf, X_train)
+    results = matrix_completion(wcmf, X_train)
+    log_param("model", "wcmf")
 
     # Predict the risk over the test set using the results from matrix completion as 
     # input parameters to the prediction algorithm 
@@ -183,6 +187,7 @@ def main():
     plot_roc_curve(np.load(f"{BASE_PATH}/results/data/x_true.npy"), 
                    np.load(f"{BASE_PATH}/results/data/p_pred.npy"), f"{BASE_PATH}/results/figures")
 
+    log_artifacts(f"{BASE_PATH}/results/figures")
 
 if __name__ == "__main__":
     main()
