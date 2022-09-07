@@ -3,6 +3,7 @@ esemble the screening data used in the DeCipher project.
 """
 import os 
 import numpy as np
+import json
 
 from scipy.stats import betabinom
 
@@ -68,8 +69,18 @@ def main():
 
 	X, M = produce_dataset(N=n_rows, T=n_columns, r=rank, level=sparsity_level)
 
+	dataset_metadata = {
+		"rank": rank,
+		"sparsity_level": sparsity_level,
+		"n_rows": n_rows,
+		"n_columns": n_columns,
+		"generation_method": "DGD",  # Only one method implemented.
+	}
+
 	np.save(f"{BASE_PATH}/datasets/X.npy", X)
 	np.save(f"{BASE_PATH}/datasets/M.npy", M)
+	with open(f"{BASE_PATH}/datasets/dataset_metadata.json", "w") as metadata_file:
+		metadata_file.write(json.dumps(dataset_metadata))
 	
 
 if __name__ == "__main__":
