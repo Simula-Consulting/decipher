@@ -21,8 +21,9 @@ from algorithms.utils import (initialize_basis,
 
 from sklearn.metrics import matthews_corrcoef, accuracy_score
 from itertools import combinations, product
+import tensorflow as tf
 
-from mlflow import log_metric, log_param, log_params, log_artifacts, start_run, log_metrics, end_run
+from mlflow import log_metric, log_param, log_params, log_artifacts, start_run, log_metrics, end_run, set_tag, set_tags
 
 BASE_PATH = "/Users/thorvald/Documents/Decipher/decipher/matfact/"  # TODO: make generic
 BASE_PATH = "./"
@@ -138,8 +139,8 @@ def model_factory(X, shift_range: np.ndarray[Any, int], convolution: bool, weigh
 
     short_model_name = ''.join(symbol for symbol, setting in [
         ("s", shift_range.size),
+        ("w", weights is not None),
         ("c", convolution), 
-        ("w", weights is not None)
         ] if setting) + "mf"
 
     short_model_name = "".join(a if cond else b for cond, a, b in [
@@ -172,6 +173,14 @@ def experiment(
         dataset_metadata = {f"DATASET_{key}": value for key,value in json.load(metadata_file).items()}
 
     start_run()
+    set_tags({
+        "Developer": "Thorvald M. Ballestad",
+        "GPU": False,
+        "Notes": "tf.function commented out"
+    })
+    # Probably should not do this, but let us just test
+    set_tag("mlflow.note.content", "tf.function is commented out")
+
     # Simulate data for a prediction task by selecting the last data point in each 
     # sample vetor as the prediction target
     X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
@@ -187,10 +196,10 @@ def experiment(
 
     # Generate the model
     model_name, model = model_factory(X_train,
-    shift_range=np.arange(-12, 13) if enable_shift else np.array([]),
-    convolution=enable_convolution,
-    weights=data_weights(X_train) if enable_weighting else None,
-    **hyperparams)
+        shift_range=np.arange(-12, 13) if enable_shift else np.array([]),
+        convolution=enable_convolution,
+        weights=data_weights(X_train) if enable_weighting else None,
+        **hyperparams)
 
     log_param("model_name", model_name)
 
@@ -205,8 +214,11 @@ def experiment(
     x_pred = 1.0 + np.argmax(p_pred, axis=1)
 
     # Log some metrics
-    log_metric("matthew_score", matthews_corrcoef(x_true, x_pred))
-    log_metric("accuracy", accuracy_score(x_true, x_pred))
+    log_metric("matthew_score", matthews_corrcoef(x_true, x_pred), step=results["epochs"][-1])
+    log_metric("accuracy", accuracy_score(x_true, x_pred), step=results["epochs"][-1])
+    for epoch, loss in zip(results["epochs"], results["loss_values"]):
+        log_metric("loss", loss, step=epoch)
+    log_metric("norm_difference", np.linalg.norm(results["M"] - M_train))
     end_run()
 
 def main():
@@ -318,6 +330,8 @@ def main():
 
 if __name__ == "__main__":
     # main()
+
+    tf.config.set_visible_devices([], 'GPU')
 
     for shift, weight, convolve in product([False, True], repeat=3):
         print("Running ", shift, weight, convolve)
