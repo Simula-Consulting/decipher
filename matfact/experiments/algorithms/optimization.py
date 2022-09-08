@@ -1,10 +1,19 @@
 from .utils import theta_mle
 from .convergence import convergence_monitor
 from tqdm import tqdm
+
  
 
-def matrix_completion(model, X, fname="", epochs_per_val=5, num_epochs=2000, patience=200):
-	"Run matrix completion on input matrix X using a factorization model." 
+def matrix_completion(model, X, extra_metrics=None, fname="", epochs_per_val=5, num_epochs=2000, patience=200):
+	"""Run matrix completion on input matrix X using a factorization model.
+	
+	extra_metrics: iterable of name, exectuable pairs for extra metric logggin.
+		iterable must have the signature (model: Type[BaseMF]) -> Float
+	"""
+
+	# TODO: this already assumes that model is given X?
+	# so it is better to not have X as an argument to the funciton,
+	# and ratheer use model.X in theta_mle
 	
 	# Results collected from the process 
 	output = {
@@ -17,6 +26,9 @@ def matrix_completion(model, X, fname="", epochs_per_val=5, num_epochs=2000, pat
 		"s": None,
 		"theta_mle": None 
 	}
+
+	for metric, _ in extra_metrics:
+		output[metric] = []
 	
 	for epoch in tqdm(range(num_epochs)):
 		
@@ -24,6 +36,9 @@ def matrix_completion(model, X, fname="", epochs_per_val=5, num_epochs=2000, pat
  
 		output["epochs"].append(int(epoch))
 		output["loss_values"].append(float(model.loss()))
+		for metric, callable in extra_metrics:
+			output[metric].append(callable(model))
+
 
 		if epoch == patience:
 			monitor = convergence_monitor(model.M)

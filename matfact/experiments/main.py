@@ -159,6 +159,28 @@ def model_factory(X, shift_range: np.ndarray[Any, int], convolution: bool, weigh
         else:
             return short_model_name, CMF(X, V, **kwargs)
 
+
+
+def _reconstruction_mse(true_matrix, observed_matrix, reconstructed_matrix):
+	"""Compute the reconstruction means-squared error
+	
+	Arguments:
+	 true_matrix: the ground truth dense matrix
+	 observed_matrix: the observed, censored matrix
+	 reconstructed_matrix: the reconstruced, dense matrix
+	 
+	Returns:
+	 recMSE
+	 
+	Notes:
+	 The function uses the observed_matrix to find the observation mask (where the observed_matrix is zero), 
+	 and then finds the norm of the difference at unobserved entries, normalized by the sparseness.
+	 recMSE = || P_inverse(M - U.V) || / (1-|P|)
+	 where P is the observation mask, M is the ground truth and U.V is the reconstructed matrix.
+	"""
+	hidden_mask = observed_matrix == 0  # Entries where there is no observation
+
+	return np.linalg.norm(hidden_mask * (true_matrix - reconstructed_matrix)) / np.sum(hidden_mask)
     
 def experiment(
     hyperparams,
@@ -215,7 +237,8 @@ def experiment(
 
     #### Training and testing ####
     # Train the model (i.e. perform the matrix completion)
-    results = matrix_completion(model, X_train, **optimization_params)
+    extra_metrics = (("recMSE", lambda model: _reconstruction_mse(M_train, X_train, model.M)),)
+    results = matrix_completion(model, X_train, extra_metrics=extra_metrics, **optimization_params)
 
     # Predict the risk over the test set using the results from matrix completion as 
     # input parameters to the prediction algorithm 
@@ -228,6 +251,11 @@ def experiment(
     log_metric("accuracy", accuracy_score(x_true, x_pred), step=results["epochs"][-1])
     for epoch, loss in zip(results["epochs"], results["loss_values"]):
         log_metric("loss", loss, step=epoch)
+    
+    for metric,_ in extra_metrics:
+        for epoch, metric_value in zip(results["epochs"], results[metric]):
+            log_metric(metric, metric_value, step=epoch)
+
     log_metric("norm_difference", np.linalg.norm(results["M"] - M_train))
     end_run()
 
