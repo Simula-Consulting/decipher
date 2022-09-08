@@ -19,6 +19,8 @@ class WCMF(BaseMF):
 		lambda: Regularization coefficients
 		iter_U, iter_V: The number of steps with gradient descent (GD) per factor update 
 		learning_rate: Stepsize used in the GD 
+	
+	TODO: Will this fail if no W is given, i.e. if it is None?
 	"""
 
 	def __init__(self, X, V, W=None, D=None, J=None, K=None, lambda1=1.0, lambda2=1.0, lambda3=1.0, 
@@ -60,7 +62,7 @@ class WCMF(BaseMF):
 				
 	def _update_V(self):
 
-		@tf.function
+		# @tf.function
 		def _loss_V():
 
 			frob_tensor = tf.multiply(W, X - (U @ tf.transpose(V)))
@@ -87,7 +89,7 @@ class WCMF(BaseMF):
 			
 	def _approx_U(self):
 
-		@tf.function
+		# @tf.function
 		def _loss_U():
 			
 			frob_tensor = tf.multiply(W, X - tf.matmul(U, V, transpose_b=True))

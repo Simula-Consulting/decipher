@@ -16,7 +16,11 @@ sklearn = "^0.0"
 tensorflow-macos = "^2.9.2"
 tensorflow-metal = "^0.5.1"
 mlflow = "^1.28.0"
+tqdm = "^4.64.1"
 
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.15.2"
 
 [build-system]
 requires = ["poetry-core"]

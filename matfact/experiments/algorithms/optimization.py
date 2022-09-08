@@ -1,8 +1,9 @@
 from .utils import theta_mle
 from .convergence import convergence_monitor
+from tqdm import tqdm
  
 
-def matrix_completion(model, X, fname="", epochs_per_val=5, num_epochs=5, patience=2):
+def matrix_completion(model, X, fname="", epochs_per_val=5, num_epochs=2000, patience=200):
 	"Run matrix completion on input matrix X using a factorization model." 
 	
 	# Results collected from the process 
@@ -17,7 +18,7 @@ def matrix_completion(model, X, fname="", epochs_per_val=5, num_epochs=5, patien
 		"theta_mle": None 
 	}
 	
-	for epoch in range(num_epochs):
+	for epoch in tqdm(range(num_epochs)):
 		
 		model.run_step()
  

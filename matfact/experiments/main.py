@@ -5,6 +5,7 @@ produced in the `datasets` directory.
 from typing import Any
 import numpy as np 
 import json
+from tqdm import tqdm
 
 from plotting.diagnostic import (plot_confusion, plot_basis, plot_coefs, 
                                  plot_train_loss, plot_roc_curve)
@@ -160,10 +161,24 @@ def model_factory(X, shift_range: np.ndarray[Any, int], convolution: bool, weigh
 
     
 def experiment(
+    hyperparams,
+    optimization_params,
     enable_shift: bool = False,
     enable_weighting: bool = False,
     enable_convolution: bool = False,
 ):
+    """
+    hyperparams = {
+        rank,
+        lambda1,
+        lambda2,
+    }
+    optimization_params = {
+        num_epochs,
+        epochs_per_val,
+        patience,
+    }
+    """
     #### Setup and loading ####
     # Load some synthetic data from the Gaussian generator 
     X_train, X_test, M_train, M_test = train_test_split(np.load(f"{BASE_PATH}/datasets/X.npy"), 
@@ -185,13 +200,8 @@ def experiment(
     # sample vetor as the prediction target
     X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
 
-    hyperparams = {
-        "rank": 6,
-        "lambda1": 2.15,
-        "lambda2": 1000,
-    }
-
     log_params(hyperparams)
+    log_params(optimization_params)
     log_params(dataset_metadata)
 
     # Generate the model
@@ -205,7 +215,7 @@ def experiment(
 
     #### Training and testing ####
     # Train the model (i.e. perform the matrix completion)
-    results = matrix_completion(model, X_train)
+    results = matrix_completion(model, X_train, **optimization_params)
 
     # Predict the risk over the test set using the results from matrix completion as 
     # input parameters to the prediction algorithm 
@@ -332,7 +342,19 @@ if __name__ == "__main__":
     # main()
 
     tf.config.set_visible_devices([], 'GPU')
+    # NB! lamabda1, lambda2, lambda3 does *not* correspond directly to 
+    # the notation used in the master thesis.
+    hyperparams = {
+        "rank": 5,
+        "lambda1": 10,
+        "lambda2": 10,
+        "lambda3": 100,
+    }
+    optimization_params = {
+        "num_epochs": 1000,
+        "patience": 5,
+    }
 
     for shift, weight, convolve in product([False, True], repeat=3):
         print("Running ", shift, weight, convolve)
-        experiment(shift, weight, convolve)
+        experiment(hyperparams, optimization_params, shift, weight, convolve)
