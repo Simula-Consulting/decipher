@@ -38,3 +38,25 @@ def laplacian_kernel_matrix(T, gamma=1.0):
     kernel = lambda x: np.exp(-1.0 * gamma * np.abs(x))
 
     return [kernel(np.arange(T) - i) for i in np.arange(T)]
+
+
+def reconstruction_mse(true_matrix, observed_matrix, reconstructed_matrix):
+	"""Compute the reconstruction means-squared error
+	
+	Arguments:
+	 true_matrix: the ground truth dense matrix
+	 observed_matrix: the observed, censored matrix
+	 reconstructed_matrix: the reconstruced, dense matrix
+	 
+	Returns:
+	 recMSE
+	 
+	Notes:
+	 The function uses the observed_matrix to find the observation mask (where the observed_matrix is zero), 
+	 and then finds the norm of the difference at unobserved entries, normalized by the sparseness.
+	 recMSE = || P_inverse(M - U.V) || / (1-|P|)
+	 where P is the observation mask, M is the ground truth and U.V is the reconstructed matrix.
+	"""
+	hidden_mask = observed_matrix == 0  # Entries where there is no observation
+
+	return np.linalg.norm(hidden_mask * (true_matrix - reconstructed_matrix)) / np.sum(hidden_mask)

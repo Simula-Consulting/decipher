@@ -18,7 +18,8 @@ from algorithms.risk_prediction import predict_proba
 
 from algorithms.utils import (initialize_basis, 
                               finite_difference_matrix, 
-                              laplacian_kernel_matrix)
+                              laplacian_kernel_matrix,
+                              reconstruction_mse)
 
 from sklearn.metrics import matthews_corrcoef, accuracy_score
 from itertools import combinations, product
@@ -138,12 +139,6 @@ def model_factory(X, shift_range: np.ndarray[Any, int], convolution: bool, weigh
 
     V = initialize_basis(X.shape[1], rank, seed)
 
-    short_model_name = ''.join(symbol for symbol, setting in [
-        ("s", shift_range.size),
-        ("w", weights is not None),
-        ("c", convolution), 
-        ] if setting) + "mf"
-
     short_model_name = "".join(a if cond else b for cond, a, b in [
             (shift_range.size, "s", ""),
             (convolution, "c", "l2"),
@@ -159,28 +154,6 @@ def model_factory(X, shift_range: np.ndarray[Any, int], convolution: bool, weigh
         else:
             return short_model_name, CMF(X, V, **kwargs)
 
-
-
-def _reconstruction_mse(true_matrix, observed_matrix, reconstructed_matrix):
-	"""Compute the reconstruction means-squared error
-	
-	Arguments:
-	 true_matrix: the ground truth dense matrix
-	 observed_matrix: the observed, censored matrix
-	 reconstructed_matrix: the reconstruced, dense matrix
-	 
-	Returns:
-	 recMSE
-	 
-	Notes:
-	 The function uses the observed_matrix to find the observation mask (where the observed_matrix is zero), 
-	 and then finds the norm of the difference at unobserved entries, normalized by the sparseness.
-	 recMSE = || P_inverse(M - U.V) || / (1-|P|)
-	 where P is the observation mask, M is the ground truth and U.V is the reconstructed matrix.
-	"""
-	hidden_mask = observed_matrix == 0  # Entries where there is no observation
-
-	return np.linalg.norm(hidden_mask * (true_matrix - reconstructed_matrix)) / np.sum(hidden_mask)
     
 def experiment(
     hyperparams,
@@ -200,6 +173,10 @@ def experiment(
         epochs_per_val,
         patience,
     }
+
+    TODO: option to plot and log figures
+    TODO: option to store and log artifacts like U,V,M,datasets,etc
+    TODO: more clearly separate train and predict
     """
     #### Setup and loading ####
     # Load some synthetic data from the Gaussian generator 
@@ -237,8 +214,8 @@ def experiment(
 
     #### Training and testing ####
     # Train the model (i.e. perform the matrix completion)
-    extra_metrics = (("recMSE", lambda model: _reconstruction_mse(M_train, X_train, model.M)),)
     results = matrix_completion(model, X_train, extra_metrics=extra_metrics, **optimization_params)
+    extra_metrics = (("recMSE", lambda model: reconstruction_mse(M_train, X_train, model.M)),)
 
     # Predict the risk over the test set using the results from matrix completion as 
     # input parameters to the prediction algorithm 
@@ -259,116 +236,8 @@ def experiment(
     log_metric("norm_difference", np.linalg.norm(results["M"] - M_train))
     end_run()
 
-def main():
-
-    # Load some synthetic data from the Gaussian generator 
-    X_train, X_test, M_train, M_test = train_test_split(np.load(f"{BASE_PATH}/datasets/X.npy"), 
-                                                        np.load(f"{BASE_PATH}/datasets/M.npy"))
-    
-    with open(f"{BASE_PATH}/datasets/dataset_metadata.json", "r") as metadata_file:
-        dataset_metadata = {f"DATASET_{key}": value for key,value in json.load(metadata_file).items()}
-
-    # Simulate data for a prediction task by selecting the last data point in each 
-    # sample vetor as the prediction target
-    X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
-
-    # Examples on how to instantiate a series of models 
-
-    hyperparams = {
-        "rank": 6,
-        "lambda1": 2.15,
-        "lambda2": 1000,
-    }
-
-    # Only L2 regularization  
-    l2mf = l2_regularizer(X_train, **hyperparams)
-
-    # Weighted L2 regularization  
-    wl2mf = l2_regularizer(X_train, weights=data_weights(X_train), **hyperparams)
-
-    # Convolutional regularization 
-    cmf = convolution(X_train, **hyperparams)
-
-    # Weighted discrepancy with convolutional regularization 
-    wcmf = convolution(X_train, weights=data_weights(X_train), **hyperparams)
-
-    # Shifted L2 regularization  
-    sl2mf = shifted(X_train, **hyperparams)
-    
-    # Shifted convolutional regularization  
-    scmf = shifted(X_train, convolution=True, **hyperparams)
-
-    # Shifted weighted convolutional regularization  
-    swcmf = shifted(X_train, convolution=True, weights=data_weights(X_train), **hyperparams)
-
-    models = {
-        "l2mf": l2mf,
-        "wl2mf": wl2mf,
-        "cmf": cmf,
-        "wcmf": wcmf,
-        "sl2mf": sl2mf,
-        "scmf": scmf,
-        "swcmf": swcmf,
-    }
-    active_model = "wcmf"
-
-    with start_run():
-        # Estimate factor matrices U and V such that U @ V.T \approx X 
-        # Results from the experiment are stored in the output
-        results = matrix_completion(models[active_model], X_train)
-        log_param("model", active_model)
-        log_params(hyperparams)
-
-        log_params(dataset_metadata)
-
-        # Predict the risk over the test set using the results from matrix completion as 
-        # input parameters to the prediction algorithm 
-        p_pred = predict_proba(X_test_masked, results["M"], t_pred, results["theta_mle"])
-        # Estimate the mostl likely prediction result from the probabilities 
-        x_pred = 1.0 + np.argmax(p_pred, axis=1)
-
-        # Save useful results 
-        np.save(f"{BASE_PATH}/results/data/X_train.npy", X_train)
-        np.save(f"{BASE_PATH}/results/data/M_train.npy", M_train)
-        np.save(f"{BASE_PATH}/results/data/X_test.npy", X_test)
-        np.save(f"{BASE_PATH}/results/data/M_test.npy", M_test)
-        np.save(f"{BASE_PATH}/results/data/X_test_masked.npy", X_test_masked)
-
-        np.save(f"{BASE_PATH}/results/data/U.npy", results["U"])
-        np.save(f"{BASE_PATH}/results/data/V.npy", results["V"])
-        np.save(f"{BASE_PATH}/results/data/M.npy", results["M"])
-        np.save(f"{BASE_PATH}/results/data/theta_mle.npy", results["theta_mle"])
-        np.save(f"{BASE_PATH}/results/data/epochs.npy", results["epochs"])
-        np.save(f"{BASE_PATH}/results/data/loss_values.npy", results["loss_values"])
-        np.save(f"{BASE_PATH}/results/data/convergence_rate.npy", results["convergence_rate"])
-
-        np.save(f"{BASE_PATH}/results/data/p_pred.npy", p_pred)
-        np.save(f"{BASE_PATH}/results/data/x_pred.npy", x_pred)
-        np.save(f"{BASE_PATH}/results/data/x_true.npy", x_true)
-        np.save(f"{BASE_PATH}/results/data/t_pred.npy", t_pred)
-
-
-        log_metric("matthew_score", matthews_corrcoef(x_true, x_pred))
-        log_metric("accuracy", accuracy_score(x_true, x_pred))
-
-        # Plotting results 
-        plot_coefs(np.load(f"{BASE_PATH}/results/data/U.npy"), f"{BASE_PATH}/results/figures")
-        plot_basis(np.load(f"{BASE_PATH}/results/data/V.npy"), f"{BASE_PATH}/results/figures")
-        
-        plot_train_loss(np.load(f"{BASE_PATH}/results/data/epochs.npy"), 
-                        np.load(f"{BASE_PATH}/results/data/loss_values.npy"), f"{BASE_PATH}/results/figures")
-
-        plot_confusion(np.load(f"{BASE_PATH}/results/data/x_true.npy"), 
-                    np.load(f"{BASE_PATH}/results/data/x_pred.npy"), f"{BASE_PATH}/results/figures")
-
-        plot_roc_curve(np.load(f"{BASE_PATH}/results/data/x_true.npy"), 
-                    np.load(f"{BASE_PATH}/results/data/p_pred.npy"), f"{BASE_PATH}/results/figures")
-
-        log_artifacts(f"{BASE_PATH}/results/figures")
 
 if __name__ == "__main__":
-    # main()
-
     tf.config.set_visible_devices([], 'GPU')
     # NB! lamabda1, lambda2, lambda3 does *not* correspond directly to 
     # the notation used in the master thesis.
