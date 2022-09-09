@@ -83,6 +83,9 @@ class Dataset:
             "sparsity_level": None,
         }
 
+    def __str__(self):
+        return f"Dataset object of size {self.metadata['n_rows']}x{self.metadata['n_columns']} with rank {self.metadata['rank']} and sparsity level {self.metadata['sparsity_level']}"
+
     def load(self, path):
         """Load dataset from file"""
         assert not self.data_loaded, "Data is already loaded!"
@@ -153,9 +156,10 @@ class Dataset:
 
     def prefixed_metadata(self, prefix="DATASET_"):
         """Return the metadata dict with prefix prepended to keys
-        
+
         Convenience method used in for example logging"""
         return {prefix + key: value for key, value in self.metadata.items()}
+
 
 def main():
 
