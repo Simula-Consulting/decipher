@@ -83,7 +83,7 @@ def experiment(
     mlflow.log_metric("norm_difference", np.linalg.norm(results["M"] - M_train))
     mlflow.end_run()
 
-if __name__ == "__main__":
+def main():
     USE_GPU = False
     if not USE_GPU:
         tf.config.set_visible_devices([], 'GPU')
@@ -108,3 +108,7 @@ if __name__ == "__main__":
 
     for shift, weight, convolve in product([False, True], repeat=3):
         experiment(hyperparams, optimization_params, shift, weight, convolve, mlflow_tags=mlflow_tags)
+
+
+if __name__ == "__main__":
+    main()
