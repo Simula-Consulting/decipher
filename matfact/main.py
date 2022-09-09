@@ -62,8 +62,8 @@ def experiment(
     #### Training and testing ####
     # Train the model (i.e. perform the matrix completion)
     extra_metrics = (("recMSE", lambda model: reconstruction_mse(M_train, X_train, model.M)),)
-    results = matrix_completion(model, extra_metrics=extra_metrics, **optimization_params)
     model.test()
+    results = matrix_completion(model, X_train, extra_metrics=extra_metrics, **optimization_params)
 
     # Predict the risk over the test set using the results from matrix completion as 
     # input parameters to the prediction algorithm 

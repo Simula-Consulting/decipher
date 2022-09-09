@@ -4,7 +4,7 @@ from tqdm import tqdm
 
  
 
-def matrix_completion(model, extra_metrics=None, fname="", epochs_per_val=5, num_epochs=2000, patience=200):
+def matrix_completion(model, X, extra_metrics=None, fname="", epochs_per_val=5, num_epochs=2000, patience=200):
 	"""Run matrix completion on input matrix X using a factorization model.
 	
 	extra_metrics: iterable of name, exectuable pairs for extra metric logggin.
@@ -51,6 +51,6 @@ def matrix_completion(model, extra_metrics=None, fname="", epochs_per_val=5, num
 	if hasattr(model, "s"):
 		output["s"] = model.s 
 
-	output["theta_mle"] = theta_mle(model.X, model.M)
+	output["theta_mle"] = theta_mle(X, model.M)
 
 	return output 
