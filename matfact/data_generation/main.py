@@ -93,6 +93,15 @@ class Dataset:
         self.data_loaded = True
         return self
 
+    def save(self, path):
+        """Store dataset to file"""
+        assert self.data_loaded, "No data is loaded or generated!"
+        np.save(f"{path}/X.npy", self.X)
+        np.save(f"{path}/M.npy", self.M)
+        with open(f"{path}/dataset_metadata.json", "w") as metadata_file:
+            metadata_file.write(json.dumps(self.metadata))
+        return self
+
     def generate(
         self,
         N,
