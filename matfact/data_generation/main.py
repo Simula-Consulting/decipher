@@ -1,6 +1,7 @@
 """This module demonstrates how to generate synthetic data developed to 
 esemble the screening data used in the DeCipher project.
 """
+from inspect import classify_class_attrs
 import os 
 import numpy as np
 import json
@@ -59,6 +60,34 @@ def produce_dataset(N, T, r, level, memory_length=5, missing=0,
 	
 	return X[valid_rows].astype(np.float32), M[valid_rows].astype(np.float32)
 
+
+class Dataset:
+	def __init__(self):
+		data_loaded = False
+		metadata = {
+			"rank": None,
+			"n_rows": None,
+			"n_columns": None,
+			"sparsity_level": None,
+		}
+		return self
+
+	def load(self, path):
+		"""Load dataset from file"""
+		assert not self.data_loaded, "Data is already loaded!"
+
+		self.X, self.M = np.load(path + "/X.npy"), np.load(path + "/M.npy")
+		with open(path + "/dataset_metadata.json", "r") as metadata_file:
+			self.metadata.update(json.load(metadata_file))
+		self.data_loaded = True
+
+	def generate(self, N, T, r, level, memory_length=5, missing=0, 		
+					value_range=np.arange(1, 5), theta=2.5, seed=42):
+		assert not self.data_loaded, "Data is already loaded!"
+
+		self.X, self.M = produce_dataset(N, T, r, level, memory_length=5, missing=0, 		
+							value_range=np.arange(1, 5), theta=2.5, seed=42)
+		self.data_loaded = True
 
 def main(): 
 	
