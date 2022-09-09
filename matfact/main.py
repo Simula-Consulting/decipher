@@ -3,6 +3,8 @@ from experiments.main import model_factory
 from experiments.algorithms.optimization import matrix_completion
 from experiments.algorithms.risk_prediction import predict_proba
 from experiments.simulation import prediction_data, data_weights
+from experiments.plotting.diagnostic import (plot_confusion, plot_basis, plot_coefs, 
+                                 plot_train_loss, plot_roc_curve)
 from data_generation.main import Dataset
 import mlflow
 import numpy as np
@@ -81,6 +83,16 @@ def experiment(
             mlflow.log_metric(metric, metric_value, step=epoch)
 
     mlflow.log_metric("norm_difference", np.linalg.norm(results["M"] - M_train))
+
+
+    ## Plotting ##
+    figure_path = f"{BASE_PATH}/results/figures"
+    plot_coefs(results["U"], figure_path)
+    plot_basis(results["V"], figure_path)
+    plot_confusion(x_true, x_pred, figure_path)
+    plot_roc_curve(x_true, p_pred, figure_path)
+    mlflow.log_artifacts(figure_path)
+
     mlflow.end_run()
 
 def main():
