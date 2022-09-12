@@ -2,8 +2,6 @@
 esemble the screening data used in the DeCipher project.
 """
 import json
-import os
-from inspect import classify_class_attrs
 
 import numpy as np
 from scipy.stats import betabinom
