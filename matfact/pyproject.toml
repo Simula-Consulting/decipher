@@ -17,6 +17,7 @@ tensorflow-macos = "^2.9.2"
 tensorflow-metal = "^0.5.1"
 mlflow = "^1.28.0"
 tqdm = "^4.64.1"
+pre-commit = "^2.20.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -25,3 +26,6 @@ ipykernel = "^6.15.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
