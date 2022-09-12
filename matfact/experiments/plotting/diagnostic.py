@@ -1,3 +1,5 @@
+import pathlib
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -8,11 +10,8 @@ from . import plot_config, plot_utils
 
 plot_config.setup()
 
-RESULTS_BASE = "/tsd/p1068/home/p1068-gslangbe/decipher/results"
-DATA_BASE = "/tsd/p1068/home/p1068-gslangbe/decipher/data"
 
-
-def plot_coefs(U, path_to_figure, fname="", n_bins=50):
+def plot_coefs(U, path_to_figure: pathlib.Path, fname="", n_bins=50):
     "Make a histogram of coefficients from the U matrix."
 
     hist, bins = np.histogram(U.ravel(), bins=n_bins)
@@ -29,11 +28,11 @@ def plot_coefs(U, path_to_figure, fname="", n_bins=50):
 
     fig.tight_layout()
     fig.savefig(
-        f"{path_to_figure}/coefs_{fname}.pdf", transparent=True, bbox_inches="tight"
+        path_to_figure / f"coefs_{fname}.pdf", transparent=True, bbox_inches="tight"
     )
 
 
-def plot_basis(V, path_to_figure, fname=""):
+def plot_basis(V, path_to_figure: pathlib.Path, fname=""):
     "Plot the basic vectors in the V matrix."
 
     fig, axis = plt.subplots(
@@ -48,7 +47,7 @@ def plot_basis(V, path_to_figure, fname=""):
 
     fig.tight_layout()
     fig.savefig(
-        f"{path_to_figure}/basis_{fname}.pdf", transparent=True, bbox_inches="tight"
+        path_to_figure / f"basis_{fname}.pdf", transparent=True, bbox_inches="tight"
     )
 
 
@@ -63,7 +62,7 @@ def _confusion(true, pred, n_classes=4):
     return cmat
 
 
-def plot_confusion(x_true, x_pred, path_to_figure, n_classes=4, fname=""):
+def plot_confusion(x_true, x_pred, path_to_figure: pathlib.Path, n_classes=4, fname=""):
     "PLot a confusion matrix to compare predictions and ground truths."
 
     cmat = _confusion(x_true, x_pred, n_classes=n_classes)
@@ -95,11 +94,11 @@ def plot_confusion(x_true, x_pred, path_to_figure, n_classes=4, fname=""):
 
     fig.tight_layout()
     fig.savefig(
-        f"{path_to_figure}/confusion_{fname}.pdf", transparent=True, bbox_inches="tight"
+        path_to_figure / f"confusion_{fname}.pdf", transparent=True, bbox_inches="tight"
     )
 
 
-def plot_train_loss(epochs, loss_values, path_to_figure, fname=""):
+def plot_train_loss(epochs, loss_values, path_to_figure: pathlib.Path, fname=""):
     "PLot the loss values from matrix completion."
 
     fig, axis = plt.subplots(
@@ -115,7 +114,7 @@ def plot_train_loss(epochs, loss_values, path_to_figure, fname=""):
 
     fig.tight_layout()
     fig.savefig(
-        f"{path_to_figure}/train_loss_{fname}.pdf",
+        path_to_figure / f"train_loss_{fname}.pdf",
         transparent=True,
         bbox_inches="tight",
     )
@@ -153,7 +152,12 @@ def _macro_roc(x_ohe, p_pred, fpr, tpr, roc_auc):
 
 
 def plot_roc_curve(
-    x_true, p_pred, path_to_figure, classes=np.arange(1, 5), average="micro", fname=""
+    x_true,
+    p_pred,
+    path_to_figure: pathlib.Path,
+    classes=np.arange(1, 5),
+    average="micro",
+    fname="",
 ):
     "Plot a ROC curve"
 
@@ -197,4 +201,4 @@ def plot_roc_curve(
     plot_utils.set_arrowed_spines(fig, axis)
 
     plt.tight_layout()
-    plt.savefig(f"{path_to_figure}/roc_auc_{average}_{fname}.pdf")
+    plt.savefig(path_to_figure / f"roc_auc_{average}_{fname}.pdf")

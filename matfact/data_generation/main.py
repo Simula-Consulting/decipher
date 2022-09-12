@@ -2,15 +2,15 @@
 esemble the screening data used in the DeCipher project.
 """
 import json
+import pathlib
 
 import numpy as np
 from scipy.stats import betabinom
 
+from settings import DATASET_PATH
+
 from .gaussian_generator import discretise_matrix, float_matrix
 from .masking import simulate_mask
-
-BASE_PATH = "/Users/thorvald/Documents/Decipher/decipher/matfact/"  # TODO: make generic
-BASE_PATH = "./"
 
 
 def censoring(X, missing=0):
@@ -89,22 +89,22 @@ class Dataset:
             f" {self.metadata['sparsity_level']}"
         )
 
-    def load(self, path):
+    def load(self, path: pathlib.Path):
         """Load dataset from file"""
         assert not self.data_loaded, "Data is already loaded!"
 
-        self.X, self.M = np.load(path + "/X.npy"), np.load(path + "/M.npy")
-        with open(path + "/dataset_metadata.json", "r") as metadata_file:
+        self.X, self.M = np.load(path / "X.npy"), np.load(path / "M.npy")
+        with (path / "dataset_metadata.json").open("r") as metadata_file:
             self.metadata.update(json.load(metadata_file))
         self.data_loaded = True
         return self
 
-    def save(self, path):
+    def save(self, path: pathlib.Path):
         """Store dataset to file"""
         assert self.data_loaded, "No data is loaded or generated!"
-        np.save(f"{path}/X.npy", self.X)
-        np.save(f"{path}/M.npy", self.M)
-        with open(f"{path}/dataset_metadata.json", "w") as metadata_file:
+        np.save(path / "X.npy", self.X)
+        np.save(path / "M.npy", self.M)
+        with (path / "dataset_metadata.json").open("w") as metadata_file:
             metadata_file.write(json.dumps(self.metadata))
         return self
 
@@ -180,9 +180,9 @@ def main():
         "generation_method": "DGD",  # Only one method implemented.
     }
 
-    np.save(f"{BASE_PATH}/datasets/X.npy", X)
-    np.save(f"{BASE_PATH}/datasets/M.npy", M)
-    with open(f"{BASE_PATH}/datasets/dataset_metadata.json", "w") as metadata_file:
+    np.save(DATASET_PATH / "X.npy", X)
+    np.save(DATASET_PATH / "M.npy", M)
+    with (DATASET_PATH / "dataset_metadata.json").open("w") as metadata_file:
         metadata_file.write(json.dumps(dataset_metadata))
 
 

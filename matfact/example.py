@@ -17,8 +17,7 @@ from experiments.plotting.diagnostic import (
     plot_roc_curve,
 )
 from experiments.simulation import data_weights, prediction_data
-
-BASE_PATH = "./"
+from settings import DATASET_PATH, FIGURE_PATH
 
 
 def experiment(
@@ -46,7 +45,7 @@ def experiment(
     TODO: more clearly separate train and predict
     """
     # Setup and loading #
-    dataset = Dataset().load(f"{BASE_PATH}/datasets")
+    dataset = Dataset().load(DATASET_PATH)
     X_train, X_test, M_train, M_test = dataset.get_split_X_M()
 
     # Simulate data for a prediction task by selecting the last data point in each
@@ -102,19 +101,18 @@ def experiment(
     mlflow.log_metric("norm_difference", np.linalg.norm(results["M"] - M_train))
 
     # Plotting #
-    figure_path = f"{BASE_PATH}/results/figures"
-    plot_coefs(results["U"], figure_path)
-    plot_basis(results["V"], figure_path)
-    plot_confusion(x_true, x_pred, figure_path)
-    plot_roc_curve(x_true, p_pred, figure_path)
-    mlflow.log_artifacts(figure_path)
+    plot_coefs(results["U"], FIGURE_PATH)
+    plot_basis(results["V"], FIGURE_PATH)
+    plot_confusion(x_true, x_pred, FIGURE_PATH)
+    plot_roc_curve(x_true, p_pred, FIGURE_PATH)
+    mlflow.log_artifacts(FIGURE_PATH)
 
     mlflow.end_run()
 
 
 def main():
     # Generate some data
-    Dataset().generate(N=1000, T=50, r=5, level=6).save(f"{BASE_PATH}/datasets")
+    Dataset().generate(N=1000, T=50, r=5, level=6).save(DATASET_PATH)
 
     USE_GPU = False
     if not USE_GPU:

@@ -28,3 +28,5 @@ Experiment runs are tracked using [MLFlow](https://mlflow.org/); execute `mlflow
 There are multiple entry points to the code, depending on what level of control you need.
 For an example of using the program, see `main` in `example.py`.
 For more granular use, `model_factory` in `experiments/main.py` is a convenience function for returning appropriate model objects alternatively create models directly.
+
+For setting dataset and results paths, go to `settings.py`.

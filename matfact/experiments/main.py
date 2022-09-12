@@ -13,9 +13,6 @@ from .algorithms.utils import (
     laplacian_kernel_matrix,
 )
 
-BASE_PATH = "/Users/thorvald/Documents/Decipher/decipher/matfact/"  # TODO: make generic
-BASE_PATH = "./"
-
 
 def l2_regularizer(X, rank=5, lambda1=1.0, lambda2=1.0, weights=None, seed=42):
     """Matrix factorization with L2 regularization. Weight discrepancy term is optional.
