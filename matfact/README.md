@@ -1,6 +1,6 @@
 # MATFACT -- MATrix FACtorization for cervical cancer screening data reconstruction and prediction
 
-## Installation 
+## Installation
 This project is managed using [Poetry](https://python-poetry.org/).
 To set it up, you must have Poetry installed.
 Then, navigate to the project root directory, and run `poetry install`.
@@ -15,7 +15,7 @@ python <filename.py>
 ```
 
 ### Notes on Apple M1 chips
-The current Poetry project is set up on a M1 comptuter. 
+The current Poetry project is set up on a M1 comptuter.
 As a consequence, the poetry requires `tensorflow-macos` instead of `tensorflow`.
 For the future, we will change this to be a conditional dependency, based on the system it is installed on.
 

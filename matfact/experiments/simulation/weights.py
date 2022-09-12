@@ -1,4 +1,4 @@
-import numpy as np 
+import numpy as np
 
 
 def data_weights(X):
@@ -7,9 +7,9 @@ def data_weights(X):
     """
 
     W = np.zeros_like(X)
-    W[X == 1] = 1 
-    W[X == 2] = 2 
-    W[X == 3] = 3 
+    W[X == 1] = 1
+    W[X == 2] = 2
+    W[X == 3] = 3
     W[X == 4] = 4
 
-    return W 
+    return W

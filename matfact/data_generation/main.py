@@ -1,15 +1,15 @@
-"""This module demonstrates how to generate synthetic data developed to 
+"""This module demonstrates how to generate synthetic data developed to
 esemble the screening data used in the DeCipher project.
 """
-from inspect import classify_class_attrs
-import os
-import numpy as np
 import json
+import os
+from inspect import classify_class_attrs
 
+import numpy as np
 from scipy.stats import betabinom
 
+from .gaussian_generator import discretise_matrix, float_matrix
 from .masking import simulate_mask
-from .gaussian_generator import float_matrix, discretise_matrix
 
 BASE_PATH = "/Users/thorvald/Documents/Decipher/decipher/matfact/"  # TODO: make generic
 BASE_PATH = "./"
