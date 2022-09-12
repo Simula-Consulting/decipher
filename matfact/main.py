@@ -114,6 +114,9 @@ def experiment(
 
 
 def main():
+    # Generate some data
+    Dataset().generate(N=1000, T=50, r=5, level=6).save(f"{BASE_PATH}/datasets")
+
     USE_GPU = False
     if not USE_GPU:
         tf.config.set_visible_devices([], "GPU")
