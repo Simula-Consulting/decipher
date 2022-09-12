@@ -32,22 +32,19 @@ def _take_per_row_strided(A, start_idx, n_elem):
 
 class SCMF(BaseMF):
     """Shifted matrix factorization with L2 and convolutional regularization (optional).
-        Factor updates are based on gradient descent approximations, permitting
-        an arbitrary weight matrix in the discrepancy term. The shift mechanism will maximize the
-    correlation between vector samples in the original and estimated data matrices for more accurate
-    factor estimates.
+    Factor updates are based on gradient descent approximations, permitting an arbitrary
+    weight matrix in the discrepancy term. The shift mechanism will maximize the
+    correlation between vector samples in the original and estimated data matrices for
+    more accurate factor estimates.
 
     Args:
-                X: Sparse data matrix used to estimate factor matrices
-                V: Initial estimate for basic vectors
-        s_budget: Range of possible shift steps (forward or backward from the original position)
-                W (optional): Weight matrix for the discrepancy term
-                D (optional): Forward difference matrix
-                J (optional): A martix used to impose a minimum value in the basic vecors V
-                K (optional): Convolutional matrix
-                lambda: Regularization coefficients
-                iter_U, iter_V: The number of steps with gradient descent (GD) per factor update
-                learning_rate: Stepsize used in the GD
+        X: Sparse data matrix used to estimate factor matrices V: Initial estimate for
+        basic vectors s_budget: Range of possible shift steps (forward or backward from
+        the original position) W (optional): Weight matrix for the discrepancy term D
+        (optional): Forward difference matrix J (optional): A martix used to impose a
+        minimum value in the basic vecors V K (optional): Convolutional matrix lambda:
+        Regularization coefficients iter_U, iter_V: The number of steps with gradient
+        descent (GD) per factor update learning_rate: Stepsize used in the GD
     """
 
     def __init__(

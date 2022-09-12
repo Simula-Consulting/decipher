@@ -2,50 +2,23 @@
 for matrix completion and risk prediction. The example is based on synthetic data
 produced in the `datasets` directory.
 """
-import json
-from itertools import combinations, product
 from typing import Any
 
 import numpy as np
-import tensorflow as tf
-from mlflow import (
-    end_run,
-    log_artifacts,
-    log_metric,
-    log_metrics,
-    log_param,
-    log_params,
-    set_tag,
-    set_tags,
-    start_run,
-)
-from sklearn.metrics import accuracy_score, matthews_corrcoef
-from tqdm import tqdm
 
 from .algorithms import CMF, SCMF, WCMF
-from .algorithms.optimization import matrix_completion
-from .algorithms.risk_prediction import predict_proba
 from .algorithms.utils import (
     finite_difference_matrix,
     initialize_basis,
     laplacian_kernel_matrix,
-    reconstruction_mse,
 )
-from .plotting.diagnostic import (
-    plot_basis,
-    plot_coefs,
-    plot_confusion,
-    plot_roc_curve,
-    plot_train_loss,
-)
-from .simulation import data_weights, prediction_data, train_test_split
 
 BASE_PATH = "/Users/thorvald/Documents/Decipher/decipher/matfact/"  # TODO: make generic
 BASE_PATH = "./"
 
 
 def l2_regularizer(X, rank=5, lambda1=1.0, lambda2=1.0, weights=None, seed=42):
-    """Matrix factorization with L2 regularization. Weighted discrepancy term is optional.
+    """Matrix factorization with L2 regularization. Weight discrepancy term is optional.
 
     Args:
         X: Sparse (N x T) data matrix used to estimate factor matrices
@@ -70,9 +43,10 @@ def l2_regularizer(X, rank=5, lambda1=1.0, lambda2=1.0, weights=None, seed=42):
 def convolution(
     X, rank=5, lambda1=1.0, lambda2=1.0, lambda3=1.0, weights=None, seed=42
 ):
-    """Matrix factorization with L2 and convolutional regularization. Weighted discrepancy
-    term is optional. The convolutional regularization allows for more local variability in
-    the reconstructed data.
+    """Matrix factorization with L2 and convolutional regularization.
+    Weighted discrepancy term is optional.
+    The convolutional regularization allows
+    for more local variability in the reconstructed data.
 
     Args:
         X: Sparse (N x T) data matrix used to estimate factor matrices
@@ -112,7 +86,8 @@ def shifted(
     convolution=False,
     seed=42,
 ):
-    """Shifted matrix factorization with L2 and optional convolutional regularization. Weighted discrepancy
+    """Shifted matrix factorization with L2 and optional convolutional regularization.
+    Weighted discrepancy
     term is also optional. The shift
 
     Note that the shifted models (SCMF) are slower than CMF and WCFM.
@@ -177,8 +152,6 @@ def model_factory(
 
     TODO: it is possible to move the bool inputs to rather be the absence of values
     for corresponding quantities (non-zoer shift, weights etc)
-
-    TODO: generate a short format model name? Or is it better to simply store the settings?
     """
 
     padding = 2 * shift_range.size
@@ -187,9 +160,8 @@ def model_factory(
         D = finite_difference_matrix(X.shape[1] + padding)
         K = laplacian_kernel_matrix(X.shape[1] + padding)
     else:
-        D = (
-            K
-        ) = None  # None will make the objects generate appropriate identity matrices later.
+        # None will make the objects generate appropriate identity matrices later.
+        D = K = None
     kwargs.update({"D": D, "K": K})
 
     V = initialize_basis(X.shape[1], rank, seed)

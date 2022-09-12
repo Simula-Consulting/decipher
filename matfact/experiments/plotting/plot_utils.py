@@ -55,7 +55,6 @@ def set_arrowed_spines(fig, ax):
     # manual arrowhead width and length
     hw = 1.0 / 40.0 * (ymax - ymin)
     hl = 1.0 / 40.0 * (xmax - xmin)
-    lw = 1  # axis line width
     ohg = 0.3  # arrow overhang
 
     # compute matching arrowhead length and width

@@ -56,14 +56,14 @@ def produce_dataset(
     Y = discretise_matrix(M, domain=value_range, theta=theta, seed=seed)
 
     # Simulate a sparse dataset.
-    O = simulate_mask(
+    mask = simulate_mask(
         Y,
         observation_proba=np.array([0.01, 0.03, 0.08, 0.12, 0.04]),
         memory_length=memory_length,
         level=level,
         seed=seed,
     )
-    X = O * Y
+    X = mask * Y
     X = censoring(X, missing=missing)
 
     valid_rows = np.sum(X != 0, axis=1) > 2
@@ -82,7 +82,12 @@ class Dataset:
         }
 
     def __str__(self):
-        return f"Dataset object of size {self.metadata['n_rows']}x{self.metadata['n_columns']} with rank {self.metadata['rank']} and sparsity level {self.metadata['sparsity_level']}"
+        return (
+            "Dataset object of size"
+            f" {self.metadata['n_rows']}x{self.metadata['n_columns']} with rank"
+            f" {self.metadata['rank']} and sparsity level"
+            f" {self.metadata['sparsity_level']}"
+        )
 
     def load(self, path):
         """Load dataset from file"""
@@ -160,7 +165,6 @@ class Dataset:
 
 
 def main():
-
     rank = 5
     n_rows = 1000
     n_columns = 50

@@ -1,6 +1,3 @@
-import numpy as np
-
-
 def train_test_split(X, M):
     "Simple train-test splitting of data."
 

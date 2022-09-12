@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.lib.stride_tricks import as_strided
 
 
 def theta_mle(X, M):
@@ -14,8 +13,8 @@ def theta_mle(X, M):
         Theta estimate (float)
     """
 
-    O = (X != 0).astype(float)
-    return np.sum(O) / (2 * np.square(np.linalg.norm(O * (X - M))))
+    mask = (X != 0).astype(float)
+    return np.sum(mask) / (2 * np.square(np.linalg.norm(mask * (X - M))))
 
 
 def initialize_basis(T, r, seed):
@@ -36,7 +35,8 @@ def finite_difference_matrix(T):
 def laplacian_kernel_matrix(T, gamma=1.0):
     "Construct a (T x T) matrix for convolutional regularization"
 
-    kernel = lambda x: np.exp(-1.0 * gamma * np.abs(x))
+    def kernel(x):
+        return np.exp(-1.0 * gamma * np.abs(x))
 
     return [kernel(np.arange(T) - i) for i in np.arange(T)]
 
@@ -53,10 +53,11 @@ def reconstruction_mse(true_matrix, observed_matrix, reconstructed_matrix):
      recMSE
 
     Notes:
-     The function uses the observed_matrix to find the observation mask (where the observed_matrix is zero),
-     and then finds the norm of the difference at unobserved entries, normalized by the sparseness.
-     recMSE = || P_inverse(M - U.V) || / (1-|P|)
-     where P is the observation mask, M is the ground truth and U.V is the reconstructed matrix.
+     The function uses the observed_matrix to find the observation mask (where the
+     observed_matrix is zero), and then finds the norm of the difference at unobserved
+     entries, normalized by the sparseness. recMSE = || P_inverse(M - U.V) || / (1-|P|)
+     where P is the observation mask, M is the ground truth and U.V is the reconstructed
+     matrix.
     """
     hidden_mask = observed_matrix == 0  # Entries where there is no observation
 

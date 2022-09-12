@@ -42,7 +42,7 @@ class CMF(BaseMF):
     def _init_matrices(self, D, J, K):
 
         self.S = self.X.copy()
-        self.O = (self.X != 0).astype(np.float32)
+        self.mask = (self.X != 0).astype(np.float32)
 
         self.J = np.ones((self.T, self.r)) if J is None else J
 
@@ -80,7 +80,7 @@ class CMF(BaseMF):
     def loss(self):
         "Compute the loss from the optimization objective"
 
-        loss = np.square(np.linalg.norm(self.O * (self.X - self.U @ self.V.T)))
+        loss = np.square(np.linalg.norm(self.mask * (self.X - self.U @ self.V.T)))
         loss += self.lambda1 * np.square(np.linalg.norm(self.U))
         loss += self.lambda2 * np.square(np.linalg.norm(self.V - self.J))
         loss += self.lambda3 * np.square(np.linalg.norm(self.K @ self.D @ self.V))

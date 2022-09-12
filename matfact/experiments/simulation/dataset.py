@@ -1,3 +1,5 @@
+import random as rnd
+
 import numpy as np
 
 
@@ -18,7 +20,12 @@ def _t_pred(Y, prediction_rule):
         return Y.shape[1] - np.argmax(Y[:, ::-1] != 0, axis=1) - 1
 
     if prediction_rule == "random":
-
+        # NB! We (Simula) should be careful to trust this function,
+        # as when we inherited the code, the function did not work
+        # as random was not imported.
+        # I (Thorvald Ballestad) simply imported it, but
+        # have not tested that the rest of the logic is correct.
+        #  - 12. Sep. 2022
         rows, cols = np.where(Y != 0)
 
         times = []

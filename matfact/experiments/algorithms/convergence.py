@@ -1,7 +1,4 @@
-from collections import defaultdict
-
 import numpy as np
-import pandas as pd
 
 
 def convergence_monitor(M, error_tol=1e-4):

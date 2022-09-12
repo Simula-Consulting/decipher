@@ -10,15 +10,15 @@ class WCMF(BaseMF):
     an arbitrary weight matrix in the discrepancy term.
 
     Args:
-            X: Sparse data matrix used to estimate factor matrices
-            V: Initial estimate for basic vectors
-            W (optional): Weight matrix for the discrepancy term
-            D (optional): Forward difference matrix
-            J (optional): A martix used to impose a minimum value in the basic vecors V
-            K (optional): Convolutional matrix
-            lambda: Regularization coefficients
-            iter_U, iter_V: The number of steps with gradient descent (GD) per factor update
-            learning_rate: Stepsize used in the GD
+        X: Sparse data matrix used to estimate factor matrices
+        V: Initial estimate for basic vectors
+        W (optional): Weight matrix for the discrepancy term
+        D (optional): Forward difference matrix
+        J (optional): A martix used to impose a minimum value in the basic vecors V
+        K (optional): Convolutional matrix
+        lambda: Regularization coefficients
+        iter_U, iter_V: The number of steps with gradient descent (GD) per factor update
+        learning_rate: Stepsize used in the GD
 
     TODO: Will this fail if no W is given, i.e. if it is None?
     """
@@ -38,7 +38,6 @@ class WCMF(BaseMF):
         iter_V=2,
         learning_rate=0.001,
     ):
-
         self.X = X
         self.V = V
         self.W = W
@@ -63,7 +62,6 @@ class WCMF(BaseMF):
         return np.array(self.U @ self.V.T, dtype=np.float32)
 
     def _init_matrices(self, D, J, K):
-
         self.J = np.ones((self.T, self.r)) if J is None else J
         self.K = np.identity(self.T) if K is None else K
         self.D = np.identity(self.T) if D is None else D
@@ -74,10 +72,8 @@ class WCMF(BaseMF):
         self.I_l1 = self.lambda1 * np.eye(self.r)
 
     def _update_V(self):
-
         # @tf.function
         def _loss_V():
-
             frob_tensor = tf.multiply(W, X - (U @ tf.transpose(V)))
             frob_loss = tf.square(tf.norm(frob_tensor))
 
@@ -101,10 +97,8 @@ class WCMF(BaseMF):
         self.V = V.numpy()
 
     def _approx_U(self):
-
         # @tf.function
         def _loss_U():
-
             frob_tensor = tf.multiply(W, X - tf.matmul(U, V, transpose_b=True))
             frob_loss = tf.square(tf.norm(frob_tensor))
 
@@ -124,13 +118,11 @@ class WCMF(BaseMF):
         return U.numpy()
 
     def _update_U(self):
-
         # Faster to approximate U in consecutive iterations
         if self.n_iter_ > 0:
             self.U = self._approx_U()
 
         else:
-
             # Estimate U in the first iteration of alternating minimization
             self.U = np.zeros((self.N, self.r))
 

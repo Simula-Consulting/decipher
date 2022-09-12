@@ -87,7 +87,7 @@ def plot_confusion(x_true, x_pred, path_to_figure, n_classes=4, fname=""):
     ax.set_ylabel("Ground truth", weight="bold")
     ax.set_yticklabels(np.arange(1, n_classes + 1), ha="right", va="center", rotation=0)
 
-    ax.set_title(f"Predicted", weight="bold")
+    ax.set_title("Predicted", weight="bold")
     ax.set_xticklabels(
         np.arange(1, n_classes + 1)[::-1], ha="center", va="bottom", rotation=0
     )

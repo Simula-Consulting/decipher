@@ -15,7 +15,6 @@ from experiments.plotting.diagnostic import (
     plot_coefs,
     plot_confusion,
     plot_roc_curve,
-    plot_train_loss,
 )
 from experiments.simulation import data_weights, prediction_data
 
@@ -46,7 +45,7 @@ def experiment(
     TODO: option to store and log artifacts like U,V,M,datasets,etc
     TODO: more clearly separate train and predict
     """
-    #### Setup and loading ####
+    # Setup and loading #
     dataset = Dataset().load(f"{BASE_PATH}/datasets")
     X_train, X_test, M_train, M_test = dataset.get_split_X_M()
 
@@ -71,7 +70,7 @@ def experiment(
 
     mlflow.log_param("model_name", model_name)
 
-    #### Training and testing ####
+    # Training and testing #
     # Train the model (i.e. perform the matrix completion)
     extra_metrics = (
         ("recMSE", lambda model: reconstruction_mse(M_train, X_train, model.M)),
@@ -102,7 +101,7 @@ def experiment(
 
     mlflow.log_metric("norm_difference", np.linalg.norm(results["M"] - M_train))
 
-    ## Plotting ##
+    # Plotting #
     figure_path = f"{BASE_PATH}/results/figures"
     plot_coefs(results["U"], figure_path)
     plot_basis(results["V"], figure_path)
