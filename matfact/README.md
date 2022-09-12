@@ -14,7 +14,7 @@ poetry shell
 python <filename.py>
 ```
 
-### Notes on Apple M1 chips
+### Notes on Apple Silicon chips (M1, M2, etc.)
 The current Poetry project is set up on a M1 comptuter.
 As a consequence, the poetry requires `tensorflow-macos` instead of `tensorflow`.
 For the future, we will change this to be a conditional dependency, based on the system it is installed on.
