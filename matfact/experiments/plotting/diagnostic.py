@@ -30,6 +30,7 @@ def plot_coefs(U, path_to_figure: pathlib.Path, fname="", n_bins=50):
     fig.savefig(
         path_to_figure / f"coefs_{fname}.pdf", transparent=True, bbox_inches="tight"
     )
+    plt.close()
 
 
 def plot_basis(V, path_to_figure: pathlib.Path, fname=""):
@@ -49,6 +50,7 @@ def plot_basis(V, path_to_figure: pathlib.Path, fname=""):
     fig.savefig(
         path_to_figure / f"basis_{fname}.pdf", transparent=True, bbox_inches="tight"
     )
+    plt.close()
 
 
 def _confusion(true, pred, n_classes=4):
@@ -96,6 +98,7 @@ def plot_confusion(x_true, x_pred, path_to_figure: pathlib.Path, n_classes=4, fn
     fig.savefig(
         path_to_figure / f"confusion_{fname}.pdf", transparent=True, bbox_inches="tight"
     )
+    plt.close()
 
 
 def plot_train_loss(epochs, loss_values, path_to_figure: pathlib.Path, fname=""):
@@ -118,6 +121,7 @@ def plot_train_loss(epochs, loss_values, path_to_figure: pathlib.Path, fname="")
         transparent=True,
         bbox_inches="tight",
     )
+    plt.close()
 
 
 def _micro_roc(x_ohe, p_pred, fpr, tpr, roc_auc):
@@ -202,3 +206,4 @@ def plot_roc_curve(
 
     plt.tight_layout()
     plt.savefig(path_to_figure / f"roc_auc_{average}_{fname}.pdf")
+    plt.close()
