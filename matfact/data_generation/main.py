@@ -112,8 +112,8 @@ class Dataset:
         self,
         N,
         T,
-        r,
-        level,
+        rank,
+        sparsity_level,
         memory_length=5,
         missing=0,
         value_range=np.arange(1, 5),
@@ -127,8 +127,8 @@ class Dataset:
         self.X, self.M = produce_dataset(
             N,
             T,
-            r,
-            level,
+            rank,
+            sparsity_level,
             memory_length=memory_length,
             missing=missing,
             value_range=value_range,
@@ -136,8 +136,8 @@ class Dataset:
             seed=seed,
         )
         self.metadata = {
-            "rank": r,
-            "sparsity_level": level,
+            "rank": rank,
+            "sparsity_level": sparsity_level,
             "N": N,
             "T": T,
             "generation_method": generation_method,
