@@ -50,6 +50,9 @@ class SCMF(BaseMF):
         lambda: Regularization coefficients
         iter_U, iter_V: The number of steps with gradient descent (GD) per factor update
         learning_rate: Stepsize used in the GD
+
+
+    TODO: it looks like J is never used...
     """
 
     def __init__(
@@ -70,8 +73,10 @@ class SCMF(BaseMF):
     ):
 
         self.X = X
+        self.X_shifted = X.copy()  # Altered during solving
         self.V = V
         self.W = W
+        self.W_shifted = W.copy()  # Altered during solving
 
         self.s_budget = s_budget
 
@@ -84,8 +89,8 @@ class SCMF(BaseMF):
         self.learning_rate = learning_rate
 
         self.r = V.shape[1]
-        self.N, self.T = np.shape(self.X)
-        self.nz_rows, self.nz_cols = np.nonzero(self.X)
+        self.N, self.T = np.shape(self.X_shifted)
+        self.nz_rows, self.nz_cols = np.nonzero(self.X_shifted)
 
         self.n_iter_ = 0
         self._init_matrices(D, J, K)
@@ -115,10 +120,10 @@ class SCMF(BaseMF):
 
         # Expand matrices with zeros over the extended left and right boundaries.
         self.X_bc = np.hstack(
-            [np.zeros((self.N, self.Ns)), self.X, np.zeros((self.N, self.Ns))]
+            [np.zeros((self.N, self.Ns)), self.X_shifted, np.zeros((self.N, self.Ns))]
         )
         self.W_bc = np.hstack(
-            [np.zeros((self.N, self.Ns)), self.W, np.zeros((self.N, self.Ns))]
+            [np.zeros((self.N, self.Ns)), self.W_shifted, np.zeros((self.N, self.Ns))]
         )
 
         self.V = np.vstack(
@@ -141,8 +146,8 @@ class SCMF(BaseMF):
 
     def _shift_X_W(self):
 
-        self.X = _custom_roll(self.X_bc.copy(), -1 * self.s)
-        self.W = _custom_roll(self.W_bc.copy(), -1 * self.s)
+        self.X_shifted = _custom_roll(self.X_bc.copy(), -1 * self.s)
+        self.W_shifted = _custom_roll(self.W_bc.copy(), -1 * self.s)
 
     def _fill_boundary_regions_V(self):
         # Extrapolate the edge values in V over the extended boundaries
@@ -178,8 +183,8 @@ class SCMF(BaseMF):
         V = tf.Variable(self.V, dtype=tf.float32)
         J = tf.ones_like(self.V, dtype=tf.float32)
 
-        W = tf.cast(self.W, dtype=tf.float32)
-        X = tf.cast(self.X, dtype=tf.float32)
+        W = tf.cast(self.W_shifted, dtype=tf.float32)
+        X = tf.cast(self.X_shifted, dtype=tf.float32)
         U = tf.cast(self.U, dtype=tf.float32)
 
         optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
@@ -202,8 +207,8 @@ class SCMF(BaseMF):
 
         U = tf.Variable(self.U, dtype=tf.float32)
 
-        W = tf.cast(self.W, dtype=tf.float32)
-        X = tf.cast(self.X, dtype=tf.float32)
+        W = tf.cast(self.W_shifted, dtype=tf.float32)
+        X = tf.cast(self.X_shifted, dtype=tf.float32)
         V = tf.cast(self.V, dtype=tf.float32)
 
         optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
@@ -225,9 +230,11 @@ class SCMF(BaseMF):
 
             for n in range(self.N):
                 self.U[n] = (
-                    self.X[n]
+                    self.X_shifted[n]
                     @ self.V
-                    @ np.linalg.inv(self.V.T @ (np.diag(self.W[n]) @ self.V) + self.I1)
+                    @ np.linalg.inv(
+                        self.V.T @ (np.diag(self.W_shifted[n]) @ self.V) + self.I1
+                    )
                 )
 
     def _update_s(self):
@@ -261,7 +268,10 @@ class SCMF(BaseMF):
         "Compute the loss from the optimization objective"
 
         loss = np.sum(
-            np.linalg.norm(self.W * (self.X - self.U @ self.V.T), axis=1) ** 2
+            np.linalg.norm(
+                self.W_shifted * (self.X_shifted - self.U @ self.V.T), axis=1
+            )
+            ** 2
         )
         loss += self.lambda1 * np.sum(np.linalg.norm(self.U, axis=1) ** 2)
         loss += self.lambda2 * np.linalg.norm(self.V) ** 2
