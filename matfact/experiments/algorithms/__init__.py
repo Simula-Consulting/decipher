@@ -1,3 +1,9 @@
 from .factorization.cmf import CMF
-from .factorization.wcmf import WCMF
 from .factorization.scmf import SCMF
+from .factorization.wcmf import WCMF
+
+__all__ = [
+    "CMF",
+    "SCMF",
+    "WCMF",
+]

@@ -1,141 +1,154 @@
 import numpy as np
-import tensorflow as tf 
+import tensorflow as tf
 
 from .mfbase import BaseMF
 
 
 class WCMF(BaseMF):
-	"""Matrix factorization with L2 and convolutional regularization. 
-	Factor updates are based on gradient descent approximations, permitting 
-	an arbitrary weight matrix in the discrepancy term.
+    """Matrix factorization with L2 and convolutional regularization.
+    Factor updates are based on gradient descent approximations, permitting
+    an arbitrary weight matrix in the discrepancy term.
 
-	Args:
-		X: Sparse data matrix used to estimate factor matrices 
-		V: Initial estimate for basic vectors 
-		W (optional): Weight matrix for the discrepancy term 
-		D (optional): Forward difference matrix
-		J (optional): A martix used to impose a minimum value in the basic vecors V
-		K (optional): Convolutional matrix
-		lambda: Regularization coefficients
-		iter_U, iter_V: The number of steps with gradient descent (GD) per factor update 
-		learning_rate: Stepsize used in the GD 
-	"""
+    Args:
+        X: Sparse data matrix used to estimate factor matrices
+        V: Initial estimate for basic vectors
+        W (optional): Weight matrix for the discrepancy term
+        D (optional): Forward difference matrix
+        J (optional): A martix used to impose a minimum value in the basic vecors V
+        K (optional): Convolutional matrix
+        lambda: Regularization coefficients
+        iter_U, iter_V: The number of steps with gradient descent (GD) per factor update
+        learning_rate: Stepsize used in the GD
 
-	def __init__(self, X, V, W=None, D=None, J=None, K=None, lambda1=1.0, lambda2=1.0, lambda3=1.0, 
-				 iter_U=2, iter_V=2, learning_rate=0.001):
+    TODO: Will this fail if no W is given, i.e. if it is None?
+    """
 
-		self.X = X 
-		self.V = V 
-		self.W = W 
+    def __init__(
+        self,
+        X,
+        V,
+        W=None,
+        D=None,
+        J=None,
+        K=None,
+        lambda1=1.0,
+        lambda2=1.0,
+        lambda3=1.0,
+        iter_U=2,
+        iter_V=2,
+        learning_rate=0.001,
+    ):
+        self.X = X
+        self.V = V
+        self.W = W
 
-		self.lambda1 = lambda1
-		self.lambda2 = lambda2
-		self.lambda3 = lambda3
+        self.lambda1 = lambda1
+        self.lambda2 = lambda2
+        self.lambda3 = lambda3
 
-		self.iter_U = iter_U
-		self.iter_V = iter_V
-		self.learning_rate = learning_rate
+        self.iter_U = iter_U
+        self.iter_V = iter_V
+        self.learning_rate = learning_rate
 
-		self.r = V.shape[1]
-		self.N, self.T = np.shape(self.X)
-		self.nz_rows, self.nz_cols = np.nonzero(self.X)
+        self.r = V.shape[1]
+        self.N, self.T = np.shape(self.X)
+        self.nz_rows, self.nz_cols = np.nonzero(self.X)
 
-		self.n_iter_ = 0
-		self._init_matrices(D, J, K)
+        self.n_iter_ = 0
+        self._init_matrices(D, J, K)
 
-	@property 
-	def M(self):
-		return np.array(self.U @ self.V.T, dtype=np.float32)
+    @property
+    def M(self):
+        return np.array(self.U @ self.V.T, dtype=np.float32)
 
-	def _init_matrices(self, D, J, K):
+    def _init_matrices(self, D, J, K):
+        self.J = np.ones((self.T, self.r)) if J is None else J
+        self.K = np.identity(self.T) if K is None else K
+        self.D = np.identity(self.T) if D is None else D
 
-		self.J = np.ones((self.T, self.r)) if J is None else J
-		self.K = np.identity(self.T) if K is None else K
-		self.D = np.identity(self.T) if D is None else D
+        self.KD = tf.cast(self.K @ self.D, dtype=tf.float32)
+        self.DTKTKD = (self.K @ self.D).T @ (self.K @ self.D)
 
-		self.KD = tf.cast(self.K @ self.D, dtype=tf.float32)
-		self.DTKTKD = (self.K @ self.D).T @ (self.K @ self.D)
-		
-		self.I_l1 = self.lambda1 * np.eye(self.r)
-				
-	def _update_V(self):
+        self.I_l1 = self.lambda1 * np.eye(self.r)
 
-		@tf.function
-		def _loss_V():
+    def _update_V(self):
+        # @tf.function
+        def _loss_V():
+            frob_tensor = tf.multiply(W, X - (U @ tf.transpose(V)))
+            frob_loss = tf.square(tf.norm(frob_tensor))
 
-			frob_tensor = tf.multiply(W, X - (U @ tf.transpose(V)))
-			frob_loss = tf.square(tf.norm(frob_tensor))
-			
-			l2_loss = self.lambda2 * tf.square(tf.norm(V - J))
-			
-			conv_loss = self.lambda3 * tf.square(tf.norm(tf.matmul(self.KD, V)))
-			
-			return frob_loss + l2_loss + conv_loss 
-		
-		V = tf.Variable(self.V, dtype=tf.float32)
-		J = tf.ones_like(self.V, dtype=tf.float32)
+            l2_loss = self.lambda2 * tf.square(tf.norm(V - J))
 
-		W = tf.cast(self.W, dtype=tf.float32)
-		X = tf.cast(self.X, dtype=tf.float32)
-		U = tf.cast(self.U, dtype=tf.float32)
+            conv_loss = self.lambda3 * tf.square(tf.norm(tf.matmul(self.KD, V)))
 
-		optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-		for _ in tf.range(self.iter_V):
-			optimiser.minimize(_loss_V, [V])
+            return frob_loss + l2_loss + conv_loss
 
-		self.V = V.numpy()
-			
-	def _approx_U(self):
+        V = tf.Variable(self.V, dtype=tf.float32)
+        J = tf.ones_like(self.V, dtype=tf.float32)
 
-		@tf.function
-		def _loss_U():
-			
-			frob_tensor = tf.multiply(W, X - tf.matmul(U, V, transpose_b=True))
-			frob_loss = tf.square(tf.norm(frob_tensor))
-			
-			return frob_loss + self.lambda1 * tf.square(tf.norm(U))
-		
-		U = tf.Variable(self.U, dtype=tf.float32) 
+        W = tf.cast(self.W, dtype=tf.float32)
+        X = tf.cast(self.X, dtype=tf.float32)
+        U = tf.cast(self.U, dtype=tf.float32)
 
-		W = tf.cast(self.W, dtype=tf.float32)
-		X = tf.cast(self.X, dtype=tf.float32)
-		V = tf.cast(self.V, dtype=tf.float32)
+        optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
+        for _ in tf.range(self.iter_V):
+            optimiser.minimize(_loss_V, [V])
 
-		optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
+        self.V = V.numpy()
 
-		for _ in tf.range(self.iter_U):
-			optimiser.minimize(_loss_U, [U])
+    def _approx_U(self):
+        # @tf.function
+        def _loss_U():
+            frob_tensor = tf.multiply(W, X - tf.matmul(U, V, transpose_b=True))
+            frob_loss = tf.square(tf.norm(frob_tensor))
 
-		return U.numpy()
-	
-	def _update_U(self):
-		
-		# Faster to approximate U in consecutive iterations 
-		if self.n_iter_ > 0:
-			self.U = self._approx_U()
+            return frob_loss + self.lambda1 * tf.square(tf.norm(U))
 
-		else:	
+        U = tf.Variable(self.U, dtype=tf.float32)
 
-			# Estimate U in the first iteration of alternating minimization 
-			self.U = np.zeros((self.N, self.r))
+        W = tf.cast(self.W, dtype=tf.float32)
+        X = tf.cast(self.X, dtype=tf.float32)
+        V = tf.cast(self.V, dtype=tf.float32)
 
-			for n in range(self.N):
-				self.U[n] = self.V.T @ (self.W[n] * self.X[n]) @ np.linalg.inv(self.V.T @ (self.W[n][:, None] * self.V) + self.I_l1)
-    							
-	def loss(self):
-		"Compute the loss from the optimization objective"
+        optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
 
-		loss = np.square(np.linalg.norm(self.W * (self.X - self.U @ self.V.T)))
-		loss += self.lambda1 * np.square(np.linalg.norm(self.U))
-		loss += self.lambda2 * np.square(np.linalg.norm(self.V - 1))
-		loss += self.lambda3 * np.square(np.linalg.norm(self.K @ self.D @ self.V))
+        for _ in tf.range(self.iter_U):
+            optimiser.minimize(_loss_U, [U])
 
-		return loss
+        return U.numpy()
 
-	def run_step(self):
-		"Perform one step of alternating minimization"
+    def _update_U(self):
+        # Faster to approximate U in consecutive iterations
+        if self.n_iter_ > 0:
+            self.U = self._approx_U()
 
-		self._update_U()
-		self._update_V()
+        else:
+            # Estimate U in the first iteration of alternating minimization
+            self.U = np.zeros((self.N, self.r))
 
-		self.n_iter_ += 1
+            for n in range(self.N):
+                self.U[n] = (
+                    self.V.T
+                    @ (self.W[n] * self.X[n])
+                    @ np.linalg.inv(
+                        self.V.T @ (self.W[n][:, None] * self.V) + self.I_l1
+                    )
+                )
+
+    def loss(self):
+        "Compute the loss from the optimization objective"
+
+        loss = np.square(np.linalg.norm(self.W * (self.X - self.U @ self.V.T)))
+        loss += self.lambda1 * np.square(np.linalg.norm(self.U))
+        loss += self.lambda2 * np.square(np.linalg.norm(self.V - 1))
+        loss += self.lambda3 * np.square(np.linalg.norm(self.K @ self.D @ self.V))
+
+        return loss
+
+    def run_step(self):
+        "Perform one step of alternating minimization"
+
+        self._update_U()
+        self._update_V()
+
+        self.n_iter_ += 1

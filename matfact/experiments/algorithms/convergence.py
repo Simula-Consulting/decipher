@@ -1,7 +1,4 @@
-from collections import defaultdict
-
-import numpy as np 
-import pandas as pd 
+import numpy as np
 
 
 def convergence_monitor(M, error_tol=1e-4):
@@ -12,29 +9,30 @@ def convergence_monitor(M, error_tol=1e-4):
 
 
 class MonitorFactorUpdate:
-
     def __init__(self, M, tol=1e-6):
 
         self.M = M
-        self.tol = tol 
+        self.tol = tol
 
         self.n_iter_ = 0
         self.update_ = []
         self.convergence_rate_ = []
-    
+
     def _should_stop(self, M_new):
-        
-        update = float(np.linalg.norm(M_new - self.M) ** 2 / np.linalg.norm(self.M) ** 2)
+
+        update = float(
+            np.linalg.norm(M_new - self.M) ** 2 / np.linalg.norm(self.M) ** 2
+        )
 
         if np.isnan(update):
             raise ValueError("Update value is NaN")
 
         self.update_.append(update)
-            
+
         return update < self.tol
 
     def track_convergence_rate(self, M_new):
-        
+
         self.Mpp = self.Mp
         self.Mp = self.M
         self.M = M_new

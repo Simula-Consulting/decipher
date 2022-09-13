@@ -1,25 +1,24 @@
-import numpy as np 
-import seaborn as sns 
-import matplotlib.pyplot as plt 
+import pathlib
 
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
 from sklearn.metrics import auc, roc_curve
 from sklearn.preprocessing import label_binarize
 
-from . import plot_config
-from . import plot_utils 
+from . import plot_config, plot_utils
 
 plot_config.setup()
 
-RESULTS_BASE = "/tsd/p1068/home/p1068-gslangbe/decipher/results"
-DATA_BASE = "/tsd/p1068/home/p1068-gslangbe/decipher/data"
 
-
-def plot_coefs(U, path_to_figure, fname="", n_bins=50):
+def plot_coefs(U, path_to_figure: pathlib.Path, fname="", n_bins=50):
     "Make a histogram of coefficients from the U matrix."
 
     hist, bins = np.histogram(U.ravel(), bins=n_bins)
 
-    fig, axis = plt.subplots(1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
+    fig, axis = plt.subplots(
+        1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1))
+    )
 
     axis.bar((bins[:-1] + bins[1:]) / 2, hist)
     axis.set_ylabel("Count")
@@ -28,13 +27,18 @@ def plot_coefs(U, path_to_figure, fname="", n_bins=50):
     plot_utils.set_arrowed_spines(fig, axis)
 
     fig.tight_layout()
-    fig.savefig(f"{path_to_figure}/coefs_{fname}.pdf", transparent=True, bbox_inches="tight")
+    fig.savefig(
+        path_to_figure / f"coefs_{fname}.pdf", transparent=True, bbox_inches="tight"
+    )
+    plt.close()
 
 
-def plot_basis(V, path_to_figure, fname=""):
+def plot_basis(V, path_to_figure: pathlib.Path, fname=""):
     "Plot the basic vectors in the V matrix."
 
-    fig, axis = plt.subplots(1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
+    fig, axis = plt.subplots(
+        1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1))
+    )
 
     axis.plot(V)
     axis.set_xlabel("Column coordinate")
@@ -43,7 +47,10 @@ def plot_basis(V, path_to_figure, fname=""):
     plot_utils.set_arrowed_spines(fig, axis)
 
     fig.tight_layout()
-    fig.savefig(f"{path_to_figure}/basis_{fname}.pdf", transparent=True, bbox_inches="tight") 
+    fig.savefig(
+        path_to_figure / f"basis_{fname}.pdf", transparent=True, bbox_inches="tight"
+    )
+    plt.close()
 
 
 def _confusion(true, pred, n_classes=4):
@@ -54,36 +61,52 @@ def _confusion(true, pred, n_classes=4):
 
         cmat[int(x - 1), int(pred[i] - 1)] += 1
 
-    return cmat 
+    return cmat
 
 
-def plot_confusion(x_true, x_pred, path_to_figure, n_classes=4, fname=""):
+def plot_confusion(x_true, x_pred, path_to_figure: pathlib.Path, n_classes=4, fname=""):
     "PLot a confusion matrix to compare predictions and ground truths."
 
     cmat = _confusion(x_true, x_pred, n_classes=n_classes)
 
-    fig, axis = plt.subplots(1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
-    ax = sns.heatmap(cmat[::-1], 
-                     annot=True, fmt="d", linewidths=0.5, square=True, cbar=False,
-                     cmap=plt.cm.get_cmap("Blues", np.max(cmat)),
-                     linecolor="k", ax=axis)
+    fig, axis = plt.subplots(
+        1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1))
+    )
+    ax = sns.heatmap(
+        cmat[::-1],
+        annot=True,
+        fmt="d",
+        linewidths=0.5,
+        square=True,
+        cbar=False,
+        cmap=plt.cm.get_cmap("Blues", np.max(cmat)),
+        linecolor="k",
+        ax=axis,
+    )
     ax.set_ylim(0, n_classes)
 
     ax.set_ylabel("Ground truth", weight="bold")
     ax.set_yticklabels(np.arange(1, n_classes + 1), ha="right", va="center", rotation=0)
 
-    ax.set_title(f"Predicted", weight="bold")
-    ax.set_xticklabels(np.arange(1, n_classes + 1)[::-1], ha="center", va="bottom", rotation=0)
+    ax.set_title("Predicted", weight="bold")
+    ax.set_xticklabels(
+        np.arange(1, n_classes + 1)[::-1], ha="center", va="bottom", rotation=0
+    )
     ax.xaxis.set_ticks_position("top")
-    
+
     fig.tight_layout()
-    fig.savefig(f"{path_to_figure}/confusion_{fname}.pdf", transparent=True, bbox_inches="tight")
+    fig.savefig(
+        path_to_figure / f"confusion_{fname}.pdf", transparent=True, bbox_inches="tight"
+    )
+    plt.close()
 
 
-def plot_train_loss(epochs, loss_values, path_to_figure, fname=""):
+def plot_train_loss(epochs, loss_values, path_to_figure: pathlib.Path, fname=""):
     "PLot the loss values from matrix completion."
 
-    fig, axis = plt.subplots(1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
+    fig, axis = plt.subplots(
+        1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1))
+    )
 
     axis.plot(epochs, loss_values, marker="o", alpha=0.7)
 
@@ -91,9 +114,14 @@ def plot_train_loss(epochs, loss_values, path_to_figure, fname=""):
     axis.set_xlabel("Epoch", weight="bold")
 
     plot_utils.set_arrowed_spines(fig, axis)
-    
+
     fig.tight_layout()
-    fig.savefig(f"{path_to_figure}/train_loss_{fname}.pdf", transparent=True, bbox_inches="tight")
+    fig.savefig(
+        path_to_figure / f"train_loss_{fname}.pdf",
+        transparent=True,
+        bbox_inches="tight",
+    )
+    plt.close()
 
 
 def _micro_roc(x_ohe, p_pred, fpr, tpr, roc_auc):
@@ -101,7 +129,7 @@ def _micro_roc(x_ohe, p_pred, fpr, tpr, roc_auc):
 
     # Compute micro-average ROC curve and ROC area
     fpr["micro"], tpr["micro"], _ = roc_curve(x_ohe.ravel(), p_pred.ravel())
-    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"]) 
+    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
     return fpr, tpr, roc_auc
 
@@ -127,7 +155,14 @@ def _macro_roc(x_ohe, p_pred, fpr, tpr, roc_auc):
     return fpr, tpr, roc_auc
 
 
-def plot_roc_curve(x_true, p_pred, path_to_figure, classes=np.arange(1, 5), average="micro", fname=""):
+def plot_roc_curve(
+    x_true,
+    p_pred,
+    path_to_figure: pathlib.Path,
+    classes=np.arange(1, 5),
+    average="micro",
+    fname="",
+):
     "Plot a ROC curve"
 
     x_ohe = label_binarize(x_true, classes=classes)
@@ -147,18 +182,28 @@ def plot_roc_curve(x_true, p_pred, path_to_figure, classes=np.arange(1, 5), aver
     else:
         raise ValueError(f"Invalid average: {average}")
 
-    fig, axis = plt.subplots(1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
-    
-    axis.plot([0, 1], [0, 1], linestyle='--', lw=1.5, color='gray', label="Random")
-    axis.plot(fpr[average], tpr[average], lw=1.5, label="ROC curve (AUC = %0.2f)" % roc_auc[average])
+    fig, axis = plt.subplots(
+        1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1))
+    )
+
+    axis.plot([0, 1], [0, 1], linestyle="--", lw=1.5, color="gray", label="Random")
+    axis.plot(
+        fpr[average],
+        tpr[average],
+        lw=1.5,
+        label="ROC curve (AUC = %0.2f)" % roc_auc[average],
+    )
 
     axis.set_xlabel("1 - Specificity")
     axis.set_ylabel("Sensitivity")
     axis.set_aspect("equal")
 
-    axis.legend(loc='lower left', bbox_to_anchor=(0.5, 0), ncol=1, fancybox=True, shadow=True)
+    axis.legend(
+        loc="lower left", bbox_to_anchor=(0.5, 0), ncol=1, fancybox=True, shadow=True
+    )
 
     plot_utils.set_arrowed_spines(fig, axis)
 
     plt.tight_layout()
-    plt.savefig(f"{path_to_figure}/roc_auc_{average}_{fname}.pdf")
+    plt.savefig(path_to_figure / f"roc_auc_{average}_{fname}.pdf")
+    plt.close()

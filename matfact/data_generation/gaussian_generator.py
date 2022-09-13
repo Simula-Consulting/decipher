@@ -29,7 +29,7 @@ def float_matrix(N, T, r, domain, seed=42):
 
 def discretise_matrix(M, domain, theta, seed=42):
     """Convert a <float> basis to <int>."""
-    
+
     np.random.seed(seed)
 
     d_max = np.max(domain)
@@ -40,12 +40,12 @@ def discretise_matrix(M, domain, theta, seed=42):
 
     X_float_scaled = d_min + (d_max - d_min) * (M - np.min(M)) / (np.max(M) - np.min(M))
 
-    domain_repeated = np.repeat(domain, N).reshape((N, Z), order='F')
+    domain_repeated = np.repeat(domain, N).reshape((N, Z), order="F")
 
     D = np.empty_like(X_float_scaled)
     for j in range(T):
 
-        column_repeated = np.repeat(X_float_scaled[:, j], 4).reshape((N, 4), order='C')
+        column_repeated = np.repeat(X_float_scaled[:, j], 4).reshape((N, 4), order="C")
 
         pdf = probability_model(column_repeated, theta, domain_repeated)
         cdf = np.cumsum(pdf / np.reshape(np.sum(pdf, axis=1), (N, 1)), axis=1)
@@ -55,4 +55,3 @@ def discretise_matrix(M, domain, theta, seed=42):
         D[:, j] = domain[np.argmax(u <= cdf, axis=1)]
 
     return D
-    
