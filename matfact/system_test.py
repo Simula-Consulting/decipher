@@ -73,4 +73,5 @@ def test_train(tmp_path):
             weight,
             convolve,
             mlflow_tags=mlflow_tags,
+            dataset_path=tmp_path,
         )
