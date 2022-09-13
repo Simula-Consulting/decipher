@@ -15,7 +15,7 @@ def simulate_mask(D, observation_proba, memory_length, level, seed=42):
     np.random.seed(seed)
     N, T = np.shape(D)
 
-    mask = np.zeros_like(D, dtype=np.bool)
+    mask = np.zeros_like(D, dtype=bool)
     observed_values = np.zeros_like(D, dtype=np.float32)
 
     for t in range(T - 1):
