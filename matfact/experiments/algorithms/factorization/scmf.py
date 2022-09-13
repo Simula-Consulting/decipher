@@ -2,6 +2,8 @@ import numpy as np
 import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
 
+from experiments.simulation.weights import data_weights
+
 from .mfbase import BaseMF
 
 
@@ -43,7 +45,8 @@ class SCMF(BaseMF):
         V: Initial estimate for basic vectors
         s_budget: Range of possible shift steps (forward or backward from the original
             position)
-        W (optional): Weight matrix for the discrepancy term
+        W (optional): Weight matrix for the discrepancy term. Default is
+            set to the output of `experiments.simulation.data_weights(X)`.
         D (optional): Forward difference matrix
         J (optional): A matrix used to impose a minimum value in the basic vecors V
         K (optional): Convolutional matrix
@@ -75,8 +78,8 @@ class SCMF(BaseMF):
         self.X = X
         self.X_shifted = X.copy()  # Altered during solving
         self.V = V
-        self.W = W
-        self.W_shifted = W.copy()  # Altered during solving
+        self.W = data_weights(X) if W is None else W
+        self.W_shifted = self.W.copy()  # Altered during solving
 
         self.s_budget = s_budget
 
