@@ -1,10 +1,13 @@
 """Full system integration tests"""
 from itertools import product
 
+import numpy as np
 import tensorflow as tf
 
 from data_generation.main import Dataset
 from example import experiment
+from experiments.algorithms import CMF, SCMF, WCMF
+from experiments.simulation import data_weights
 
 
 def test_dataset_read_write(tmp_path):
@@ -75,3 +78,43 @@ def test_train(tmp_path):
             mlflow_tags=mlflow_tags,
             dataset_path=tmp_path,
         )
+
+
+def test_model_input_not_changed():
+    """Test that models do not modify their input arguments.
+
+    Models are expected to leave input variables like X, W, s_budged unmodified
+    unless otherwise specified.
+    >>> model = WCMF(X, V, W)
+    >>> model.run_step()
+    model.X should be the same as supplied during initialization.
+    """
+
+    # Some arbitrary data size
+    sample_size, time_span, rank = 100, 40, 5
+    X = np.random.choice(np.arange(5), size=(sample_size, time_span))
+    V = np.random.choice(np.arange(5), size=(time_span, rank))
+    W = data_weights(X)
+    print(W.shape)
+    s_budget = np.arange(-5, 5)
+
+    X_initial, W_initial = X.copy(), W.copy()
+
+    cmf = CMF(X, V)
+    assert np.array_equal(cmf.X, X_initial)
+    cmf.run_step()
+    assert np.array_equal(cmf.X, X_initial)
+
+    scmf = WCMF(X, V, W)
+    assert np.array_equal(scmf.X, X_initial)
+    assert np.array_equal(scmf.W, W_initial)
+    scmf.run_step()
+    assert np.array_equal(scmf.X, X_initial)
+    assert np.array_equal(scmf.W, W_initial)
+
+    scmf = SCMF(X, V, s_budget=s_budget, W=W)
+    assert np.array_equal(scmf.X, X_initial)
+    assert np.array_equal(scmf.W, W_initial)
+    scmf.run_step()
+    assert np.array_equal(scmf.X, X_initial)
+    assert np.array_equal(scmf.W, W_initial)
