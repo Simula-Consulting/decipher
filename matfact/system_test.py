@@ -95,7 +95,6 @@ def test_model_input_not_changed():
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
     V = np.random.choice(np.arange(5), size=(time_span, rank))
     W = data_weights(X)
-    print(W.shape)
     s_budget = np.arange(-5, 5)
 
     X_initial, W_initial = X.copy(), W.copy()
