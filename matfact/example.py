@@ -77,7 +77,7 @@ def experiment(
         ("recMSE", lambda model: reconstruction_mse(M_train, X_train, model.M)),
     )
     results = matrix_completion(
-        model, X_train, extra_metrics=extra_metrics, **optimization_params
+        model, extra_metrics=extra_metrics, **optimization_params
     )
 
     # Predict the risk over the test set using the results from matrix completion as
