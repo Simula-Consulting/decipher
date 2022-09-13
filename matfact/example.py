@@ -7,7 +7,6 @@ import tensorflow as tf
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 
 from data_generation.main import Dataset
-from experiments.algorithms.risk_prediction import predict_proba
 from experiments.algorithms.utils import reconstruction_mse
 from experiments.main import model_factory
 from experiments.plotting.diagnostic import (
@@ -79,9 +78,8 @@ def experiment(
         extra_metrics=extra_metrics, **optimization_params
     )
 
-    # Predict the risk over the test set using the results from matrix completion as
-    # input parameters to the prediction algorithm
-    p_pred = predict_proba(X_test_masked, results["M"], t_pred, results["theta_mle"])
+    # Predict the risk over the test set
+    p_pred = model.predict_probability(X_test_masked, t_pred)
     # Estimate the mostl likely prediction result from the probabilities
     x_pred = 1.0 + np.argmax(p_pred, axis=1)
 
