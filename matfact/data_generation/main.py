@@ -72,6 +72,13 @@ def produce_dataset(
 
 
 class Dataset:
+    """Screening dataset container
+
+    This class simplifies generating, loading, and saving datasets.
+    Most methods returns the Dataset object, so that it is chainable, as
+    >>> Dataset().load(some_path).get_X_M()
+    """
+
     def __init__(self):
         self.data_loaded = False
         self.metadata = {
@@ -121,6 +128,7 @@ class Dataset:
         seed=42,
         generation_method="DGD",
     ):
+        """Generate a Datasert"""
         assert not self.data_loaded, "Data is already loaded!"
         if generation_method != "DGD":
             raise NotImplementedError("Only DGD generation is implemented.")
@@ -146,10 +154,12 @@ class Dataset:
         return self
 
     def get_X_M(self):
+        """Return the X and M matrix, after asserting data has been loaded."""
         assert self.data_loaded
         return self.X, self.M
 
     def get_split_X_M(self):
+        """Split dataset into train and test subsets."""
         X, M = self.get_X_M()
         # TODO: Keep the hardcoded slicing used in original
         # code until we are sure that this hardcoding is not

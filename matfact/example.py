@@ -28,17 +28,39 @@ def experiment(
     mlflow_tags: dict = None,
     dataset_path: pathlib.Path = DATASET_PATH,
 ):
-    """
-    hyperparams = {
-        rank,
-        lambda1,
-        lambda2,
-    }
-    optimization_params = {
-        num_epochs,
-        epochs_per_val,
-        patience,
-    }
+    """Execute and log an experiment.
+
+    Loads the dataset in dataset_path and splits this into train and test sets.
+    The test set is masked, so that the last observation is hidden.
+    The matrix completion is solved on the train set and then the probability of the
+    possible states of the (masked) train set is comptued.
+
+    The run is tracked using MLFLow, using several metrics and artifacts (files).
+
+    Parameters:
+        hyperparams: Dict of hyperparameters passed to the model. Common for all models
+            is
+            {
+                rank,
+                lambda1,
+                lambda2,
+            }
+        optimization_params: Dict passed to the model solver
+            {
+                num_epochs,
+                epochs_per_val,
+                patience,
+            }
+        enable_shift: Use shifted model with shift range (-12,12)
+        enable_weighting: Use weighted model with weights as defined in
+            experiments.simulation::data_weights
+        enable_convolution: Use convolutional model.
+        mlflow_tags: Dict of tags to mark the MLFLow run with. For example
+            {
+                "Developer": "Ola Nordmann",
+                "Notes": "Using a very slow computer.",
+            }
+        dataset_path: pathlib.Path The path were dataset is stored.
 
     TODO: option to plot and log figures
     TODO: option to store and log artifacts like U,V,M,datasets,etc
