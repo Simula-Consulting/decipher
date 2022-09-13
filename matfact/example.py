@@ -7,7 +7,6 @@ import tensorflow as tf
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 
 from data_generation.main import Dataset
-from experiments.algorithms.optimization import matrix_completion
 from experiments.algorithms.risk_prediction import predict_proba
 from experiments.algorithms.utils import reconstruction_mse
 from experiments.main import model_factory
@@ -76,8 +75,8 @@ def experiment(
     extra_metrics = (
         ("recMSE", lambda model: reconstruction_mse(M_train, X_train, model.M)),
     )
-    results = matrix_completion(
-        model, extra_metrics=extra_metrics, **optimization_params
+    results = model.matrix_completion(
+        extra_metrics=extra_metrics, **optimization_params
     )
 
     # Predict the risk over the test set using the results from matrix completion as
