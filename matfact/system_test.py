@@ -117,3 +117,21 @@ def test_model_input_not_changed():
     scmf.run_step()
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
+
+
+def test_model_optional_args():
+    """Test that model works when optional arguments are empty."""
+    # Some arbitrary data size
+    sample_size, time_span, rank = 100, 40, 5
+    X = np.random.choice(np.arange(5), size=(sample_size, time_span))
+    V = np.random.choice(np.arange(5), size=(time_span, rank))
+    s_budget = np.arange(-5, 5)
+
+    cmf = CMF(X, V)
+    cmf.run_step()
+
+    scmf = WCMF(X, V)
+    scmf.run_step()
+
+    scmf = SCMF(X, V, s_budget=s_budget)
+    scmf.run_step()
