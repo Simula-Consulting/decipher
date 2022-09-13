@@ -6,7 +6,6 @@ from .utils import theta_mle
 
 def matrix_completion(
     model,
-    X,
     extra_metrics=None,
     fname="",
     epochs_per_val=5,
@@ -58,6 +57,6 @@ def matrix_completion(
     if hasattr(model, "s"):
         output["s"] = model.s
 
-    output["theta_mle"] = theta_mle(X, model.M)
+    output["theta_mle"] = theta_mle(model.X, model.M)
 
     return output
