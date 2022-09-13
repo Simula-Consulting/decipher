@@ -1,3 +1,4 @@
+import pathlib
 from itertools import product
 
 import mlflow
@@ -27,6 +28,7 @@ def experiment(
     enable_weighting: bool = False,
     enable_convolution: bool = False,
     mlflow_tags: dict = None,
+    dataset_path: pathlib.Path = DATASET_PATH,
 ):
     """
     hyperparams = {
@@ -45,7 +47,7 @@ def experiment(
     TODO: more clearly separate train and predict
     """
     # Setup and loading #
-    dataset = Dataset().load(DATASET_PATH)
+    dataset = Dataset().load(dataset_path)
     X_train, X_test, M_train, M_test = dataset.get_split_X_M()
 
     # Simulate data for a prediction task by selecting the last data point in each
