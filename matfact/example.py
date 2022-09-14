@@ -6,17 +6,15 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 
-from data_generation.main import Dataset
-from experiments.algorithms.utils import reconstruction_mse
-from experiments.main import model_factory
-from experiments.plotting.diagnostic import (
-    plot_basis,
-    plot_coefs,
-    plot_confusion,
-    plot_roc_curve,
+from matfact.data_generation import Dataset
+from matfact.experiments import (
+    data_weights,
+    model_factory,
+    prediction_data,
+    reconstruction_mse,
 )
-from experiments.simulation import data_weights, prediction_data
-from settings import DATASET_PATH, FIGURE_PATH
+from matfact.plotting import plot_basis, plot_coefs, plot_confusion, plot_roc_curve
+from matfact.settings import DATASET_PATH, FIGURE_PATH
 
 
 def experiment(

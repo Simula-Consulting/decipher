@@ -4,10 +4,9 @@ from itertools import product
 import numpy as np
 import tensorflow as tf
 
-from data_generation.main import Dataset
 from example import experiment
-from experiments.algorithms import CMF, SCMF, WCMF
-from experiments.simulation import data_weights
+from matfact.data_generation import Dataset
+from matfact.experiments import CMF, SCMF, WCMF, data_weights
 
 
 def test_dataset_read_write(tmp_path):
