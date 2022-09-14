@@ -158,14 +158,11 @@ class Dataset:
         assert self.data_loaded
         return self.X, self.M
 
-    def get_split_X_M(self):
+    def get_split_X_M(self, ratio=0.8):
         """Split dataset into train and test subsets."""
         X, M = self.get_X_M()
-        # TODO: Keep the hardcoded slicing used in original
-        # code until we are sure that this hardcoding is not
-        # expected anywher else
-        # After that we should split using some optional ratio
-        return X[:800], X[-200:], M[:800], M[-200:]
+        slice_index = int(X.shape[0] * ratio)
+        return X[:slice_index], X[slice_index:], M[:slice_index], M[slice_index:]
 
     def prefixed_metadata(self, prefix="DATASET_"):
         """Return the metadata dict with prefix prepended to keys
