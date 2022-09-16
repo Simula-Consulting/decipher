@@ -45,7 +45,7 @@ class SCMF(BaseMF):
             position)
         W (optional): Weight matrix for the discrepancy term
         D (optional): Forward difference matrix
-        J (optional): A martix used to impose a minimum value in the basic vecors V
+        J (optional): A matrix used to impose a minimum value in the basic vecors V
         K (optional): Convolutional matrix
         lambda: Regularization coefficients
         iter_U, iter_V: The number of steps with gradient descent (GD) per factor update
