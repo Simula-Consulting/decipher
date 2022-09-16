@@ -30,29 +30,3 @@ For an example of using the program, see `main` in `example.py`.
 For more granular use, `model_factory` in `experiments/main.py` is a convenience function for returning appropriate model objects alternatively create models directly.
 
 For setting dataset and results paths, go to `settings.py`.
-
-
-## Future work / development
-We here compile a list of incomplete tasks and suggestions for future development.
-
-### Improved test coverage
-The test coverage is very low.
-In particular, there should be more tests concering the models themselves, `cmf.py`, `wcmf.py`, `scmf.py`.
-
-### Refactor the model code
-The models now have some confusing behaviour in that they overwrite their input matrices for some models but not for others.
-For example, in the case of SCMF the model.X is modified by the solver.
-This should be clearly documented, and preferably rewritten such that the input variables are not modified.
-At the very least, the behaviour should be consistent accross all the models.
-
-### Overall improved documentation
-The docstring coverage is quite good, but should still be improved.
-
-### Track MLFlow runs in sqlite db
-
-### Figure out the tf.function
-See if there is some performance to get from using the tf.function cleverly
-
-### Clean up folder and file structure
-Now, the strucuter is `<submodule>/main.py`.
-This is not common, and maybe a better solution is to import the exportable things in `__init__.py`, to get more clear improt statements, like `from data_generation import Dataset`, instead of the current `from data_generation.main import Dataset`.
