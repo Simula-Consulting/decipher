@@ -1,4 +1,5 @@
 import pathlib
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -203,3 +204,48 @@ def plot_roc_curve(
     plt.tight_layout()  # type: ignore
     plt.savefig(path_to_figure / f"roc_auc_{average}_{fname}.pdf")
     plt.close()
+
+
+def _calculate_delta(probabilities: np.ndarray, correct_index: np.ndarray):
+    """Calculate the delta value from a list of probabilites for different classes.
+
+    Args:
+        probabilities: (N x domain.size) with probabilities for each class.
+        correct_index: (N) the index of the correct class per individual.
+
+    Given the list probabilities, where each element corresponds to the class of
+    that index, compute the delta value."""
+
+    # We find the highest probability that is not the correct answer
+    # Make array where probability of the correct class is masked out
+    mask = np.ones_like(probabilities)
+    for i, correct_index in enumerate(correct_index):
+        mask[i, int(correct_index)] = 0
+    masked_probabilities = probabilities * mask
+    masked_max = np.max(masked_probabilities, axis=1)
+    correct_probabilities = probabilities[
+        np.arange(len(probabilities)), int(correct_index)
+    ]
+    return masked_max - correct_probabilities
+
+
+def plot_certainty(p_pred, x_true, path_to_figure: Optional[pathlib.Path] = None):
+    """Plot the certainty difference delta.
+
+    p_pred is an (N x domain.size) ndarray, where N is the number of
+    individuals and domain.size is the number of classes.
+
+    Given some classification prediction, let delta = p_max - p_(max - 1), i.e.
+    the difference in probability between the most likely class and the second most
+    likely class.
+    We want to plot the distribution of delta for the individuals N."""
+
+    correct_index = x_true - 1  # x_true is one-indexed
+    deltas = _calculate_delta(p_pred, correct_index)
+    sns.displot(deltas, kind="ecdf").set(xlim=(-1, 1))  # deltas are elements in [-1, 1]
+
+    if path_to_figure is None:
+        plt.show()
+    else:
+        plt.savefig(path_to_figure / "certainty_plot.pdf")
+        plt.close()

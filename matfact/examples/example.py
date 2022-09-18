@@ -1,6 +1,7 @@
 import pathlib
 from itertools import product
 
+import matplotlib
 import mlflow
 import numpy as np
 import tensorflow as tf
@@ -13,7 +14,13 @@ from matfact.experiments import (
     prediction_data,
     reconstruction_mse,
 )
-from matfact.plotting import plot_basis, plot_coefs, plot_confusion, plot_roc_curve
+from matfact.plotting import (
+    plot_basis,
+    plot_certainty,
+    plot_coefs,
+    plot_confusion,
+    plot_roc_curve,
+)
 from matfact.settings import DATASET_PATH, FIGURE_PATH
 
 
@@ -102,6 +109,9 @@ def experiment(
     p_pred = model.predict_probability(X_test_masked, t_pred)
     # Estimate the mostl likely prediction result from the probabilities
     x_pred = 1.0 + np.argmax(p_pred, axis=1)
+
+    matplotlib.use("MacOSX")
+    plot_certainty(p_pred, x_true)
 
     # Log some metrics
     mlflow.log_metric(
