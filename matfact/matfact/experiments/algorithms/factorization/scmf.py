@@ -173,8 +173,8 @@ class SCMF(BaseMF):
 
     def _shift_X_W(self):
 
-        self.X_shifted = _custom_roll(self.X_bc.copy(), -1 * self.s)
-        self.W_shifted = _custom_roll(self.W_bc.copy(), -1 * self.s)
+        self.X_shifted = _custom_roll(self.X_bc, -1 * self.s)
+        self.W_shifted = _custom_roll(self.W_bc, -1 * self.s)
 
     def _fill_boundary_regions_V(self):
         # Extrapolate the edge values in V over the extended boundaries
@@ -195,24 +195,21 @@ class SCMF(BaseMF):
         self.V = V_filled
 
     def _update_V(self):
+        V = tf.Variable(self.V, dtype=tf.float32)
+        J = tf.ones_like(self.V, dtype=tf.float32)
 
         # @tf.function
         def _loss_V():
 
-            frob_tensor = tf.multiply(W, X - (U @ tf.transpose(V)))
+            frob_tensor = tf.multiply(
+                self.W_shifted, self.X_shifted - (self.U @ tf.transpose(V))
+            )
             frob_loss = tf.reduce_sum(tf.square(tf.norm(frob_tensor, axis=-1)))
 
             l2_loss = self.lambda2 * tf.square(tf.norm(V - J))
             conv_loss = self.lambda3 * tf.square(tf.norm(tf.matmul(self.KD, V)))
 
             return frob_loss + l2_loss + conv_loss
-
-        V = tf.Variable(self.V, dtype=tf.float32)
-        J = tf.ones_like(self.V, dtype=tf.float32)
-
-        W = tf.cast(self.W_shifted, dtype=tf.float32)
-        X = tf.cast(self.X_shifted, dtype=tf.float32)
-        U = tf.cast(self.U, dtype=tf.float32)
 
         optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         for _ in tf.range(self.iter_V):
@@ -222,21 +219,19 @@ class SCMF(BaseMF):
 
     def _approx_U(self):
 
+        U = tf.Variable(self.U, dtype=tf.float32)
+
         # @tf.function
         def _loss_U():
 
-            frob_tensor = tf.multiply(W, X - tf.matmul(U, V, transpose_b=True))
+            frob_tensor = tf.multiply(
+                self.W_shifted, self.X_shifted - tf.matmul(U, self.V, transpose_b=True)
+            )
             frob_loss = tf.reduce_sum(tf.square(tf.norm(frob_tensor, axis=-1)))
 
             return frob_loss + self.lambda1 * tf.reduce_sum(
                 tf.square(tf.norm(U, axis=-1))
             )
-
-        U = tf.Variable(self.U, dtype=tf.float32)
-
-        W = tf.cast(self.W_shifted, dtype=tf.float32)
-        X = tf.cast(self.X_shifted, dtype=tf.float32)
-        V = tf.cast(self.V, dtype=tf.float32)
 
         optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         for _ in tf.range(self.iter_U):
