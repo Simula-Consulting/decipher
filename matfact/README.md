@@ -20,13 +20,12 @@ As a consequence, the poetry requires `tensorflow-macos` instead of `tensorflow`
 For the future, we will change this to be a conditional dependency, based on the system it is installed on.
 
 ## Usage
-The project consists of two main components: data generation (`datasets/`) and the model itself (`experiments/`).
-To run the code, the main entry point is `example.py`.
+The project source code is located in under `matfact`.
+The code consists of three main modules: `data_generation`, `experiments`, and `plotting`.
+The factorisation and prediction, i.e. train and test, is part of `experiments`.
+As a starting point on how to use the library, an example script is found in `example.py`;
+it shows data generation, factorization, prediction, and plotting.
 
 Experiment runs are tracked using [MLFlow](https://mlflow.org/); execute `mlflow ui` (in the poetry environment) to open the UI for showing experiment runs, by default available at http://127.0.0.1:5000.
-
-There are multiple entry points to the code, depending on what level of control you need.
-For an example of using the program, see `main` in `example.py`.
-For more granular use, `model_factory` in `experiments/main.py` is a convenience function for returning appropriate model objects alternatively create models directly.
 
 For setting dataset and results paths, go to `settings.py`.
