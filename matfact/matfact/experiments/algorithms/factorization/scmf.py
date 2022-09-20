@@ -7,13 +7,25 @@ from .mfbase import BaseMF
 
 
 def _custom_roll(arr, m):
-    # Auxillary function for faster row-wise shifting
+    """Roll array elements with different amount per axis.
+
+    Fast implementation of row wise shifting.
+
+    Arguments:
+    arr: two-dimensional array
+    m: one dimensional list of integers, each corresponding to a shift of a row in arr
+    """
 
     # NOTE: Should do copy here
-    arr_roll = arr[:, [*range(arr.shape[1]), *range(arr.shape[1] - 1)]].copy()
+    # Thorvald (19.09.22): Why?
+    arr_roll = arr[:, [*range(arr.shape[1]), *range(arr.shape[1] - 1)]]  # .copy()
     strd_0, strd_1 = arr_roll.strides
     n = arr.shape[1]
-    result = as_strided(arr_roll, (*arr.shape, n), (strd_0, strd_1, strd_1))
+    # Set as_strided to writable=False to avoid accidentally writing to the memory
+    # thus corrupting the data, as reccomended in the documentation.
+    result = as_strided(
+        arr_roll, (*arr.shape, n), (strd_0, strd_1, strd_1), writeable=False
+    )
 
     return result[np.arange(arr.shape[0]), (n - m) % n].astype(arr.dtype)
 
@@ -36,7 +48,9 @@ def _take_per_row_strided(A, start_idx, n_elem):
     A.shape = -1
     s0 = A.strides[0]
     l_indx = start_idx + n * np.arange(len(start_idx))
-    out = as_strided(A, (len(A) - n_elem + 1, n_elem), (s0, s0))[l_indx]
+    out = as_strided(A, (len(A) - n_elem + 1, n_elem), (s0, s0), writeable=False)[
+        l_indx
+    ]
     A.shape = m, n
 
     return out
