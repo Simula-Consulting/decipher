@@ -7,7 +7,7 @@ import pathlib
 import numpy as np
 from scipy.stats import betabinom
 
-from settings import DATASET_PATH
+from matfact.settings import DATASET_PATH
 
 from .gaussian_generator import discretise_matrix, float_matrix
 from .masking import simulate_mask
@@ -72,6 +72,13 @@ def produce_dataset(
 
 
 class Dataset:
+    """Screening dataset container
+
+    This class simplifies generating, loading, and saving datasets.
+    Most methods returns the Dataset object, so that it is chainable, as
+    >>> Dataset().load(some_path).get_X_M()
+    """
+
     def __init__(self):
         self.data_loaded = False
         self.metadata = {
@@ -121,6 +128,7 @@ class Dataset:
         seed=42,
         generation_method="DGD",
     ):
+        """Generate a Datasert"""
         assert not self.data_loaded, "Data is already loaded!"
         if generation_method != "DGD":
             raise NotImplementedError("Only DGD generation is implemented.")
@@ -146,16 +154,15 @@ class Dataset:
         return self
 
     def get_X_M(self):
+        """Return the X and M matrix, after asserting data has been loaded."""
         assert self.data_loaded
         return self.X, self.M
 
-    def get_split_X_M(self):
+    def get_split_X_M(self, ratio=0.8):
+        """Split dataset into train and test subsets."""
         X, M = self.get_X_M()
-        # TODO: Keep the hardcoded slicing used in original
-        # code until we are sure that this hardcoding is not
-        # expected anywher else
-        # After that we should split using some optional ratio
-        return X[:800], X[-200:], M[:800], M[-200:]
+        slice_index = int(X.shape[0] * ratio)
+        return X[:slice_index], X[slice_index:], M[:slice_index], M[slice_index:]
 
     def prefixed_metadata(self, prefix="DATASET_"):
         """Return the metadata dict with prefix prepended to keys

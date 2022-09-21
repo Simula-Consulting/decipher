@@ -2,7 +2,7 @@
 for matrix completion and risk prediction. The example is based on synthetic data
 produced in the `datasets` directory.
 """
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 
@@ -137,18 +137,17 @@ def shifted(
 
 
 def model_factory(
-    X,
+    X: np.ndarray,
     shift_range: np.ndarray[Any, int],
     convolution: bool,
-    weights=None,
+    weights: Optional[np.ndarray] = None,
     rank: int = 5,
     seed: int = 42,
     **kwargs
 ):
-    """
+    """Initialize and return appropriate model based on arguments.
 
-    TODO: it is possible to move the bool inputs to rather be the absence of values
-    for corresponding quantities (non-zoer shift, weights etc)
+    kwargs are passed directly to the models.
     """
 
     padding = 2 * shift_range.size

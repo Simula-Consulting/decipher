@@ -2,8 +2,7 @@ import numpy as np
 import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
 
-from experiments.simulation.weights import data_weights
-
+from ...simulation import data_weights
 from .mfbase import BaseMF
 
 
