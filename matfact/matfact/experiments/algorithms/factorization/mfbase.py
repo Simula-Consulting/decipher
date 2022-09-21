@@ -37,6 +37,7 @@ class BaseMF(ABC):
         epochs_per_val=5,
         num_epochs=2000,
         patience=200,
+        progress=True,
     ):
         """Run matrix completion on input matrix X using a factorization model.
 
@@ -62,7 +63,7 @@ class BaseMF(ABC):
         for metric, _ in extra_metrics:
             output[metric] = []
 
-        for epoch in tqdm(range(num_epochs)):
+        for epoch in tqdm(range(num_epochs), disable=not progress, desc="Epoch: "):
 
             self.run_step()
 
