@@ -56,6 +56,9 @@ class BaseMF(ABC):
             "theta_mle": None,
         }
 
+        if extra_metrics is None:
+            extra_metrics = []
+
         for metric, _ in extra_metrics:
             output[metric] = []
 
