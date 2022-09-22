@@ -138,8 +138,8 @@ def shifted(
 
 def model_factory(
     X: np.ndarray,
-    shift_range: np.ndarray[Any, int],
-    convolution: bool,
+    shift_range: Optional[np.ndarray[Any, int]] = None,
+    convolution: bool = False,
     weights: Optional[np.ndarray] = None,
     rank: int = 5,
     seed: int = 42,
@@ -149,6 +149,8 @@ def model_factory(
 
     kwargs are passed directly to the models.
     """
+    if shift_range is None:
+        shift_range = np.array([])
 
     padding = 2 * shift_range.size
 
