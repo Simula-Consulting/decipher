@@ -10,7 +10,7 @@ def prediction_data(Y, method):
     and the corresponding column number (aka time points) are stored in
     separate vectors."""
 
-    return mask_test_samples(Y, _t_pred(Y, method))
+    return mask_test_samples(Y.copy(), _t_pred(Y, method))
 
 
 def _t_pred(Y, prediction_rule):

@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from example import experiment
 from matfact.data_generation import Dataset
-from matfact.experiments import CMF, SCMF, WCMF, data_weights
+from matfact.experiments import CMF, SCMF, WCMF, data_weights, prediction_data
 
 
 def test_dataset_read_write(tmp_path):
@@ -134,3 +134,14 @@ def test_model_optional_args():
 
     scmf = SCMF(X, V, s_budget=s_budget)
     scmf.run_step()
+
+
+def test_prediction_data():
+    """Test that prediction_data does not alter its input array."""
+    methods = ["last_observed"]
+    for method in methods:
+        rng = np.random.default_rng(42)
+        X = rng.integers(0, 2, (4, 10))
+        X_passed_to_function = X.copy()
+        prediction_data(X_passed_to_function, method)
+        assert np.array_equal(X, X_passed_to_function)
