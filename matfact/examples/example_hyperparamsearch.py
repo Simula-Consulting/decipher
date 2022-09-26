@@ -27,6 +27,8 @@ def get_objective(data: Dataset, search_space: list, **hyperparams):
             log_loss=False,
             **hyperparams,
         )
+        # The score logged, the Matthew correlation coefficient, is 'higher is
+        # better', while we are minimizing.
         return -output["score"]
 
     return objective
@@ -52,6 +54,8 @@ def get_objective_CV(
                 log_loss=False,
                 **hyperparams,
             )
+            # The score logged, the Matthew correlation coefficient, is 'higher is
+            # better', while we are minimizing.
             scores.append(-output["score"])
 
         return np.mean(scores)

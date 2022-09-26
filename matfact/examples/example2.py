@@ -85,9 +85,6 @@ def experiment(
     )
 
     # Plotting #
-    # TODO: Possible to have run id returned in results, and then append these artifacts
-    # to that run
-    # TODO: Same with tags
     with mlflow.start_run(run_id=results["mlflow_run_id"]):
         mlflow.set_tags(mlflow_tags)
         plot_coefs(results["U"], FIGURE_PATH)
