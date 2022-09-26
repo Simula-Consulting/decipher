@@ -4,14 +4,17 @@ produced in the `datasets` directory.
 """
 from typing import Any, Optional
 
+import mlflow
 import numpy as np
+from sklearn.metrics import matthews_corrcoef
 
-from .algorithms import CMF, SCMF, WCMF
-from .algorithms.utils import (
+from matfact.experiments import CMF, SCMF, WCMF
+from matfact.experiments.algorithms.utils import (
     finite_difference_matrix,
     initialize_basis,
     laplacian_kernel_matrix,
 )
+from matfact.experiments.simulation.dataset import prediction_data
 
 
 def model_factory(
@@ -21,7 +24,7 @@ def model_factory(
     weights: Optional[np.ndarray] = None,
     rank: int = 5,
     seed: int = 42,
-    **kwargs
+    **kwargs,
 ):
     """Initialize and return appropriate model based on arguments.
 
@@ -62,3 +65,62 @@ def model_factory(
             return short_model_name, WCMF(X, V, weights, **kwargs)
         else:
             return short_model_name, CMF(X, V, **kwargs)
+
+
+def train_and_log(
+    X_train,
+    X_test,
+    dict_to_log=None,
+    extra_metrics=None,
+    log_loss=True,
+    nested=False,
+    **hyperparams,
+):
+    """Train model and log in MLFlow."""
+
+    # In the future, we could implement cross validation testing.
+    # However, it is not obvious what we should log, as we log for example the
+    # loss function of each training run.
+    # Two examples are to log each run separately or logging all folds together
+
+    X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
+    mlflow.start_run(nested=nested)
+
+    # Create model
+    model_name, factoriser = model_factory(X_train, **hyperparams)
+
+    # Fit model
+    results = factoriser.matrix_completion(extra_metrics=extra_metrics)
+
+    # Predict
+    p_pred = factoriser.predict_probability(X_test_masked, t_pred)
+    x_pred = 1 + np.argmax(p_pred, axis=1)
+
+    # Score
+    score = matthews_corrcoef(x_pred, x_true)
+    results.update(
+        {
+            "score": score,
+            "p_pred": p_pred,
+            "x_pred": x_pred,
+            "x_true": x_true,
+        }
+    )
+
+    # Logging
+    mlflow.log_params(hyperparams)
+    mlflow.log_param("model_name", model_name)
+    if dict_to_log:
+        mlflow.log_params(dict_to_log)
+
+    mlflow.log_metric("matthew_score", score)
+    if extra_metrics:
+        for metric, _ in extra_metrics:
+            for epoch, metric_value in zip(results["epochs"], results[metric]):
+                mlflow.log_metric(metric, metric_value, step=epoch)
+    if log_loss:
+        for epoch, loss in zip(results["epochs"], results["loss_values"]):
+            mlflow.log_metric("loss", loss, step=epoch)
+    results["mlflow_run_id"] = mlflow.active_run().info.run_id
+    mlflow.end_run()
+    return results
