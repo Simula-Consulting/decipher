@@ -109,7 +109,7 @@ def train_and_log(
     if log_loss:
         if "loss" in metrics:
             raise ValueError(
-                "log_loss True and loss is in extra_metrics."
+                "log_loss True and loss is in extra_metrics. "
                 "This is illegal, as it causes name collision!"
             )
         metrics.append("loss")

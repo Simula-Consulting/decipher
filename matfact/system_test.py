@@ -2,11 +2,19 @@
 from itertools import product
 
 import numpy as np
+import pytest
 import tensorflow as tf
 
 from example import experiment
 from matfact.data_generation import Dataset
-from matfact.experiments import CMF, SCMF, WCMF, data_weights, prediction_data
+from matfact.experiments import (
+    CMF,
+    SCMF,
+    WCMF,
+    data_weights,
+    prediction_data,
+    train_and_log,
+)
 
 
 def test_dataset_read_write(tmp_path):
@@ -145,3 +153,24 @@ def test_prediction_data():
         X_passed_to_function = X.copy()
         prediction_data(X_passed_to_function, method)
         assert np.array_equal(X, X_passed_to_function)
+
+
+def test_value_error_loss_extra_metric():
+    """Test that ValueError is raised when loss in extra metric"""
+    # Some arbitrary data size
+    sample_size, time_span = 100, 40
+    X = np.random.choice(np.arange(5), size=(sample_size, time_span))
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "log_loss True and loss is in extra_metrics. "
+            "This is illegal, as it causes name collision!"
+        ),
+    ):
+        train_and_log(
+            X,
+            X,
+            extra_metrics={"loss": lambda x: None},
+            log_loss=True,
+        )
