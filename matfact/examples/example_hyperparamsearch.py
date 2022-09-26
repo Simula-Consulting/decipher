@@ -11,12 +11,12 @@ from matfact.experiments import train_and_log
 from matfact.settings import BASE_PATH, DATASET_PATH
 
 
-def get_objective(data: Dataset, **hyperparams):
+def get_objective(data: Dataset, search_space: list, **hyperparams):
     """Simple train-test based search."""
 
     X_train, X_test, *_ = data.get_split_X_M()
 
-    @use_named_args(space)
+    @use_named_args(search_space)
     def objective(**search_hyperparams):
         hyperparams.update(search_hyperparams)
         output = train_and_log(
@@ -32,12 +32,14 @@ def get_objective(data: Dataset, **hyperparams):
     return objective
 
 
-def get_objective_CV(data: Dataset, n_splits: int = 5, **hyperparams):
+def get_objective_CV(
+    data: Dataset, search_space: list, n_splits: int = 5, **hyperparams
+):
     """Cross validation search."""
     kf = KFold(n_splits=n_splits)
     X, _ = data.get_X_M()
 
-    @use_named_args(space)
+    @use_named_args(search_space)
     def objective(**search_hyperparams):
         hyperparams.update(search_hyperparams)
         scores = []
@@ -57,7 +59,7 @@ def get_objective_CV(data: Dataset, n_splits: int = 5, **hyperparams):
     return objective
 
 
-if __name__ == "__main__":
+def example_hyperparameter_search():
     tf.config.set_visible_devices([], "GPU")
     mlflow.set_tracking_uri(BASE_PATH / "mlruns")
     space = (
@@ -76,9 +78,11 @@ if __name__ == "__main__":
     # objective_getter = get_objective
     objective_getter = get_objective_CV
 
-    with mlflow.start_run() as run:
+    with mlflow.start_run():
         res_gp = gp_minimize(
-            objective_getter(data, convolution=False, shift_range=None),
+            objective_getter(
+                data, search_space=space, convolution=False, shift_range=None
+            ),
             space,
             n_calls=10,
         )
@@ -88,3 +92,7 @@ if __name__ == "__main__":
         mlflow.log_metric("best_score", -best_score)
         for param, value in zip(space, best_values):
             mlflow.log_param(f"best_{param.name}", value)
+
+
+if __name__ == "__main__":
+    example_hyperparameter_search()
