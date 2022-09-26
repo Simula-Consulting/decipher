@@ -2,13 +2,13 @@
 for matrix completion and risk prediction. The example is based on synthetic data
 produced in the `datasets` directory.
 """
-from typing import Any, Optional
+from typing import Any, Callable, Optional, Type
 
 import mlflow
 import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
-from matfact.experiments import CMF, SCMF, WCMF
+from matfact.experiments import CMF, SCMF, WCMF, BaseMF
 from matfact.experiments.algorithms.utils import (
     finite_difference_matrix,
     initialize_basis,
@@ -68,20 +68,51 @@ def model_factory(
 
 
 def train_and_log(
-    X_train,
-    X_test,
-    dict_to_log=None,
-    extra_metrics=None,
-    log_loss=True,
-    nested=False,
+    X_train: np.ndarray,
+    X_test: np.ndarray,
+    dict_to_log: Optional[dict] = None,
+    extra_metrics: Optional[dict[str, Callable[[Type[BaseMF]], float]]] = None,
+    log_loss: bool = True,
+    nested: bool = False,
     **hyperparams,
 ):
-    """Train model and log in MLFlow."""
+    """Train model and log in MLFlow.
 
-    # In the future, we could implement cross validation testing.
-    # However, it is not obvious what we should log, as we log for example the
-    # loss function of each training run.
-    # Two examples are to log each run separately or logging all folds together
+    Params:
+    X_train, X_test: Train and test data.
+    dict_to_log:  optional dictionary assosiated with the run, logged with MLFlow.
+    extra_metrics: opional dictionary of metrics logged in each epoch of training.
+        See `BaseMF.matrix_completion` for more details.
+    log_loss: Whether the loss function as function of epoch should be logged
+        in MLFlow. Note that this is slow.
+    nested: If True, the run is logged as a nested run in MLFlow, useful in for
+        example hyperparameter search. Assumes there to exist an active parent run.
+
+    Returns:
+    A dictionary of relevant output statistics.
+
+
+    Discussion:
+    Concerning cross validation: the function accepts a train and test set. In order
+    to do for example cross validation hyperparameter search, simply wrap this
+    function in cross validation logic.
+    In this case, each run will be logged separately.
+
+    In future versions of this package, it is possible that cross validation will
+    be supported directly from within this function.
+    However, it is not obvious what we should log, as we log for example the
+    loss function of each training run.
+    Two examples are to log each run separately or logging all folds together.
+    """
+
+    metrics = list(extra_metrics.keys()) if extra_metrics else []
+    if log_loss:
+        if "loss" in metrics:
+            raise ValueError(
+                "log_loss True and loss is in extra_metrics."
+                "This is illegal, as it causes name collision!"
+            )
+        metrics.append("loss")
 
     X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
     mlflow.start_run(nested=nested)
@@ -114,13 +145,9 @@ def train_and_log(
         mlflow.log_params(dict_to_log)
 
     mlflow.log_metric("matthew_score", score)
-    if extra_metrics:
-        for metric, _ in extra_metrics:
-            for epoch, metric_value in zip(results["epochs"], results[metric]):
-                mlflow.log_metric(metric, metric_value, step=epoch)
-    if log_loss:
-        for epoch, loss in zip(results["epochs"], results["loss_values"]):
-            mlflow.log_metric("loss", loss, step=epoch)
+    for metric in metrics:
+        for epoch, metric_value in zip(results["epochs"], results[metric]):
+            mlflow.log_metric(metric, metric_value, step=epoch)
     results["mlflow_run_id"] = mlflow.active_run().info.run_id
     mlflow.end_run()
     return results

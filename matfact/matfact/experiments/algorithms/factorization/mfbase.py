@@ -41,14 +41,14 @@ class BaseMF(ABC):
     ):
         """Run matrix completion on input matrix X using a factorization model.
 
-        extra_metrics: iterable of name, exectuable pairs for extra metric logging.
-            iterable must have the signature (model: Type[BaseMF]) -> Float.
+        extra_metrics: Dict of name, callable pairs for extra metric logging.
+            Callable must have the signature (model: Type[BaseMF]) -> Float.
         """
 
         # Results collected from the process
         output = {
             "convergence_rate": [],
-            "loss_values": [],
+            "loss": [],
             "epochs": [],
             "U": None,
             "V": None,
@@ -58,9 +58,9 @@ class BaseMF(ABC):
         }
 
         if extra_metrics is None:
-            extra_metrics = []
+            extra_metrics = {}
 
-        for metric, _ in extra_metrics:
+        for metric in extra_metrics:
             output[metric] = []
 
         for epoch in tqdm(range(num_epochs), disable=not progress, desc="Epoch: "):
@@ -68,8 +68,8 @@ class BaseMF(ABC):
             self.run_step()
 
             output["epochs"].append(int(epoch))
-            output["loss_values"].append(float(self.loss()))
-            for metric, callable in extra_metrics:
+            output["loss"].append(float(self.loss()))
+            for metric, callable in extra_metrics.items():
                 output[metric].append(callable(self))
 
             if epoch == patience:

@@ -58,10 +58,6 @@ def experiment(
                 "Notes": "Using a very slow computer.",
             }
         dataset_path: pathlib.Path The path were dataset is stored.
-
-    TODO: option to plot and log figures
-    TODO: option to store and log artifacts like U,V,M,datasets,etc
-    TODO: more clearly separate train and predict
     """
     # Setup and loading #
     dataset = Dataset().load(dataset_path)
@@ -74,9 +70,9 @@ def experiment(
     shift_range = np.arange(-12, 13) if enable_shift else np.array([])
     weights = data_weights(X_train) if enable_weighting else None
 
-    extra_metrics = (
-        ("recMSE", lambda model: reconstruction_mse(M_train, model.X, model.M)),
-    )
+    extra_metrics = {
+        "recMSE": lambda model: reconstruction_mse(M_train, model.X, model.M),
+    }
 
     results = train_and_log(
         X_train,
