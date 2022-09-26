@@ -23,8 +23,9 @@ For the future, we will change this to be a conditional dependency, based on the
 The project source code is located in under `matfact`.
 The code consists of three main modules: `data_generation`, `experiments`, and `plotting`.
 The factorisation and prediction, i.e. train and test, is part of `experiments`.
-As a starting point on how to use the library, an example script is found in `example.py`;
-it shows data generation, factorization, prediction, and plotting.
+As a starting point on how to use the library, example scripts are found in `examples`.
+`example.py` and `example_train_and_log.py` shows data generation, factorization, prediction, and plotting, with the latter utilizing the convenience funtion `train_and_log`, which is reccomended.
+`example_hyperparamsearch.py` shows how one may perform a simple hyperparameter search.
 
 Experiment runs are tracked using [MLFlow](https://mlflow.org/); execute `mlflow ui` (in the poetry environment) to open the UI for showing experiment runs, by default available at http://127.0.0.1:5000.
 

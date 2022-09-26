@@ -6,7 +6,7 @@ import pytest
 import tensorflow as tf
 
 from examples.example import experiment as experiment1
-from examples.example2 import experiment as experiment2
+from examples.example_train_and_log import experiment as experiment2
 from matfact.data_generation import Dataset
 from matfact.experiments import (
     CMF,
