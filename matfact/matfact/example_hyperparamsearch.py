@@ -25,7 +25,7 @@ def get_objective(data: Dataset, **hyperparams):
             nested=True,
             dict_to_log=data.prefixed_metadata(),
             log_loss=False,
-            **hyperparams
+            **hyperparams,
         )
         return -output["score"]
 
@@ -48,7 +48,7 @@ def get_objective_CV(data: Dataset, n_splits: int = 5, **hyperparams):
                 nested=True,
                 dict_to_log=data.prefixed_metadata(),
                 log_loss=False,
-                **hyperparams
+                **hyperparams,
             )
             scores.append(-output["score"])
 
@@ -82,3 +82,9 @@ if __name__ == "__main__":
             space,
             n_calls=10,
         )
+
+        best_values = res_gp["x"]
+        best_score = res_gp["fun"]
+        mlflow.log_metric("best_score", -best_score)
+        for param, value in zip(space, best_values):
+            mlflow.log_param(f"best_{param.name}", value)
