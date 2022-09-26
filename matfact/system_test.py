@@ -5,7 +5,8 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from example import experiment
+from example import experiment as experiment1
+from example2 import experiment as experiment2
 from matfact.data_generation import Dataset
 from matfact.experiments import (
     CMF,
@@ -76,7 +77,16 @@ def test_train(tmp_path):
     }
 
     for shift, weight, convolve in product([False, True], repeat=3):
-        experiment(
+        experiment1(
+            hyperparams,
+            optimization_params,
+            shift,
+            weight,
+            convolve,
+            mlflow_tags=mlflow_tags,
+            dataset_path=tmp_path,
+        )
+        experiment2(
             hyperparams,
             optimization_params,
             shift,
