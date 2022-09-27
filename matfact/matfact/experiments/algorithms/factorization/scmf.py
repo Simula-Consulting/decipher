@@ -79,8 +79,6 @@ class SCMF(BaseMF):
         learning_rate: Stepsize used in the GD
 
 
-    TODO: it looks like J is never used...
-
     Discussion:
     There are four X matrices (correspondingly for W):
     - X : The original input matrix
@@ -173,6 +171,7 @@ class SCMF(BaseMF):
         self.V_bc = np.vstack(
             [np.zeros((self.Ns, self.r)), V, np.zeros((self.Ns, self.r))]
         )
+        self.J = J if J else tf.ones_like(self.V_bc, dtype=tf.float32)
 
         # Implementation shifts W and Y (not UV.T)
         self.X_shifted = self.X_bc.copy()
@@ -214,7 +213,6 @@ class SCMF(BaseMF):
 
     def _update_V(self):
         V = tf.Variable(self.V_bc, dtype=tf.float32)
-        J = tf.ones_like(self.V_bc, dtype=tf.float32)
 
         # @tf.function
         def _loss_V():
@@ -224,7 +222,7 @@ class SCMF(BaseMF):
             )
             frob_loss = tf.reduce_sum(frob_tensor**2)
 
-            l2_loss = self.lambda2 * tf.reduce_sum((V - J) ** 2)
+            l2_loss = self.lambda2 * tf.reduce_sum((V - self.J) ** 2)
             conv_loss = self.lambda3 * tf.reduce_sum((tf.matmul(self.KD, V) ** 2))
 
             return frob_loss + l2_loss + conv_loss
