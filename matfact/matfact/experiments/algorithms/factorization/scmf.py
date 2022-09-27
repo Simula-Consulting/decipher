@@ -80,6 +80,17 @@ class SCMF(BaseMF):
 
 
     TODO: it looks like J is never used...
+
+    Discussion:
+    There are four X matrices (correspondingly for W):
+    - X : The original input matrix
+    - X_bc : The original input matrix with padded zeros on the time axis.
+    - X_shifted : Similar to X_bc, but each row is shifted according to self.s.
+    - X_shifts : A stack of size(s_budged) arrays similar to X_bc, but each shifted
+        horizontally (time axis). Stack layer i is shifted s_budged[i].
+
+    X_shifted is the only matrix altered after initialization.
+
     """
 
     def __init__(
@@ -99,11 +110,8 @@ class SCMF(BaseMF):
         learning_rate=0.001,
     ):
 
-        self.X = X
-        self.X_shifted = X.copy()  # Altered during solving
         self.V = V
         self.W = data_weights(X) if W is None else W
-        self.W_shifted = self.W.copy()  # Altered during solving
 
         self.s_budget = s_budget
 
@@ -116,11 +124,16 @@ class SCMF(BaseMF):
         self.learning_rate = learning_rate
 
         self.r = V.shape[1]
-        self.N, self.T = np.shape(self.X_shifted)
-        self.nz_rows, self.nz_cols = np.nonzero(self.X_shifted)
+        self.N, self.T = np.shape(X)
+        self.nz_rows, self.nz_cols = np.nonzero(X)
 
         self.n_iter_ = 0
-        self._init_matrices(D, J, K)
+        self._init_matrices(X, D, J, K)
+
+    @property
+    def X(self):
+        # return self.X_bc[:, self.Ns:-self.Ns]
+        return _take_per_row_strided(self.X_shifted, self.Ns - self.s, n_elem=self.T)
 
     @property
     def M(self):
@@ -132,7 +145,7 @@ class SCMF(BaseMF):
 
         return np.array(M, dtype=np.float32)
 
-    def _init_matrices(self, D, J, K):
+    def _init_matrices(self, X, D, J, K):
 
         self.s = np.zeros(self.N, dtype=int)
         self.Ns = int(self.s_budget.size)
@@ -147,23 +160,25 @@ class SCMF(BaseMF):
 
         # Expand matrices with zeros over the extended left and right boundaries.
         self.X_bc = np.hstack(
-            [np.zeros((self.N, self.Ns)), self.X_shifted, np.zeros((self.N, self.Ns))]
+            [np.zeros((self.N, self.Ns)), X, np.zeros((self.N, self.Ns))]
         )
         self.W_bc = np.hstack(
-            [np.zeros((self.N, self.Ns)), self.W_shifted, np.zeros((self.N, self.Ns))]
+            [np.zeros((self.N, self.Ns)), self.W, np.zeros((self.N, self.Ns))]
         )
 
         self.V = np.vstack(
             [np.zeros((self.Ns, self.r)), self.V, np.zeros((self.Ns, self.r))]
         )
 
+        # Implementation shifts W and Y (not UV.T)
+        # self._shift_X_W()
+        self.X_shifted = self.X_bc.copy()
+        self.W_shifted = self.W_bc.copy()
+        self._fill_boundary_regions_V()
+
         # Placeholders (s x N x T) for all possible candidate shits
         self.X_shifts = np.array([np.zeros_like(self.X_bc)] * self.Ns)
         self.W_shifts = np.array([np.zeros_like(self.W_bc)] * self.Ns)
-
-        # Implementation shifts W and Y (not UV.T)
-        self._shift_X_W()
-        self._fill_boundary_regions_V()
 
         # Shift Y in opposite direction of V shift.
         for j, s_n in enumerate(self.s_budget):
