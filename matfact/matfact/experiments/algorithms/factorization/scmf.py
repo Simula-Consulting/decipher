@@ -148,8 +148,9 @@ class SCMF(BaseMF):
         return np.array(M, dtype=np.float32)
 
     def _init_matrices(self, X, V, D, J, K):
-
+        # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)
+        # The number of possible shifts. Used for padding of arrays.
         self.Ns = int(self.s_budget.size)
 
         # Add time points to cover extended left and right boundaries when shifting.
@@ -167,7 +168,6 @@ class SCMF(BaseMF):
         self.W_bc = np.hstack(
             [np.zeros((self.N, self.Ns)), self.W, np.zeros((self.N, self.Ns))]
         )
-
         self.V_bc = np.vstack(
             [np.zeros((self.Ns, self.r)), V, np.zeros((self.Ns, self.r))]
         )
