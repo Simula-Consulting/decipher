@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
 
@@ -234,6 +235,21 @@ class SCMF(BaseMF):
 
         self.V_bc = V.numpy()
 
+    def _update_V_scipy(self):
+        J = np.ones_like(self.V_bc)
+
+        def _loss_V(V):
+            frob_tensor = self.W_shifted * (self.X_shifted - (self.U @ V.T))
+
+            frob_loss = np.sum(frob_tensor**2)
+
+            l2_loss = self.lambda2 * np.sum((V - J) ** 2)
+            conv_loss = self.lambda3 * np.sum((self.KD @ V) ** 2)
+
+            return frob_loss + l2_loss + conv_loss
+
+        self.V_bc = scipy.optimize.fmin(_loss_V, self.V_bc)[0]
+
     def _approx_U(self):
 
         U = tf.Variable(self.U, dtype=tf.float32)
@@ -298,6 +314,7 @@ class SCMF(BaseMF):
 
         self._update_U()
         self._update_V()
+        # self._update_V_scipy()
         self._update_s()
 
         self.n_iter_ += 1
