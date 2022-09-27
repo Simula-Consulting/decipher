@@ -110,7 +110,6 @@ class SCMF(BaseMF):
         learning_rate=0.001,
     ):
 
-        self.V = V
         self.W = data_weights(X) if W is None else W
 
         self.s_budget = s_budget
@@ -128,7 +127,7 @@ class SCMF(BaseMF):
         self.nz_rows, self.nz_cols = np.nonzero(X)
 
         self.n_iter_ = 0
-        self._init_matrices(X, D, J, K)
+        self._init_matrices(X, V, D, J, K)
 
     @property
     def X(self):
@@ -136,16 +135,21 @@ class SCMF(BaseMF):
         return _take_per_row_strided(self.X_shifted, self.Ns - self.s, n_elem=self.T)
 
     @property
+    def V(self):
+        """To be compatible with the expectation of having a V"""
+        return self.V_bc
+
+    @property
     def M(self):
 
         # Compute the reconstructed matrix with sample-specific shifts
         M = _take_per_row_strided(
-            self.U @ self.V.T, start_idx=self.Ns - self.s, n_elem=self.T
+            self.U @ self.V_bc.T, start_idx=self.Ns - self.s, n_elem=self.T
         )
 
         return np.array(M, dtype=np.float32)
 
-    def _init_matrices(self, X, D, J, K):
+    def _init_matrices(self, X, V, D, J, K):
 
         self.s = np.zeros(self.N, dtype=int)
         self.Ns = int(self.s_budget.size)
@@ -166,19 +170,18 @@ class SCMF(BaseMF):
             [np.zeros((self.N, self.Ns)), self.W, np.zeros((self.N, self.Ns))]
         )
 
-        self.V = np.vstack(
-            [np.zeros((self.Ns, self.r)), self.V, np.zeros((self.Ns, self.r))]
+        self.V_bc = np.vstack(
+            [np.zeros((self.Ns, self.r)), V, np.zeros((self.Ns, self.r))]
         )
 
         # Implementation shifts W and Y (not UV.T)
-        # self._shift_X_W()
         self.X_shifted = self.X_bc.copy()
         self.W_shifted = self.W_bc.copy()
         self._fill_boundary_regions_V()
 
         # Placeholders (s x N x T) for all possible candidate shits
-        self.X_shifts = np.array([np.zeros_like(self.X_bc)] * self.Ns)
-        self.W_shifts = np.array([np.zeros_like(self.W_bc)] * self.Ns)
+        self.X_shifts = np.empty((self.Ns, *self.X_bc.shape))
+        self.W_shifts = np.empty((self.Ns, *self.W_bc.shape))
 
         # Shift Y in opposite direction of V shift.
         for j, s_n in enumerate(self.s_budget):
@@ -194,10 +197,10 @@ class SCMF(BaseMF):
     def _fill_boundary_regions_V(self):
         # Extrapolate the edge values in V over the extended boundaries
 
-        V_filled = np.zeros_like(self.V)
+        V_filled = np.zeros_like(self.V_bc)
 
         idx = np.arange(self.T + 2 * self.Ns)
-        for i, v in enumerate(self.V.T):
+        for i, v in enumerate(self.V_bc.T):
 
             v_left = v[idx <= int(self.T / 2)]
             v_right = v[idx > int(self.T / 2)]
@@ -207,11 +210,11 @@ class SCMF(BaseMF):
 
             V_filled[:, i] = np.concatenate([v_left, v_right])
 
-        self.V = V_filled
+        self.V_bc = V_filled
 
     def _update_V(self):
-        V = tf.Variable(self.V, dtype=tf.float32)
-        J = tf.ones_like(self.V, dtype=tf.float32)
+        V = tf.Variable(self.V_bc, dtype=tf.float32)
+        J = tf.ones_like(self.V_bc, dtype=tf.float32)
 
         # @tf.function
         def _loss_V():
@@ -219,10 +222,10 @@ class SCMF(BaseMF):
             frob_tensor = tf.multiply(
                 self.W_shifted, self.X_shifted - (self.U @ tf.transpose(V))
             )
-            frob_loss = tf.reduce_sum(tf.square(tf.norm(frob_tensor, axis=-1)))
+            frob_loss = tf.reduce_sum(frob_tensor**2)
 
-            l2_loss = self.lambda2 * tf.square(tf.norm(V - J))
-            conv_loss = self.lambda3 * tf.square(tf.norm(tf.matmul(self.KD, V)))
+            l2_loss = self.lambda2 * tf.reduce_sum((V - J) ** 2)
+            conv_loss = self.lambda3 * tf.reduce_sum((tf.matmul(self.KD, V) ** 2))
 
             return frob_loss + l2_loss + conv_loss
 
@@ -230,7 +233,7 @@ class SCMF(BaseMF):
         for _ in tf.range(self.iter_V):
             optimiser.minimize(_loss_V, [V])
 
-        self.V = V.numpy()
+        self.V_bc = V.numpy()
 
     def _approx_U(self):
 
@@ -240,13 +243,12 @@ class SCMF(BaseMF):
         def _loss_U():
 
             frob_tensor = tf.multiply(
-                self.W_shifted, self.X_shifted - tf.matmul(U, self.V, transpose_b=True)
+                self.W_shifted,
+                self.X_shifted - tf.matmul(U, self.V_bc, transpose_b=True),
             )
-            frob_loss = tf.reduce_sum(tf.square(tf.norm(frob_tensor, axis=-1)))
+            frob_loss = tf.reduce_sum((frob_tensor) ** 2)
 
-            return frob_loss + self.lambda1 * tf.reduce_sum(
-                tf.square(tf.norm(U, axis=-1))
-            )
+            return frob_loss + self.lambda1 * tf.reduce_sum(U**2)
 
         optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         for _ in tf.range(self.iter_U):
@@ -268,16 +270,16 @@ class SCMF(BaseMF):
             for n in range(self.N):
                 self.U[n] = (
                     self.X_shifted[n]
-                    @ self.V
+                    @ self.V_bc
                     @ np.linalg.inv(
-                        self.V.T @ (np.diag(self.W_shifted[n]) @ self.V) + self.I1
+                        self.V_bc.T @ (np.diag(self.W_shifted[n]) @ self.V_bc) + self.I1
                     )
                 )
 
     def _update_s(self):
 
         # Evaluate the discrepancy term for all possible shift candidates
-        M = self.U @ self.V.T
+        M = self.U @ self.V_bc.T
         D = (
             np.linalg.norm(self.W_shifts * (self.X_shifts - M[None, :, :]), axis=-1)
             ** 2
@@ -306,12 +308,12 @@ class SCMF(BaseMF):
 
         loss = np.sum(
             np.linalg.norm(
-                self.W_shifted * (self.X_shifted - self.U @ self.V.T), axis=1
+                self.W_shifted * (self.X_shifted - self.U @ self.V_bc.T), axis=1
             )
             ** 2
         )
         loss += self.lambda1 * np.sum(np.linalg.norm(self.U, axis=1) ** 2)
-        loss += self.lambda2 * np.linalg.norm(self.V) ** 2
-        loss += self.lambda3 * np.linalg.norm(self.KD @ self.V) ** 2
+        loss += self.lambda2 * np.linalg.norm(self.V_bc) ** 2
+        loss += self.lambda3 * np.linalg.norm(self.KD @ self.V_bc) ** 2
 
         return loss
