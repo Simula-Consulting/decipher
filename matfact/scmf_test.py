@@ -35,7 +35,7 @@ def test_scmf():
         # do this, in that case this test will fail.
         # If so, either disable checking of V, or
         # figure out the transformation from padded V to actual V.
-        "V": np.empty((iterations, V.shape[0] + 2 * len(s_budget), V.shape[1])),
+        "V_bc": np.empty((iterations, V.shape[0] + 2 * len(s_budget), V.shape[1])),
         "M": np.empty((iterations, N, T)),
         "U": np.empty((iterations, N, r)),
         "loss": np.empty(iterations),
@@ -43,7 +43,7 @@ def test_scmf():
     }
 
     # Assumes there to exist an array <attribute_name>_log of the appropriate size
-    attributes_to_log = ["X", "M", "U", "V", "loss", "s"]
+    attributes_to_log = ["X", "M", "U", "V_bc", "loss", "s"]
 
     scmf = SCMF(X, V, s_budget)
 
@@ -62,4 +62,6 @@ def test_scmf():
     for attribute in attributes_to_log:
         correct = np.load(artifact_path / f"{attribute}_log.npy")
         observed = logs[attribute]
-        assert np.array_equal(correct, observed)
+        # Use allclose instead of array_equal, to allow for refactoring
+        # that cuases different round off (for example avoiding sqrt).
+        assert np.allclose(correct, observed)
