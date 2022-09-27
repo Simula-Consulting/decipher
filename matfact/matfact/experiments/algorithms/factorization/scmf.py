@@ -19,7 +19,18 @@ def _custom_roll(arr, m):
 
 
 def _take_per_row_strided(A, start_idx, n_elem):
-    # Auxillary function for faster selecting from shifted samples
+    """Select n_elem per row with a shift start_idx.
+
+    Fast implementation of selection from row wise shifted sample.
+    Rows are not wrapped around, i.e. if start_idx + n_elem is larger than the
+    number of columns, out of range is thrown.
+
+    In other words
+    >>> def simple_row_strided(A, shift_array, number_elements):
+    >>>     strided_A = np.empty((A.shape[0], number_elements))
+    >>>     for i in range(A.shape[0]):
+    >>>         strided_A[i] = A[i, shift_array[i]:shift_array[i]+number_elements]
+    """
 
     m, n = np.shape(A)
     A.shape = -1
