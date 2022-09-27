@@ -39,10 +39,11 @@ def test_scmf():
         "M": np.empty((iterations, N, T)),
         "U": np.empty((iterations, N, r)),
         "loss": np.empty(iterations),
+        "s": np.empty((iterations, N)),
     }
 
     # Assumes there to exist an array <attribute_name>_log of the appropriate size
-    attributes_to_log = ["X", "M", "U", "V", "loss"]
+    attributes_to_log = ["X", "M", "U", "V", "loss", "s"]
 
     scmf = SCMF(X, V, s_budget)
 
