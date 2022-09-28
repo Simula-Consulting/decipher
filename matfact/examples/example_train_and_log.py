@@ -17,7 +17,7 @@ def experiment(
     enable_shift: bool = False,
     enable_weighting: bool = False,
     enable_convolution: bool = False,
-    mlflow_tags: dict = None,
+    mlflow_tags: dict | None = None,
     dataset_path: pathlib.Path = DATASET_PATH,
 ):
     """Execute and log an experiment.
