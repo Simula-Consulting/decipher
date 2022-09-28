@@ -9,18 +9,18 @@ from .utils import age_group_idx
 
 def kappa_0(age, current_state, t, time_grid) -> float:
 
-    l = age_group_idx(age + t, time_grid)
+    l = age_group_idx(age + t, time_grid)  # noqa: E741
 
     return -1.0 * t * sum(legal_transition_lambdas(current_state, l))
 
 
-def kappa_1(age, current_state, t, time_grid, l=None) -> float:
+def kappa_1(age, current_state, t, time_grid, l=None) -> float:  # noqa: E741
 
     k = age_group_idx(age, time_grid)
     _, tau_kp = time_grid[k]
 
     if l is None:
-        l = age_group_idx(age + t, time_grid)
+        l = age_group_idx(age + t, time_grid)  # noqa: E741
 
     tau_l, _ = time_grid[l]
 
@@ -41,7 +41,7 @@ def kappa_m(age, current_state, m, time_grid) -> float:
     return -1.0 * s_km
 
 
-def kappa(age, current_state, t, i, time_grid, l=None) -> float:
+def kappa(age, current_state, t, i, time_grid, l=None) -> float:  # noqa: E741
 
     if i == 0:
         return kappa_0(age, current_state, t, time_grid)
@@ -57,7 +57,7 @@ def search_l(u, k, current_age_pts, state, time_grid, n_age_partitions=8):
     if np.isclose(k, n_age_partitions - 1):
         return k
 
-    for l in range(k, n_age_partitions):
+    for l in range(k, n_age_partitions):  # noqa: E741
 
         _, tau_lp = time_grid[l]
 
@@ -79,7 +79,7 @@ def search_l(u, k, current_age_pts, state, time_grid, n_age_partitions=8):
     return l - 1
 
 
-def exit_time(u, a, s, k, l, time_grid):
+def exit_time(u, a, s, k, l, time_grid):  # noqa: E741
     """Random exit time from current state."""
 
     sum_kappa = sum([kappa(a, s, None, i, time_grid, l=l) for i in range(1, l - k + 1)])
@@ -101,6 +101,6 @@ def time_exit_state(
 
     k = age_group_idx(current_age_pts, time_grid)
 
-    l = search_l(u, k, current_age_pts, state, time_grid)
+    l = search_l(u, k, current_age_pts, state, time_grid)  # noqa: E741
 
     return exit_time(u, current_age_pts, state, k, l, time_grid)

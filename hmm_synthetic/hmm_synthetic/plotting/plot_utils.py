@@ -70,7 +70,7 @@ def set_arrowed_spines(fig, ax):
         0.0,
         fc="k",
         ec="k",
-        lw=1,
+        lw=lw,
         head_width=hw,
         head_length=hl,
         overhang=ohg,

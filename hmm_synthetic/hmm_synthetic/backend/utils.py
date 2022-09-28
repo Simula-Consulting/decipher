@@ -44,21 +44,21 @@ p_init_state = np.array(
 )
 
 # Transition intensities: age group x state transition.
+# fmt: off
 lambda_sr = np.array(
     [
-        # fmt: off
         # N0->L1  L1->H2   H2->C3   L1->N0   H2->L1   N0->D4   L1->D4   H2->D4   C3->D4
-        [0.02027, 0.01858, 0.00016, 0.17558, 0.24261, 0.00002, 0.00014, 0.00222, 0.01817],
-        [0.01202, 0.02565, 0.00015, 0.15543, 0.11439, 0.00006, 0.00016, 0.00082, 0.03024],
-        [0.00746, 0.03959, 0.00015, 0.14622, 0.07753, 0.00012, 0.00019, 0.00163, 0.03464],
-        [0.00584, 0.04299, 0.00055, 0.15576, 0.07372, 0.00012, 0.00016, 0.00273, 0.04211],
-        [0.00547, 0.03645, 0.00074, 0.15805, 0.06958, 0.00010, 0.00015, 0.00398, 0.04110],
-        [0.00556, 0.02970, 0.00127, 0.17165, 0.08370, 0.00010, 0.00014, 0.00518, 0.03170],
-        [0.00440, 0.02713, 0.00161, 0.19910, 0.10237, 0.00020, 0.00029, 0.00618, 0.02772],
-        [0.00403, 0.03826, 0.00419, 0.24198, 0.06951, 0.00104, 0.00115, 0.02124, 0.02386],
-        # fmt: on
+        [0.02027, 0.01858, 0.00016, 0.17558, 0.24261, 0.00002, 0.00014, 0.00222, 0.01817],  # noqa: E501
+        [0.01202, 0.02565, 0.00015, 0.15543, 0.11439, 0.00006, 0.00016, 0.00082, 0.03024],  # noqa: E501
+        [0.00746, 0.03959, 0.00015, 0.14622, 0.07753, 0.00012, 0.00019, 0.00163, 0.03464],  # noqa: E501
+        [0.00584, 0.04299, 0.00055, 0.15576, 0.07372, 0.00012, 0.00016, 0.00273, 0.04211],  # noqa: E501
+        [0.00547, 0.03645, 0.00074, 0.15805, 0.06958, 0.00010, 0.00015, 0.00398, 0.04110],  # noqa: E501
+        [0.00556, 0.02970, 0.00127, 0.17165, 0.08370, 0.00010, 0.00014, 0.00518, 0.03170],  # noqa: E501
+        [0.00440, 0.02713, 0.00161, 0.19910, 0.10237, 0.00020, 0.00029, 0.00618, 0.02772],  # noqa: E501
+        [0.00403, 0.03826, 0.00419, 0.24198, 0.06951, 0.00104, 0.00115, 0.02124, 0.02386],  # noqa: E501
     ]
 )
+# fmt: on
 
 
 def age_group_idx(a: int, age_partitions_pts) -> int:
@@ -76,7 +76,7 @@ def age_group_idx(a: int, age_partitions_pts) -> int:
 def _start_end_times(N, time_grid, params, rnd=None):
     """Sample times for init and final screenings."""
 
-    time_grid = np.arange(T)
+    time_grid = np.arange(T)  # noqa: F821
 
     # Probability distributions for the first and last observed state
     # p_start = stats.exponnorm.pdf(x=time_grid, K=8.76, loc=9.80, scale=7.07)
@@ -90,7 +90,9 @@ def _start_end_times(N, time_grid, params, rnd=None):
         loc=params["lnorm_loc"],
         scale=params["lnorm_scale"],
     )
-    p_end = stats.uniform(time_grid, loc=params["uni_loc"], scale=params["uni_scale"])
+    p_end = stats.uniform(  # noqa: F841
+        time_grid, loc=params["uni_loc"], scale=params["uni_scale"]
+    )
     # p_end = stats.norm(time_grid, loc=params["norm_loc"], scale=params["norm_scale"])
 
     if rnd is None:
@@ -99,9 +101,11 @@ def _start_end_times(N, time_grid, params, rnd=None):
         t_start = rnd.choice(time_grid, size=N, p=p_start / sum(p_start))
 
     if rnd is None:
-        t_cens = np.random.choice(time_grid, size=N, p=p_cens / sum(p_cens))
+        t_cens = np.random.choice(
+            time_grid, size=N, p=p_cens / sum(p_cens)  # noqa: F821
+        )
     else:
-        t_cens = rnd.choice(time_grid, size=N, p=p_cens / sum(p_cens))
+        t_cens = rnd.choice(time_grid, size=N, p=p_cens / sum(p_cens))  # noqa: F821
 
     # Ensure t_end > t_start for all histories
     to_keep = np.squeeze(np.argwhere(t_cens - t_start > 10))
