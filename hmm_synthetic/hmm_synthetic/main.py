@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd 
 
 from data_generator import simulate_state_histories
 from plotting.history_panel import plot_history_panel
