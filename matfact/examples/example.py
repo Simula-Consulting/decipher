@@ -91,9 +91,9 @@ def experiment(
 
     # Training and testing #
     # Train the model (i.e. perform the matrix completion)
-    extra_metrics = (
-        ("recMSE", lambda model: reconstruction_mse(M_train, X_train, model.M)),
-    )
+    extra_metrics = {
+        "recMSE": lambda model: reconstruction_mse(M_train, X_train, model.M),
+    }
     results = model.matrix_completion(
         extra_metrics=extra_metrics, **optimization_params
     )
@@ -110,10 +110,10 @@ def experiment(
     mlflow.log_metric(
         "accuracy", accuracy_score(x_true, x_pred), step=results["epochs"][-1]
     )
-    for epoch, loss in zip(results["epochs"], results["loss_values"]):
+    for epoch, loss in zip(results["epochs"], results["loss"]):
         mlflow.log_metric("loss", loss, step=epoch)
 
-    for metric, _ in extra_metrics:
+    for metric in extra_metrics:
         for epoch, metric_value in zip(results["epochs"], results[metric]):
             mlflow.log_metric(metric, metric_value, step=epoch)
 
