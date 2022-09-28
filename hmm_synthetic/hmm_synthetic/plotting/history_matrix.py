@@ -71,7 +71,7 @@ def plot_history_matrix(histories, path_to_figure, n_samples=500, alpha=0.6, fna
 
     fig.tight_layout()
     fig.savefig(
-        f"{path_to_figure}/history_matrix_{fname}.pdf",
+        path_to_figure / f"history_matrix_{fname}.pdf",
         transparent=True,
         bbox_inches="tight",
     )

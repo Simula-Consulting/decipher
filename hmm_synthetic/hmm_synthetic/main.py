@@ -3,7 +3,7 @@ from data_generator import simulate_state_histories
 from plotting.history_matrix import plot_history_matrix
 from plotting.history_panel import plot_history_panel
 
-BASE = "/Users/sela/Desktop/hmm_synthetic"
+from hmm_synthetic.settings import FIGURE_PATH
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
         n_samples=100, points_per_year=points_per_year, seed=42
     )
 
-    plot_history_matrix(D, path_to_figure=f"{BASE}/figures", fname="hmm")
+    plot_history_matrix(D, path_to_figure=FIGURE_PATH, fname="hmm")
 
     # Use different random seeds to sample histories for plotting
     rnd = np.random.RandomState(seed=42)
@@ -26,7 +26,7 @@ def main():
     for i, seed in enumerate(seeds):
         plot_history_panel(
             D,
-            path_to_figure=f"{BASE}/figures",
+            path_to_figure=FIGURE_PATH,
             points_per_year=points_per_year,
             rnd=rnd,
             fname=f"D{i}",

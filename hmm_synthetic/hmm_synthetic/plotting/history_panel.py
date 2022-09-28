@@ -62,7 +62,7 @@ def plot_history_panel(
 
     fig.tight_layout()
     fig.savefig(
-        f"{path_to_figure}/history_panel_{fname}.pdf",
+        path_to_figure / f"history_panel_{fname}.pdf",
         transparent=True,
         bbox_inches="tight",
     )
