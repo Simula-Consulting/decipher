@@ -3,7 +3,6 @@ from itertools import product
 
 import numpy as np
 import pytest
-import tensorflow as tf
 
 from examples.example import experiment as experiment1
 from examples.example_train_and_log import experiment as experiment2
@@ -55,13 +54,8 @@ def test_train(tmp_path):
     }
     Dataset().generate(**dataset_params).save(tmp_path)
 
-    USE_GPU = False
-    if not USE_GPU:
-        tf.config.set_visible_devices([], "GPU")
-
     mlflow_tags = {
         "Developer": "Developer Name",
-        "GPU": USE_GPU,
     }
     # Params chosen semi-arbitrarily
     # Number of epcoh is low to make runs fast
