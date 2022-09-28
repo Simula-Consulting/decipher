@@ -6,12 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 from matfact.data_generation import Dataset
-from matfact.experiments import (
-    data_weights,
-    prediction_data,
-    reconstruction_mse,
-    train_and_log,
-)
+from matfact.experiments import data_weights, reconstruction_mse, train_and_log
 from matfact.plotting import plot_basis, plot_coefs, plot_confusion, plot_roc_curve
 from matfact.settings import DATASET_PATH, FIGURE_PATH
 
@@ -61,11 +56,7 @@ def experiment(
     """
     # Setup and loading #
     dataset = Dataset().load(dataset_path)
-    X_train, X_test, M_train, M_test = dataset.get_split_X_M()
-
-    # Simulate data for a prediction task by selecting the last data point in each
-    # sample vetor as the prediction target
-    X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
+    X_train, X_test, M_train, _ = dataset.get_split_X_M()
 
     shift_range = np.arange(-12, 13) if enable_shift else np.array([])
     weights = data_weights(X_train) if enable_weighting else None
