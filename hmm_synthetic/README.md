@@ -39,4 +39,4 @@ python -m pytest
 
 ### Continuous integration
 
-All tests are run using GitHub actions on _push_ and _pull requests_. 
+All tests are run using GitHub actions on _push_ and _pull requests_.
