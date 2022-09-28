@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from hypothesis import assume, given, strategies
 from hypothesis.extra.numpy import array_shapes, arrays
@@ -57,15 +59,8 @@ def test_take_per_row_strided(data):
         assert np.array_equal(row, A[i, start_idx[i] : start_idx[i] + n_elem])
 
 
-def test_scmf():
-    """Test that SCMF behaves as expected, comparing to stored correct values.
-
-    Rationale:
-    We have run the SCMF factorizer and stored its internal matrices and other data
-    as function of iteration step as artifacts. This test runs SCMF and compares
-    that the values match.
-    """
-
+def _generate_SCMF_logs() -> dict[str, np.ndarray]:
+    """Helper function to generate quantities from SCMF to be compared."""
     # Parameters used in the model. NB! Do not change unless also regenerating
     # the "truth" artifacts.
     N = 100
@@ -93,26 +88,40 @@ def test_scmf():
         "s": np.empty((iterations, N)),
     }
 
-    # Assumes there to exist an array <attribute_name>_log of the appropriate size
-    attributes_to_log = ["X", "M", "U", "V_bc", "loss", "s"]
-
     scmf = SCMF(X, V, s_budget)
 
     for i in range(iterations):
         scmf.run_step()
-        for attribute in attributes_to_log:
+        for attribute in logs:
             attribute_value = getattr(scmf, attribute)
             logs[attribute][i] = (
                 attribute_value() if callable(attribute_value) else attribute_value
             )
 
-    # Uncommenct /only/ to regenerate artifacts!!
-    # for attribute in attributes_to_log:
-    #     np.save(artifact_path / f"{attribute}_log.npy", logs[attribute])
+    return logs
 
-    for attribute in attributes_to_log:
+
+def test_scmf():
+    """Snapshot test that SCMF behaves as expected, comparing to stored correct values.
+
+    Rationale:
+    We have run the SCMF factorizer and stored its internal matrices and other data
+    as function of iteration step as artifacts. This test runs SCMF and compares
+    that the values match.
+
+    Snapshots are updated by running the script `generate_scmf_artifacts.py`.
+    """
+
+    logs = _generate_SCMF_logs()
+
+    for attribute in logs:
         correct = np.load(artifact_path / f"{attribute}_log.npy")
         observed = logs[attribute]
         # Use allclose instead of array_equal, to allow for refactoring
         # that cuases different round off (for example avoiding sqrt).
         assert np.allclose(correct, observed)
+        if not np.array_equal(correct, observed):
+            warnings.warn(
+                "Test successful, but note that arrays are only similar, "
+                "not equal. Consider updating the snapshot."
+            )
