@@ -1,3 +1,5 @@
+from typing import Callable
+
 import mlflow
 import numpy as np
 import tensorflow as tf
@@ -63,7 +65,10 @@ def get_objective_CV(
     return objective
 
 
-def example_hyperparameter_search():
+def example_hyperparameter_search(objective_getter: Callable = get_objective_CV):
+    """Example implementaion of hyperparameter search.
+
+    objective_getter: callable returning an objective function."""
     tf.config.set_visible_devices([], "GPU")
     mlflow.set_tracking_uri(BASE_PATH / "mlruns")
     space = (
@@ -77,10 +82,6 @@ def example_hyperparameter_search():
         data = Dataset().load(DATASET_PATH)
     except FileNotFoundError:  # No data loaded
         data = Dataset().generate(1000, 40, 5, 5)
-
-    # Comment out appropriately
-    # objective_getter = get_objective
-    objective_getter = get_objective_CV
 
     with mlflow.start_run():
         res_gp = gp_minimize(
@@ -99,4 +100,6 @@ def example_hyperparameter_search():
 
 
 if __name__ == "__main__":
-    example_hyperparameter_search()
+    # Set objective_getter to get_objective_CV to use cross validation.
+    # Otherwise, get_objective uses simple train/test split.
+    example_hyperparameter_search(objective_getter=get_objective_CV)
