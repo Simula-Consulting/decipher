@@ -81,6 +81,7 @@ def experiment(
         weights=weights,
         extra_metrics=extra_metrics,
         convolution=enable_convolution,
+        optimization_params=optimization_params,
         **hyperparams
     )
 
@@ -116,7 +117,7 @@ def main():
         "lambda3": 4.535681885641427,
     }
     optimization_params = {
-        "num_epochs": 1000,
+        "num_epochs": 1500,
         "patience": 5,
     }
 

@@ -74,6 +74,7 @@ def train_and_log(
     extra_metrics: Optional[dict[str, Callable[[Type[BaseMF]], float]]] = None,
     log_loss: bool = True,
     nested: bool = False,
+    optimization_params: Optional[dict[str, Any]] = None,
     **hyperparams,
 ):
     """Train model and log in MLFlow.
@@ -87,6 +88,12 @@ def train_and_log(
         in MLFlow. Note that this is slow.
     nested: If True, the run is logged as a nested run in MLFlow, useful in for
         example hyperparameter search. Assumes there to exist an active parent run.
+    optimization_params: kwargs passed to `BaseMF.matrix_completion`. Example
+        {
+        "num_epochs": 2000,  # Number of training epochs.
+        "patience": 200,  # Number of epochs before considering early termination.
+        "epochs_per_val": 5,  # Consider early termination every `epochs_per_val` epoch.
+        }
 
     Returns:
     A dictionary of relevant output statistics.
@@ -113,6 +120,8 @@ def train_and_log(
                 "This is illegal, as it causes name collision!"
             )
         metrics.append("loss")
+    if optimization_params is None:
+        optimization_params = {}
 
     X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
     mlflow.start_run(nested=nested)
@@ -121,7 +130,9 @@ def train_and_log(
     model_name, factoriser = model_factory(X_train, **hyperparams)
 
     # Fit model
-    results = factoriser.matrix_completion(extra_metrics=extra_metrics)
+    results = factoriser.matrix_completion(
+        extra_metrics=extra_metrics, **optimization_params
+    )
 
     # Predict
     p_pred = factoriser.predict_probability(X_test_masked, t_pred)
