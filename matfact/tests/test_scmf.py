@@ -1,9 +1,60 @@
 import numpy as np
+from hypothesis import assume, given, strategies
+from hypothesis.extra.numpy import array_shapes, arrays
 
 from matfact.experiments import SCMF
-from matfact.settings import BASE_PATH
+from matfact.experiments.algorithms.factorization.scmf import (
+    _custom_roll,
+    _take_per_row_strided,
+)
+from matfact.settings import TEST_PATH
 
-artifact_path = BASE_PATH / "test_artifacts" / "SCMF_test"
+artifact_path = TEST_PATH / "test_artifacts" / "SCMF_test"
+
+
+@given(strategies.data())
+def test_custom_roll(data):
+    """Compare _custom_roll with naive slow rolling"""
+    array = data.draw(arrays(np.float, array_shapes(min_dims=2, max_dims=2)))
+    assume(not np.isnan(array).any())
+    # Limit shifts to not be too large (1e4 arbitrarily chosen), as _custom_roll
+    # is suseptible to floating point errors for large shifts.
+    # This is not relevant for us, as shifts are never larger than the number
+    # of time steps.
+    shifts = data.draw(
+        arrays(
+            int,
+            array.shape[0],
+            elements=strategies.integers(min_value=-1e4, max_value=1e4),
+        )
+    )
+    rolled = _custom_roll(array, shifts)
+    for row, rolled_row, shift in zip(array, rolled, shifts):
+        assert np.all(rolled_row == np.roll(row, shift))
+
+
+@given(strategies.data())
+def test_take_per_row_strided(data):
+    A = data.draw(
+        arrays(
+            float,
+            array_shapes(min_dims=2, max_dims=2, min_side=2),
+            elements=strategies.floats(allow_nan=False),
+        )
+    )
+    n_elem = data.draw(strategies.integers(min_value=0, max_value=A.shape[1] - 1))
+    start_idx = data.draw(
+        arrays(
+            int,
+            A.shape[0],
+            elements=strategies.integers(
+                min_value=0, max_value=A.shape[1] - n_elem - 1
+            ),
+        )
+    )
+    strided_A = _take_per_row_strided(A, start_idx, n_elem)
+    for i, row in enumerate(strided_A):
+        assert np.array_equal(row, A[i, start_idx[i] : start_idx[i] + n_elem])
 
 
 def test_scmf():

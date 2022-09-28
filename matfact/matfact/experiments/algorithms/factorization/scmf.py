@@ -14,6 +14,8 @@ def _custom_roll(arr, m):
     Arguments:
     arr: two-dimensional array
     m: one dimensional list of integers, each corresponding to a shift of a row in arr
+
+    NB! For very large shifts, floating point errors may cause the wrong results.
     """
 
     # NOTE: Should do copy here

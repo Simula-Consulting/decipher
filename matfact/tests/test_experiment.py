@@ -1,4 +1,3 @@
-"""Full system integration tests"""
 from itertools import product
 
 import numpy as np
@@ -15,32 +14,6 @@ from matfact.experiments import (
     prediction_data,
     train_and_log,
 )
-
-
-def test_dataset_read_write(tmp_path):
-    """Test that datasets are loaded and saved correctly"""
-    # Parameters chosen arbitrarily
-    dataset_params = {
-        "N": 1000,
-        "T": 50,
-        "rank": 5,
-        "sparsity_level": 6,
-    }
-    Dataset().generate(**dataset_params).save(tmp_path)
-    for file in ["X.npy", "M.npy", "dataset_metadata.json"]:
-        assert (tmp_path / file).exists()
-
-    imported_dataset = Dataset().load(tmp_path)
-    for param in dataset_params:
-        assert imported_dataset.metadata[param] == dataset_params[param]
-
-    X, M = imported_dataset.get_X_M()
-    N, T = dataset_params["N"], dataset_params["T"]
-
-    # When generating a dataset, some individuals (N) are thrown out due
-    # to not having enough non-zero samples.
-    assert X.shape[1] == M.shape[1] == T
-    assert X.shape[0] <= N and M.shape[0] == X.shape[0]
 
 
 def test_train(tmp_path):
