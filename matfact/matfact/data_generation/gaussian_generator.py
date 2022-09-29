@@ -46,7 +46,7 @@ def float_matrix(N, T, r, domain, seed=42):
 
     # Check the edge case that all elements are the same
     if np.all(M == M.flat[0]):
-        domain_middle_value = np.min(domain) + (np.max(domain) - np.min(domain)) / 2
+        domain_middle_value = (np.max(domain) + np.min(domain)) / 2
         return np.full_like(M, domain_middle_value)
 
     domain_min, domain_max = np.min(domain), np.max(domain)
