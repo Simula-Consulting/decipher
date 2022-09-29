@@ -6,6 +6,20 @@ def probability_model(x, theta, dom):
     return np.exp(-theta * (x - dom) ** 2)
 
 
+def _scale_to_domain(X: np.ndarray, domain_min: float, domain_max: float) -> np.ndarray:
+    """Scale an array such that all its elements are inside a domain.
+
+    In the case that all elements of X are equal, the scaled array will
+    have all elements equal to the middle point of the domain."""
+
+    if np.all(X == X.flat[0]):  # Check if all values are the same.
+        # Fill array with middle value of domain.
+        return np.full(X.shape, (domain_max + domain_min) / 2)
+
+    X_min, X_max = np.min(X), np.max(X)
+    return domain_min + (domain_max - domain_min) * (X - X_min) / (X_max - X_min)
+
+
 def float_matrix(N, T, r, domain, seed=42):
     """Generate real-valued profiles.
 
@@ -44,39 +58,18 @@ def float_matrix(N, T, r, domain, seed=42):
 
     M = U @ V.T
 
-    # Check the edge case that all elements are the same
-    if np.all(M == M.flat[0]):
-        domain_middle_value = (np.max(domain) + np.min(domain)) / 2
-        return np.full_like(M, domain_middle_value)
-
-    domain_min, domain_max = np.min(domain), np.max(domain)
-    M = domain_min + (M - np.min(M)) / (np.max(M) - np.min(M)) * (
-        domain_max - domain_min
-    )
-
-    return M
+    return _scale_to_domain(M, np.min(domain), np.max(domain))
 
 
 def discretise_matrix(M, domain, theta, seed=42):
     """Convert a <float> basis to <int>."""
 
     np.random.seed(seed)
-
-    d_max = np.max(domain)
-    d_min = np.min(domain)
-
     N, T = M.shape
     domain = np.array(domain)  # If list is given, convert to numpy array
     Z = len(domain)
 
-    # Check the edge case that all elements are the same
-    if np.all(M == M.flat[0]):
-        domain_middle_value = d_min + (d_max - d_min) / 2
-        X_float_scaled = np.full_like(M, domain_middle_value)
-    else:
-        X_float_scaled = d_min + (d_max - d_min) * (M - np.min(M)) / (
-            np.max(M) - np.min(M)
-        )
+    X_float_scaled = _scale_to_domain(M, np.min(domain), np.max(domain))
 
     domain_repeated = np.repeat(domain, N).reshape((N, Z), order="F")
 
