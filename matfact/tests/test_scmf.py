@@ -124,10 +124,3 @@ def test_scmf():
                 "Test successful, but note that arrays are only similar, "
                 "not equal. Consider updating the snapshot."
             )
-
-
-def test_scmf_snapshot(snapshot):
-    logs = _generate_SCMF_logs()
-    snapshot.snapshot_dir = artifact_path
-    for attribute in logs:
-        snapshot.assert_match(logs[attribute].tobytes(), f"{attribute}")
