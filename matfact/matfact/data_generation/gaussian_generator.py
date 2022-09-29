@@ -25,8 +25,10 @@ def float_matrix(N, T, r, domain, seed=42):
     TODO: fix magic numbers
     """
 
-    assert N > 0, T > 0
-    assert r <= min(N, T)
+    if N < 1 or T < 1:
+        raise ValueError("N and T must be larger than zero.")
+    if r > min(N, T):
+        raise ValueError("Rank r cannot be larger than either N or T.")
 
     np.random.seed(seed)
 
