@@ -29,12 +29,8 @@ def float_matrix(N, T, r, domain, seed=42):
     in all elements, how to map onto the domain is ambiguous. We *define*
     it to be mapped onto the middle value of domain.
 
-    For very large domains, floating point errors may occur, making
-    the output matrix have values outside of matrix.
-    An alternative procedure to correct this is the following:
-    now, we generate a matrix M, and then map those to the range [0, 1].
-    It is possible to instead map it to some integer domain, thus avoiding
-    floating point errors when mapping to the target range.
+    Note that due to floating point errors, the generated matrix may have
+    values slightly outside of domain. This is acceptable for our use.
 
     TODO: fix magic numbers
     """
