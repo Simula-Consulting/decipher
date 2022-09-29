@@ -8,16 +8,23 @@ from matfact.data_generation.gaussian_generator import discretise_matrix, float_
 
 @given(
     strategies.data(),
-    strategies.lists(strategies.integers(min_value=-100, max_value=100), min_size=1),
+    strategies.lists(strategies.floats(min_value=-100, max_value=100), min_size=1),
 )
 def test_float_matrix(data, domain):
     N = data.draw(strategies.integers(min_value=1, max_value=100))
     T = data.draw(strategies.integers(min_value=1, max_value=100))
     r = data.draw(strategies.integers(min_value=1, max_value=min(T, N)))
     M = float_matrix(N, T, r, domain)
-    d_min, d_max = np.min(domain), np.max(domain)
+    domain_min, domain_max = np.min(domain), np.max(domain)
     assert not np.isnan(M).any()
-    assert np.all(d_min <= M) and np.all(M <= d_max)
+
+    # Check that all values are within the range.
+    # They may be slightly outside due to floating point errors, in that case
+    # check that they are close to the domain limits.
+    if not (np.all(domain_min <= M) and np.all(M <= domain_max)):
+        M_min = np.min(M)
+        M_max = np.max(M)
+        assert np.isclose(domain_min, M_min) and np.isclose(domain_max, M_max)
 
 
 @given(
