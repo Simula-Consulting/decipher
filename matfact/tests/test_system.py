@@ -6,6 +6,14 @@ from itertools import product
 from examples.example import experiment as experiment1
 from examples.example_train_and_log import experiment as experiment2
 from matfact.data_generation import Dataset
+from matfact.settings import BASE_PATH
+
+
+def test_all_examples():
+    """Run all example scripts."""
+    example_path = BASE_PATH / "examples"
+    for example in example_path.glob("*.py"):
+        exec(example.read_text())
 
 
 def test_train(tmp_path):
