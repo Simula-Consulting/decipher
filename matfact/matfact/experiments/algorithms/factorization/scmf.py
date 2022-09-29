@@ -128,29 +128,7 @@ class SCMF(BaseMF):
         self.nz_rows, self.nz_cols = np.nonzero(X)
 
         self.n_iter_ = 0
-        self._init_matrices(X, V, D, J, K)
 
-    @property
-    def X(self):
-        # return self.X_bc[:, self.Ns:-self.Ns]
-        return _take_per_row_strided(self.X_shifted, self.Ns - self.s, n_elem=self.T)
-
-    @property
-    def V(self):
-        """To be compatible with the expectation of having a V"""
-        return self.V_bc
-
-    @property
-    def M(self):
-
-        # Compute the reconstructed matrix with sample-specific shifts
-        M = _take_per_row_strided(
-            self.U @ self.V_bc.T, start_idx=self.Ns - self.s, n_elem=self.T
-        )
-
-        return np.array(M, dtype=np.float32)
-
-    def _init_matrices(self, X, V, D, J, K):
         # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)
         # The number of possible shifts. Used for padding of arrays.
@@ -190,6 +168,26 @@ class SCMF(BaseMF):
 
             self.X_shifts[j] = np.roll(self.X_bc, -1 * s_n, axis=1)
             self.W_shifts[j] = np.roll(self.W_bc, -1 * s_n, axis=1)
+
+    @property
+    def X(self):
+        # return self.X_bc[:, self.Ns:-self.Ns]
+        return _take_per_row_strided(self.X_shifted, self.Ns - self.s, n_elem=self.T)
+
+    @property
+    def V(self):
+        """To be compatible with the expectation of having a V"""
+        return self.V_bc
+
+    @property
+    def M(self):
+
+        # Compute the reconstructed matrix with sample-specific shifts
+        M = _take_per_row_strided(
+            self.U @ self.V_bc.T, start_idx=self.Ns - self.s, n_elem=self.T
+        )
+
+        return np.array(M, dtype=np.float32)
 
     def _shift_X_W(self):
 
