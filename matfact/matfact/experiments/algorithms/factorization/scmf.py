@@ -24,7 +24,8 @@ def _custom_roll(arr, m):
     strd_0, strd_1 = arr_roll.strides
     n = arr.shape[1]
     # Set as_strided to writable=False to avoid accidentally writing to the memory
-    # thus corrupting the data, as reccomended in the documentation.
+    # thus corrupting the data.
+    # Setting this is also recommended in the documentation.
     result = as_strided(
         arr_roll, (*arr.shape, n), (strd_0, strd_1, strd_1), writeable=False
     )
