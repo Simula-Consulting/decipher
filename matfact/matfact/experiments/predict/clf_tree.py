@@ -16,6 +16,9 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
         self.tau2 = tau2
         self.tau3 = tau3
 
+    def __call__(self, *args, **kwargs):
+        return self.predict(*args, **kwargs)
+
     def get_params(self, deep=True):
 
         params = {"tau2": self.tau2, "tau3": self.tau3}
