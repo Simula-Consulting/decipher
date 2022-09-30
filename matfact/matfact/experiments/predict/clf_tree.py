@@ -11,8 +11,8 @@ the class to p2. Next, check p1 > t1, etc.
 In general, given probabilities [p0, p1, p2, ...] and thresholds [t1, t2, ...], set the
 class to max(i) where pi > ti.
 
-This prediction algorithm is implemented in `ClassificationTree`.
-In addition, `estimate_proba_thresh` estimates the optimal values of the threshodls.
+This prediction algorithm is implemented in `ClassificationTree`. In addition,
+`estimate_probability_thresholds` estimates the optimal values of the thresholds.
 """
 import numpy as np
 from scipy import optimize
@@ -57,7 +57,9 @@ def mcc_objective(thresh, y_true, y_pred_proba, clf):
     )
 
 
-def estimate_proba_thresh(y_true, y_pred_proba, tol=1e-6, seed=42, n_thresholds=2):
+def estimate_probability_thresholds(
+    y_true, y_pred_proba, tol=1e-6, seed=42, n_thresholds=2
+):
     """Use differential evolution algorithm to estimate probability thresholds for the classification tree.  # noqa: E501
 
     Aags:

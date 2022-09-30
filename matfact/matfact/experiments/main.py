@@ -14,7 +14,7 @@ from matfact.experiments.algorithms.utils import (
     initialize_basis,
     laplacian_kernel_matrix,
 )
-from matfact.experiments.predict.clf_tree import estimate_proba_thresh
+from matfact.experiments.predict.clf_tree import estimate_probability_thresholds
 from matfact.experiments.simulation.dataset import prediction_data
 
 
@@ -141,7 +141,7 @@ def train_and_log(
     # Predict
     p_pred = factoriser.predict_probability(X_test_masked, t_pred)
     if use_threshold_optimization:
-        classification_tree = estimate_proba_thresh(x_true, p_pred)
+        classification_tree = estimate_probability_thresholds(x_true, p_pred)
         threshold_values = {
             f"classification_tree_{key}": value
             for key, value in classification_tree.get_params().items()
