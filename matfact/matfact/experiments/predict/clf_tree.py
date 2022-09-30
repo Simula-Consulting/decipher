@@ -1,3 +1,19 @@
+"""Threshold based classification.
+
+To correct for the data being skewed, we introduce some threshold values that
+favor less likely classes, even when they do not have the highest probability.
+Consider we have some probabilities [p0, p1, p2], where pi is the probability of
+class i. We introduce thresholds [t1, t2], such that instead of choosing the class
+with the highest probability, we choose the class as follows: beginning from the class
+with the highest number (assumed to be the rearest), check if p2 > t2. If so, we set
+the class to p2. Next, check p1 > t1, etc.
+
+In general, given probabilities [p0, p1, p2, ...] and thresholds [t1, t2, ...], set the
+class to max(i) where pi > ti.
+
+This prediction algorithm is implemented in `ClassificationTree`.
+In addition, `estimate_proba_thresh` estimates the optimal values of the threshodls.
+"""
 import copy
 
 import numpy as np
@@ -8,7 +24,7 @@ from sklearn.metrics import matthews_corrcoef
 
 class ClassificationTree(BaseEstimator, ClassifierMixin):
     """Perform hierarchical classification given probability thresholds.
-    The number of thresholds (tau) equals is one less than the number of classes.
+    The number of thresholds (tau) is one less than the number of classes.
     """
 
     def __init__(self, tau2=0, tau3=0):
