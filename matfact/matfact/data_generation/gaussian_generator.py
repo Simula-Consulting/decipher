@@ -6,8 +6,39 @@ def probability_model(x, theta, dom):
     return np.exp(-theta * (x - dom) ** 2)
 
 
+def _scale_to_domain(X: np.ndarray, domain_min: float, domain_max: float) -> np.ndarray:
+    """Scale an array such that all its elements are inside a domain.
+
+    In the case that all elements of X are equal, the scaled array will
+    have all elements equal to the middle point of the domain."""
+
+    if np.all(X == X.flat[0]):  # Check if all values are the same.
+        # Fill array with middle value of domain.
+        return np.full(X.shape, (domain_max + domain_min) / 2)
+
+    X_min, X_max = np.min(X), np.max(X)
+    return domain_min + (domain_max - domain_min) * (X - X_min) / (X_max - X_min)
+
+
 def float_matrix(N, T, r, domain, seed=42):
-    """Generate real-valued profiles."""
+    """Generate real-valued profiles.
+
+    The rank must be such that r <= min(N, T).
+
+    In the unlikely case that the generated matrix M contains the same value
+    in all elements, how to map onto the domain is ambiguous. We *define*
+    it to be mapped onto the middle value of domain.
+
+    Note that due to floating point errors, the generated matrix may have
+    values slightly outside of domain. This is acceptable for our use.
+
+    TODO: fix magic numbers
+    """
+
+    if N < 1 or T < 1:
+        raise ValueError("N and T must be larger than zero.")
+    if r > min(N, T):
+        raise ValueError("Rank r cannot be larger than either N or T.")
 
     np.random.seed(seed)
 
@@ -22,30 +53,26 @@ def float_matrix(N, T, r, domain, seed=42):
     U = np.random.gamma(shape=1.0, scale=1.0, size=(N, r))
 
     M = U @ V.T
-    M = domain[0] + (M - np.min(M)) / (np.max(M) - np.min(M)) * (domain[-1] - domain[0])
 
-    return M
+    return _scale_to_domain(M, np.min(domain), np.max(domain))
 
 
 def discretise_matrix(M, domain, theta, seed=42):
     """Convert a <float> basis to <int>."""
 
     np.random.seed(seed)
-
-    d_max = np.max(domain)
-    d_min = np.min(domain)
-
     N, T = M.shape
-    Z = domain.shape[0]
+    domain = np.array(domain)  # If list is given, convert to numpy array
+    Z = len(domain)
 
-    X_float_scaled = d_min + (d_max - d_min) * (M - np.min(M)) / (np.max(M) - np.min(M))
+    X_float_scaled = _scale_to_domain(M, np.min(domain), np.max(domain))
 
     domain_repeated = np.repeat(domain, N).reshape((N, Z), order="F")
 
     D = np.empty_like(X_float_scaled)
     for j in range(T):
 
-        column_repeated = np.repeat(X_float_scaled[:, j], 4).reshape((N, 4), order="C")
+        column_repeated = np.repeat(X_float_scaled[:, j], Z).reshape((N, Z), order="C")
 
         pdf = probability_model(column_repeated, theta, domain_repeated)
         cdf = np.cumsum(pdf / np.reshape(np.sum(pdf, axis=1), (N, 1)), axis=1)

@@ -7,25 +7,53 @@ from .mfbase import BaseMF
 
 
 def _custom_roll(arr, m):
-    # Auxillary function for faster row-wise shifting
+    """Roll array elements with different amount per axis.
+
+    Fast implementation of row wise shifting.
+
+    Arguments:
+    arr: two-dimensional array
+    m: one dimensional list of integers, each corresponding to a shift of a row in arr
+
+    NB! For very large shifts, floating point errors may cause the wrong results.
+    """
 
     # NOTE: Should do copy here
-    arr_roll = arr[:, [*range(arr.shape[1]), *range(arr.shape[1] - 1)]].copy()
+    # Thorvald (19.09.22): Why?
+    arr_roll = arr[:, [*range(arr.shape[1]), *range(arr.shape[1] - 1)]]  # .copy()
     strd_0, strd_1 = arr_roll.strides
     n = arr.shape[1]
-    result = as_strided(arr_roll, (*arr.shape, n), (strd_0, strd_1, strd_1))
+    # Set as_strided to writable=False to avoid accidentally writing to the memory
+    # thus corrupting the data.
+    # Setting this is also recommended in the documentation.
+    result = as_strided(
+        arr_roll, (*arr.shape, n), (strd_0, strd_1, strd_1), writeable=False
+    )
 
     return result[np.arange(arr.shape[0]), (n - m) % n].astype(arr.dtype)
 
 
 def _take_per_row_strided(A, start_idx, n_elem):
-    # Auxillary function for faster selecting from shifted samples
+    """Select n_elem per row with a shift start_idx.
+
+    Fast implementation of selection from row wise shifted sample.
+    Rows are not wrapped around, i.e. if start_idx + n_elem is larger than the
+    number of columns, out of range is thrown.
+
+    In other words
+    >>> def simple_row_strided(A, shift_array, number_elements):
+    >>>     strided_A = np.empty((A.shape[0], number_elements))
+    >>>     for i in range(A.shape[0]):
+    >>>         strided_A[i] = A[i, shift_array[i]:shift_array[i]+number_elements]
+    """
 
     m, n = np.shape(A)
     A.shape = -1
     s0 = A.strides[0]
     l_indx = start_idx + n * np.arange(len(start_idx))
-    out = as_strided(A, (len(A) - n_elem + 1, n_elem), (s0, s0))[l_indx]
+    out = as_strided(A, (len(A) - n_elem + 1, n_elem), (s0, s0), writeable=False)[
+        l_indx
+    ]
     A.shape = m, n
 
     return out
@@ -54,7 +82,16 @@ class SCMF(BaseMF):
         learning_rate: Stepsize used in the GD
 
 
-    TODO: it looks like J is never used...
+    Discussion:
+    There are four X matrices (correspondingly for W):
+    - X : The original input matrix
+    - X_bc : The original input matrix with padded zeros on the time axis.
+    - X_shifted : Similar to X_bc, but each row is shifted according to self.s.
+    - X_shifts : A stack of size(s_budged) arrays similar to X_bc, but each shifted
+        horizontally (time axis). Stack layer i is shifted s_budged[i].
+
+    X_shifted is the only matrix altered after initialization.
+
     """
 
     def __init__(
@@ -74,11 +111,7 @@ class SCMF(BaseMF):
         learning_rate=0.001,
     ):
 
-        self.X = X
-        self.X_shifted = X.copy()  # Altered during solving
-        self.V = V
         self.W = data_weights(X) if W is None else W
-        self.W_shifted = self.W.copy()  # Altered during solving
 
         self.s_budget = s_budget
 
@@ -91,25 +124,14 @@ class SCMF(BaseMF):
         self.learning_rate = learning_rate
 
         self.r = V.shape[1]
-        self.N, self.T = np.shape(self.X_shifted)
-        self.nz_rows, self.nz_cols = np.nonzero(self.X_shifted)
+        self.N, self.T = np.shape(X)
+        self.nz_rows, self.nz_cols = np.nonzero(X)
 
         self.n_iter_ = 0
-        self._init_matrices(D, J, K)
 
-    @property
-    def M(self):
-
-        # Compute the reconstructed matrix with sample-specific shifts
-        M = _take_per_row_strided(
-            self.U @ self.V.T, start_idx=self.Ns - self.s, n_elem=self.T
-        )
-
-        return np.array(M, dtype=np.float32)
-
-    def _init_matrices(self, D, J, K):
-
+        # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)
+        # The number of possible shifts. Used for padding of arrays.
         self.Ns = int(self.s_budget.size)
 
         # Add time points to cover extended left and right boundaries when shifting.
@@ -122,23 +144,24 @@ class SCMF(BaseMF):
 
         # Expand matrices with zeros over the extended left and right boundaries.
         self.X_bc = np.hstack(
-            [np.zeros((self.N, self.Ns)), self.X_shifted, np.zeros((self.N, self.Ns))]
+            [np.zeros((self.N, self.Ns)), X, np.zeros((self.N, self.Ns))]
         )
         self.W_bc = np.hstack(
-            [np.zeros((self.N, self.Ns)), self.W_shifted, np.zeros((self.N, self.Ns))]
+            [np.zeros((self.N, self.Ns)), self.W, np.zeros((self.N, self.Ns))]
         )
-
-        self.V = np.vstack(
-            [np.zeros((self.Ns, self.r)), self.V, np.zeros((self.Ns, self.r))]
+        self.V_bc = np.vstack(
+            [np.zeros((self.Ns, self.r)), V, np.zeros((self.Ns, self.r))]
         )
-
-        # Placeholders (s x N x T) for all possible candidate shits
-        self.X_shifts = np.array([np.zeros_like(self.X_bc)] * self.Ns)
-        self.W_shifts = np.array([np.zeros_like(self.W_bc)] * self.Ns)
+        self.J = J if J else tf.ones_like(self.V_bc, dtype=tf.float32)
 
         # Implementation shifts W and Y (not UV.T)
-        self._shift_X_W()
-        self._fill_boundary_regions_V()
+        self.X_shifted = self.X_bc.copy()
+        self.W_shifted = self.W_bc.copy()
+        self._fill_boundary_regions_V_bc()
+
+        # Placeholders (s x N x T) for all possible candidate shits
+        self.X_shifts = np.empty((self.Ns, *self.X_bc.shape))
+        self.W_shifts = np.empty((self.Ns, *self.W_bc.shape))
 
         # Shift Y in opposite direction of V shift.
         for j, s_n in enumerate(self.s_budget):
@@ -146,18 +169,38 @@ class SCMF(BaseMF):
             self.X_shifts[j] = np.roll(self.X_bc, -1 * s_n, axis=1)
             self.W_shifts[j] = np.roll(self.W_bc, -1 * s_n, axis=1)
 
+    @property
+    def X(self):
+        # return self.X_bc[:, self.Ns:-self.Ns]
+        return _take_per_row_strided(self.X_shifted, self.Ns - self.s, n_elem=self.T)
+
+    @property
+    def V(self):
+        """To be compatible with the expectation of having a V"""
+        return self.V_bc
+
+    @property
+    def M(self):
+
+        # Compute the reconstructed matrix with sample-specific shifts
+        M = _take_per_row_strided(
+            self.U @ self.V_bc.T, start_idx=self.Ns - self.s, n_elem=self.T
+        )
+
+        return np.array(M, dtype=np.float32)
+
     def _shift_X_W(self):
 
-        self.X_shifted = _custom_roll(self.X_bc.copy(), -1 * self.s)
-        self.W_shifted = _custom_roll(self.W_bc.copy(), -1 * self.s)
+        self.X_shifted = _custom_roll(self.X_bc, -1 * self.s)
+        self.W_shifted = _custom_roll(self.W_bc, -1 * self.s)
 
-    def _fill_boundary_regions_V(self):
-        # Extrapolate the edge values in V over the extended boundaries
+    def _fill_boundary_regions_V_bc(self):
+        """Extrapolate the edge values in V_bc over the extended boundaries"""
 
-        V_filled = np.zeros_like(self.V)
+        V_filled = np.zeros_like(self.V_bc)
 
         idx = np.arange(self.T + 2 * self.Ns)
-        for i, v in enumerate(self.V.T):
+        for i, v in enumerate(self.V_bc.T):
 
             v_left = v[idx <= int(self.T / 2)]
             v_right = v[idx > int(self.T / 2)]
@@ -167,51 +210,44 @@ class SCMF(BaseMF):
 
             V_filled[:, i] = np.concatenate([v_left, v_right])
 
-        self.V = V_filled
+        self.V_bc = V_filled
 
     def _update_V(self):
+        V = tf.Variable(self.V_bc, dtype=tf.float32)
 
         # @tf.function
         def _loss_V():
 
-            frob_tensor = tf.multiply(W, X - (U @ tf.transpose(V)))
-            frob_loss = tf.reduce_sum(tf.square(tf.norm(frob_tensor, axis=-1)))
+            frob_tensor = tf.multiply(
+                self.W_shifted, self.X_shifted - (self.U @ tf.transpose(V))
+            )
+            frob_loss = tf.reduce_sum(frob_tensor**2)
 
-            l2_loss = self.lambda2 * tf.square(tf.norm(V - J))
-            conv_loss = self.lambda3 * tf.square(tf.norm(tf.matmul(self.KD, V)))
+            l2_loss = self.lambda2 * tf.reduce_sum((V - self.J) ** 2)
+            conv_loss = self.lambda3 * tf.reduce_sum((tf.matmul(self.KD, V) ** 2))
 
             return frob_loss + l2_loss + conv_loss
-
-        V = tf.Variable(self.V, dtype=tf.float32)
-        J = tf.ones_like(self.V, dtype=tf.float32)
-
-        W = tf.cast(self.W_shifted, dtype=tf.float32)
-        X = tf.cast(self.X_shifted, dtype=tf.float32)
-        U = tf.cast(self.U, dtype=tf.float32)
 
         optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         for _ in tf.range(self.iter_V):
             optimiser.minimize(_loss_V, [V])
 
-        self.V = V.numpy()
+        self.V_bc = V.numpy()
 
     def _approx_U(self):
+
+        U = tf.Variable(self.U, dtype=tf.float32)
 
         # @tf.function
         def _loss_U():
 
-            frob_tensor = tf.multiply(W, X - tf.matmul(U, V, transpose_b=True))
-            frob_loss = tf.reduce_sum(tf.square(tf.norm(frob_tensor, axis=-1)))
-
-            return frob_loss + self.lambda1 * tf.reduce_sum(
-                tf.square(tf.norm(U, axis=-1))
+            frob_tensor = tf.multiply(
+                self.W_shifted,
+                self.X_shifted - tf.matmul(U, self.V_bc, transpose_b=True),
             )
+            frob_loss = tf.reduce_sum((frob_tensor) ** 2)
 
-        U = tf.Variable(self.U, dtype=tf.float32)
-
-        W = tf.cast(self.W_shifted, dtype=tf.float32)
-        X = tf.cast(self.X_shifted, dtype=tf.float32)
-        V = tf.cast(self.V, dtype=tf.float32)
+            return frob_loss + self.lambda1 * tf.reduce_sum(U**2)
 
         optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         for _ in tf.range(self.iter_U):
@@ -233,16 +269,16 @@ class SCMF(BaseMF):
             for n in range(self.N):
                 self.U[n] = (
                     self.X_shifted[n]
-                    @ self.V
+                    @ self.V_bc
                     @ np.linalg.inv(
-                        self.V.T @ (np.diag(self.W_shifted[n]) @ self.V) + self.I1
+                        self.V_bc.T @ (np.diag(self.W_shifted[n]) @ self.V_bc) + self.I1
                     )
                 )
 
     def _update_s(self):
 
         # Evaluate the discrepancy term for all possible shift candidates
-        M = self.U @ self.V.T
+        M = self.U @ self.V_bc.T
         D = (
             np.linalg.norm(self.W_shifts * (self.X_shifts - M[None, :, :]), axis=-1)
             ** 2
@@ -271,12 +307,12 @@ class SCMF(BaseMF):
 
         loss = np.sum(
             np.linalg.norm(
-                self.W_shifted * (self.X_shifted - self.U @ self.V.T), axis=1
+                self.W_shifted * (self.X_shifted - self.U @ self.V_bc.T), axis=1
             )
             ** 2
         )
         loss += self.lambda1 * np.sum(np.linalg.norm(self.U, axis=1) ** 2)
-        loss += self.lambda2 * np.linalg.norm(self.V) ** 2
-        loss += self.lambda3 * np.linalg.norm(self.KD @ self.V) ** 2
+        loss += self.lambda2 * np.linalg.norm(self.V_bc) ** 2
+        loss += self.lambda3 * np.linalg.norm(self.KD @ self.V_bc) ** 2
 
         return loss
