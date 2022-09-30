@@ -14,8 +14,6 @@ class to max(i) where pi > ti.
 This prediction algorithm is implemented in `ClassificationTree`.
 In addition, `estimate_proba_thresh` estimates the optimal values of the threshodls.
 """
-import copy
-
 import numpy as np
 from scipy import optimize
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -34,23 +32,6 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
 
     def __call__(self, *args, **kwargs):
         return self.predict(*args, **kwargs)
-
-    def get_params(self, deep=True):
-
-        params = {"tau2": self.tau2, "tau3": self.tau3}
-
-        if deep:
-            for key in params.keys():
-                params[key] = copy.deepcopy(params[key])
-
-        return params
-
-    def set_params(self, **params):
-
-        self.tau2 = params["tau2"]
-        self.tau3 = params["tau3"]
-
-        return self
 
     def predict(self, proba):
 
