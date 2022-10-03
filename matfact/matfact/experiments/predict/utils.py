@@ -1,3 +1,9 @@
+"""Binary delta score utilities.
+
+This code was given to us by Severin, but is yet not integrated with the rest of the
+code.
+"""
+
 import numpy as np
 import tensorflow as tf
 
