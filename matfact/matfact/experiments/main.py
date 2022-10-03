@@ -136,7 +136,13 @@ def train_and_log(
     results = factoriser.matrix_completion(
         extra_metrics=extra_metrics, **optimization_params
     )
+
+    # Predict
+    X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
+    p_pred = factoriser.predict_probability(X_test_masked, t_pred)
+
     if use_threshold_optimization:
+        # Find the optimal threshold values
         X_train_masked, t_pred_train, x_true_train = prediction_data(
             X_train, "last_observed"
         )
@@ -151,10 +157,7 @@ def train_and_log(
         results.update(threshold_values)
         mlflow.log_params(threshold_values)
 
-    # Predict
-    X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
-    p_pred = factoriser.predict_probability(X_test_masked, t_pred)
-    if use_threshold_optimization:
+        # Use threshold values on the test set
         x_pred = classification_tree(p_pred)
     else:
         # Simply choose the class with the highest probability
