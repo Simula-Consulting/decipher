@@ -137,9 +137,13 @@ def train_and_log(
         extra_metrics=extra_metrics, **optimization_params
     )
     if use_threshold_optimization:
-        X_train_masked, t_pred, x_true = prediction_data(X_train, "last_observed")
-        p_pred = factoriser.predict_probability(X_train_masked, t_pred)
-        classification_tree = estimate_probability_thresholds(x_true, p_pred)
+        X_train_masked, t_pred_train, x_true_train = prediction_data(
+            X_train, "last_observed"
+        )
+        p_pred_train = factoriser.predict_probability(X_train_masked, t_pred_train)
+        classification_tree = estimate_probability_thresholds(
+            x_true_train, p_pred_train
+        )
         threshold_values = {
             f"classification_tree_{key}": value
             for key, value in classification_tree.get_params().items()
