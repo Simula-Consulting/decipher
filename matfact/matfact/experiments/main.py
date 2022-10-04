@@ -158,7 +158,7 @@ def train_and_log(
         mlflow.log_params(threshold_values)
 
         # Use threshold values on the test set
-        x_pred = classification_tree(p_pred)
+        x_pred = classification_tree.predict(p_pred)
     else:
         # Simply choose the class with the highest probability
         # Class labels are 1-indexed, so add one to the arg index.
