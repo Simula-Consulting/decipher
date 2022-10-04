@@ -26,11 +26,15 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(self, tau2=0, tau3=0):
-
         self.tau2 = tau2
         self.tau3 = tau3
 
     def predict(self, proba):
+        """Perform classification given probabilities for classes.
+
+        Arguments:
+        proba: (N_samples x number_of_states) ndarray, where N_samples is the number of
+            samples."""
 
         # Bottom-up.
         states = np.ones(proba.shape[0], dtype=float)
@@ -40,7 +44,7 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
         return states
 
     def fit(self, X, y):
-        # Only for API consistency.
+        """Do nothing, fit required by sklearn API specification."""
         return self
 
 
