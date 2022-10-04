@@ -44,10 +44,10 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
         return self
 
 
-def mcc_objective(thresh, y_true, y_pred_proba, clf):
+def mcc_objective(thresholds, y_true, y_pred_proba, clf):
     "Objective function to evaluate the differential evolution process."
 
-    clf.set_params(tau2=thresh[0], tau3=thresh[1])
+    clf.set_params(tau2=thresholds[0], tau3=thresholds[1])
 
     return -1.0 * matthews_corrcoef(
         y_true.astype(int), clf.predict(y_pred_proba).astype(int)
