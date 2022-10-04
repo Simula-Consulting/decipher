@@ -14,6 +14,7 @@ from matfact.experiments.algorithms.utils import (
     initialize_basis,
     laplacian_kernel_matrix,
 )
+from matfact.experiments.predict.clf_tree import estimate_probability_thresholds
 from matfact.experiments.simulation.dataset import prediction_data
 
 
@@ -74,6 +75,7 @@ def train_and_log(
     extra_metrics: Optional[dict[str, Callable[[Type[BaseMF]], float]]] = None,
     log_loss: bool = True,
     nested: bool = False,
+    use_threshold_optimization: bool = True,
     optimization_params: Optional[dict[str, Any]] = None,
     **hyperparams,
 ):
@@ -88,6 +90,8 @@ def train_and_log(
         in MLFlow. Note that this is slow.
     nested: If True, the run is logged as a nested run in MLFlow, useful in for
         example hyperparameter search. Assumes there to exist an active parent run.
+    use_threshold_optimization: Use ClassificationTree optimization to find thresholds
+        for class selection. Can improve results on data skewed towards normal.
     optimization_params: kwargs passed to `BaseMF.matrix_completion`. Example
         {
         "num_epochs": 2000,  # Number of training epochs.
@@ -123,7 +127,6 @@ def train_and_log(
     if optimization_params is None:
         optimization_params = {}
 
-    X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
     mlflow.start_run(nested=nested)
 
     # Create model
@@ -135,8 +138,31 @@ def train_and_log(
     )
 
     # Predict
+    X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
     p_pred = factoriser.predict_probability(X_test_masked, t_pred)
-    x_pred = 1 + np.argmax(p_pred, axis=1)
+
+    if use_threshold_optimization:
+        # Find the optimal threshold values
+        X_train_masked, t_pred_train, x_true_train = prediction_data(
+            X_train, "last_observed"
+        )
+        p_pred_train = factoriser.predict_probability(X_train_masked, t_pred_train)
+        classification_tree = estimate_probability_thresholds(
+            x_true_train, p_pred_train
+        )
+        threshold_values = {
+            f"classification_tree_{key}": value
+            for key, value in classification_tree.get_params().items()
+        }
+        results.update(threshold_values)
+        mlflow.log_params(threshold_values)
+
+        # Use threshold values on the test set
+        x_pred = classification_tree.predict(p_pred)
+    else:
+        # Simply choose the class with the highest probability
+        # Class labels are 1-indexed, so add one to the arg index.
+        x_pred = 1 + np.argmax(p_pred, axis=1)
 
     # Score
     score = matthews_corrcoef(x_pred, x_true)
