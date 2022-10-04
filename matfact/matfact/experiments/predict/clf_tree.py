@@ -85,7 +85,7 @@ def estimate_probability_thresholds(
     tol: float = 1e-6,
     seed: int = 42,
 ):
-    """Use differential evolution algorithm to estimate probability thresholds for the classification tree.  # noqa: E501
+    """Estimate threshold values for ClassificationTree with differential evolution.
 
     Args:
         y_true: Vector of class labels.
