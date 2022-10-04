@@ -66,7 +66,7 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
         return self
 
 
-def _mcc_objective(
+def _matthews_correlation_coefficient_objective(
     thresholds: np.ndarray,
     y_true: np.ndarray,
     y_predicted_probabilities: np.ndarray,
@@ -102,7 +102,7 @@ def estimate_probability_thresholds(
     number_of_classes = y_predicted_probabilities.shape[1]
 
     result = optimize.differential_evolution(
-        _mcc_objective,
+        _matthews_correlation_coefficient_objective,
         # Bounds are [0, 1] for each threshold value, i.e. one less than the number
         # of classes. Iterators are not accepted, so convert to list.
         bounds=list(itertools.repeat((0, 1), number_of_classes - 1)),
