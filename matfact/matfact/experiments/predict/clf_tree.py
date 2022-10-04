@@ -63,25 +63,25 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
         return self
 
 
-def mcc_objective(
+def _mcc_objective(
     thresholds: np.ndarray,
     y_true: np.ndarray,
-    y_pred_proba: np.ndarray,
+    y_predicted_probabilities: np.ndarray,
     clf: ClassificationTree,
 ):
     "Objective function to evaluate the differential evolution process."
-    check_X_y(y_pred_proba, y_true)
+    check_X_y(y_predicted_probabilities, y_true)
 
     clf.set_params(thresholds=thresholds)
 
     return -1.0 * matthews_corrcoef(
-        y_true.astype(int), clf.predict(y_pred_proba).astype(int)
+        y_true.astype(int), clf.predict(y_predicted_probabilities).astype(int)
     )
 
 
 def estimate_probability_thresholds(
     y_true: np.ndarray,
-    y_pred_proba: np.ndarray,
+    y_predicted_probabilities: np.ndarray,
     tol: float = 1e-6,
     seed: int = 42,
 ):
@@ -95,15 +95,15 @@ def estimate_probability_thresholds(
         A ClassificationTree object instantiated with the estimated probaility
         thresholds. This object may be saved to disk using scikit-learn routines.
     """
-    check_X_y(y_pred_proba, y_true)
-    number_of_classes = y_pred_proba.shape[1]
+    check_X_y(y_predicted_probabilities, y_true)
+    number_of_classes = y_predicted_probabilities.shape[1]
 
     result = optimize.differential_evolution(
-        mcc_objective,
+        _mcc_objective,
         # Bounds are [0, 1] for each threshold value, i.e. one less than the number
         # of classes. Iterators are not accepted, so convert to list.
         bounds=list(itertools.repeat((0, 1), number_of_classes - 1)),
-        args=(y_true, y_pred_proba, ClassificationTree()),
+        args=(y_true, y_predicted_probabilities, ClassificationTree()),
         seed=seed,
         tol=tol,
     )
