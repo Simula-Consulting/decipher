@@ -59,12 +59,12 @@ def estimate_probability_thresholds(
 ):
     """Use differential evolution algorithm to estimate probability thresholds for the classification tree.  # noqa: E501
 
-    Aags:
+    Args:
         y_true: Vector of class labels.
         y_pred_proba: Vector of predicted probabilities.
 
     Returns:
-        A ClassificationTree objecti instantiated with the estimated probaility
+        A ClassificationTree object instantiated with the estimated probaility
         thresholds. This object may be saved to disk using scikit-learn routines.
     """
 
