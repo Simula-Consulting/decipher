@@ -14,6 +14,7 @@ class to max(i) where pi > ti.
 This prediction algorithm is implemented in `ClassificationTree`. In addition,
 `estimate_probability_thresholds` estimates the optimal values of the thresholds.
 """
+import itertools
 from typing import Any
 
 import numpy as np
@@ -83,7 +84,6 @@ def estimate_probability_thresholds(
     y_pred_proba: np.ndarray,
     tol: float = 1e-6,
     seed: int = 42,
-    n_thresholds: int = 3,
 ):
     """Use differential evolution algorithm to estimate probability thresholds for the classification tree.  # noqa: E501
 
@@ -96,10 +96,13 @@ def estimate_probability_thresholds(
         thresholds. This object may be saved to disk using scikit-learn routines.
     """
     check_X_y(y_pred_proba, y_true)
+    number_of_classes = y_pred_proba.shape[1]
 
     result = optimize.differential_evolution(
         mcc_objective,
-        bounds=optimize.Bounds([0] * n_thresholds, [1] * n_thresholds),
+        # Bounds are [0, 1] for each threshold value, i.e. one less than the number
+        # of classes. Iterators are not accepted, so convert to list.
+        bounds=list(itertools.repeat((0, 1), number_of_classes - 1)),
         args=(y_true, y_pred_proba, ClassificationTree()),
         seed=np.random.RandomState(seed=seed),
         tol=tol,
