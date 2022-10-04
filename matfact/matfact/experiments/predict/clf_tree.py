@@ -14,6 +14,8 @@ class to max(i) where pi > ti.
 This prediction algorithm is implemented in `ClassificationTree`. In addition,
 `estimate_probability_thresholds` estimates the optimal values of the thresholds.
 """
+from typing import Any
+
 import numpy as np
 from scipy import optimize
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -25,10 +27,12 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
     The number of thresholds (tau) is one less than the number of classes.
     """
 
-    def __init__(self, thresholds=None):
+    def __init__(self, thresholds: np.ndarray | None = None):
+        # To adhere to the sklearn API all arguments must have a default value, and
+        # we cannot have any logic in the constructor.
         self.thresholds = thresholds
 
-    def predict(self, probabilities):
+    def predict(self, probabilities: np.ndarray):
         """Perform classification given probabilities for classes.
 
         Arguments:
@@ -52,12 +56,17 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
 
         return states
 
-    def fit(self, X, y):
+    def fit(self, X: Any, y: Any):
         """Do nothing, fit required by sklearn API specification."""
         return self
 
 
-def mcc_objective(thresholds, y_true, y_pred_proba, clf):
+def mcc_objective(
+    thresholds: np.ndarray,
+    y_true: np.ndarray,
+    y_pred_proba: np.ndarray,
+    clf: ClassificationTree,
+):
     "Objective function to evaluate the differential evolution process."
 
     clf.set_params(thresholds=thresholds)
@@ -68,7 +77,11 @@ def mcc_objective(thresholds, y_true, y_pred_proba, clf):
 
 
 def estimate_probability_thresholds(
-    y_true, y_pred_proba, tol=1e-6, seed=42, n_thresholds=3
+    y_true: np.ndarray,
+    y_pred_proba: np.ndarray,
+    tol: float = 1e-6,
+    seed: int = 42,
+    n_thresholds: int = 3,
 ):
     """Use differential evolution algorithm to estimate probability thresholds for the classification tree.  # noqa: E501
 
