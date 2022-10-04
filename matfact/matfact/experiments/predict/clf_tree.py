@@ -20,6 +20,7 @@ import numpy as np
 from scipy import optimize
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import matthews_corrcoef
+from sklearn.utils import check_X_y
 
 
 class ClassificationTree(BaseEstimator, ClassifierMixin):
@@ -61,33 +62,6 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
         return self
 
 
-def _check_valid_prediction_true_pair(
-    true_classes: np.ndarray, probabilities: np.ndarray
-):
-    """Check that probability predictions and true class labels are compatible.
-
-    Arguments:
-    true_classes: (number_of_samples) index of the correct class per sample.
-    probabilities: (number_of_samples x number_of_classes) probability of each class
-        per sample.
-
-    Raises ValueError on failure."""
-    if len(probabilities.shape) != 2:
-        raise ValueError(
-            "probabilities should be two-dimensional"
-            ", one for samples and one for classes."
-        )
-
-    if len(true_classes.shape) != 1:
-        raise ValueError("true_classes should be one-dimensional.")
-
-    number_of_samples, _ = probabilities.shape
-    if number_of_samples != true_classes.size:
-        raise ValueError(
-            "true_classes and probabilities does not have the same number of samples!"
-        )
-
-
 def mcc_objective(
     thresholds: np.ndarray,
     y_true: np.ndarray,
@@ -95,7 +69,7 @@ def mcc_objective(
     clf: ClassificationTree,
 ):
     "Objective function to evaluate the differential evolution process."
-    _check_valid_prediction_true_pair(y_true, y_pred_proba)
+    check_X_y(y_pred_proba, y_true)
 
     clf.set_params(thresholds=thresholds)
 
@@ -121,8 +95,8 @@ def estimate_probability_thresholds(
         A ClassificationTree object instantiated with the estimated probaility
         thresholds. This object may be saved to disk using scikit-learn routines.
     """
+    check_X_y(y_pred_proba, y_true)
 
-    _check_valid_prediction_true_pair(y_true, y_pred_proba)
     result = optimize.differential_evolution(
         mcc_objective,
         bounds=optimize.Bounds([0] * n_thresholds, [1] * n_thresholds),
