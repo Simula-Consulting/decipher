@@ -26,6 +26,8 @@ from sklearn.utils import check_X_y
 
 class ClassificationTree(BaseEstimator, ClassifierMixin):
     """Perform hierarchical classification given probability thresholds.
+
+    Class labels are 1 indexed integers.
     The number of thresholds (tau) is one less than the number of classes.
     """
 
@@ -38,25 +40,26 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
         """Perform classification given probabilities for classes.
 
         Arguments:
-        probabilities: (number_of_samples x number_of_states) ndarray
+        probabilities: (number_of_samples x number_of_classes) ndarray
         """
 
-        number_of_samples, number_of_states = probabilities.shape
-        if number_of_states != len(self.thresholds) + 1:
+        number_of_samples, number_of_classes = probabilities.shape
+        if number_of_classes != len(self.thresholds) + 1:
             raise ValueError(
-                f"Probabilities for {number_of_states} states given. "
-                "The number of thresholds should be one less than the number of states"
+                f"Probabilities for {number_of_classes} classes given. "
+                "The number of thresholds should be one less than the number of classes"
                 f", but it is {len(self.thresholds)}."
             )
 
-        # Set all states to one
-        # Iterate through the classes, if it is above the threshold, assign that class.
-        states = np.ones(number_of_samples)
+        # Set all samples to class one.
+        # Iterate through the classes, if the probability is above the
+        # threshold, assign that class.
+        classes = np.ones(number_of_samples)
         for i, threshold in enumerate(self.thresholds):
             # Threshold i correspond to class i + 1, so add one
-            states[probabilities[:, i + 1] >= threshold] = i + 1
+            classes[probabilities[:, i + 1] >= threshold] = i + 1
 
-        return states
+        return classes
 
     def fit(self, X: Any, y: Any):
         """Do nothing, fit required by sklearn API specification."""
