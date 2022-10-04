@@ -25,21 +25,30 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
     The number of thresholds (tau) is one less than the number of classes.
     """
 
-    def __init__(self, tau2=0, tau3=0):
-        self.tau2 = tau2
-        self.tau3 = tau3
+    def __init__(self, thresholds=None):
+        self.thresholds = thresholds
 
-    def predict(self, proba):
+    def predict(self, probabilities):
         """Perform classification given probabilities for classes.
 
         Arguments:
-        proba: (N_samples x number_of_states) ndarray, where N_samples is the number of
-            samples."""
+        probabilities: (number_of_samples x number_of_states) ndarray
+        """
 
-        # Bottom-up.
-        states = np.ones(proba.shape[0], dtype=float)
-        states[proba[:, 1] >= self.tau2] = 2
-        states[proba[:, 2] >= self.tau3] = 3
+        number_of_samples, number_of_states = probabilities.shape
+        if number_of_states != len(self.thresholds) + 1:
+            raise ValueError(
+                f"Probabilities for {number_of_states} states given. "
+                "The number of thresholds should be one less than the number of states"
+                f", but it is {len(self.thresholds)}."
+            )
+
+        # Set all states to one
+        # Iterate through the classes, if it is above the threshold, assign that class.
+        states = np.ones(number_of_samples)
+        for i, threshold in enumerate(self.thresholds):
+            # Threshold i correspond to class i + 1, so add one
+            states[probabilities[:, i + 1] >= threshold] = i + 1
 
         return states
 
@@ -51,7 +60,7 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
 def mcc_objective(thresholds, y_true, y_pred_proba, clf):
     "Objective function to evaluate the differential evolution process."
 
-    clf.set_params(tau2=thresholds[0], tau3=thresholds[1])
+    clf.set_params(thresholds=thresholds)
 
     return -1.0 * matthews_corrcoef(
         y_true.astype(int), clf.predict(y_pred_proba).astype(int)
@@ -59,7 +68,7 @@ def mcc_objective(thresholds, y_true, y_pred_proba, clf):
 
 
 def estimate_probability_thresholds(
-    y_true, y_pred_proba, tol=1e-6, seed=42, n_thresholds=2
+    y_true, y_pred_proba, tol=1e-6, seed=42, n_thresholds=3
 ):
     """Use differential evolution algorithm to estimate probability thresholds for the classification tree.  # noqa: E501
 
@@ -80,4 +89,4 @@ def estimate_probability_thresholds(
         tol=tol,
     )
 
-    return ClassificationTree(*result.x)
+    return ClassificationTree(thresholds=result.x)
