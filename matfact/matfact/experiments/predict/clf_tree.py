@@ -104,7 +104,7 @@ def estimate_probability_thresholds(
         # of classes. Iterators are not accepted, so convert to list.
         bounds=list(itertools.repeat((0, 1), number_of_classes - 1)),
         args=(y_true, y_pred_proba, ClassificationTree()),
-        seed=np.random.RandomState(seed=seed),
+        seed=seed,
         tol=tol,
     )
 
