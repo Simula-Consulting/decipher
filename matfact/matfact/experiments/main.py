@@ -259,6 +259,12 @@ def train_and_log(
     X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
     p_pred = factoriser.predict_probability(X_test_masked, t_pred)
 
+    mlflow_output = {
+        "params": {},
+        "metrics": {},
+        "tags": {},
+        "meta": {},
+    }
     if use_threshold_optimization:
         # Find the optimal threshold values
         X_train_masked, t_pred_train, x_true_train = prediction_data(
@@ -272,8 +278,7 @@ def train_and_log(
             f"classification_tree_{key}": value
             for key, value in classification_tree.get_params().items()
         }
-        results.update(threshold_values)
-        mlflow.log_params(threshold_values)
+        mlflow_output["params"].update(threshold_values)
 
         # Use threshold values on the test set
         x_pred = classification_tree.predict(p_pred)
@@ -292,17 +297,18 @@ def train_and_log(
             "x_true": x_true,
         }
     )
+    mlflow_output["meta"]["results"] = results
 
     # Logging
-    mlflow.log_params(hyperparams)
-    mlflow.log_param("model_name", model_name)
+    mlflow_output["params"].update(hyperparams)
+    mlflow_output["params"]["model_name"] = model_name
     if dict_to_log:
-        mlflow.log_params(dict_to_log)
+        mlflow_output["params"].update(dict_to_log)
 
-    mlflow.log_metric("matthew_score", score)
+    mlflow_output["metrics"]["matthew_score"] = score
     for metric in metrics:
-        for epoch, metric_value in zip(results["epochs"], results[metric]):
-            mlflow.log_metric(metric, metric_value, step=epoch)
-    results["mlflow_run_id"] = mlflow.active_run().info.run_id
+        mlflow_output["metrics"][metric] = results[metric]
+    mlflow_logger(mlflow_output)
+    mlflow_output["meta"]["mlflow_run_id"] = mlflow.active_run().info.run_id
     mlflow.end_run()
-    return results
+    return mlflow_output

@@ -10,6 +10,7 @@ from skopt.utils import use_named_args
 
 from matfact.data_generation import Dataset
 from matfact.experiments import train_and_log
+from matfact.experiments.main import batch_mlflow_logger
 from matfact.settings import BASE_PATH, DATASET_PATH
 
 
@@ -21,7 +22,7 @@ def get_objective(data: Dataset, search_space: list, **hyperparams):
     @use_named_args(search_space)
     def objective(**search_hyperparams):
         hyperparams.update(search_hyperparams)
-        output = train_and_log(
+        mlflow_output = train_and_log(
             X_train,
             X_test,
             nested=True,
@@ -31,7 +32,7 @@ def get_objective(data: Dataset, search_space: list, **hyperparams):
         )
         # The score logged, the Matthew correlation coefficient, is 'higher is
         # better', while we are minimizing.
-        return -output["score"]
+        return -mlflow_output["metrics"]["matthew_score"]
 
     return objective
 
@@ -47,8 +48,10 @@ def get_objective_CV(
     def objective(**search_hyperparams):
         hyperparams.update(search_hyperparams)
         scores = []
+        mlflow.start_run(nested=True)
+        mlflow_logs = []
         for train_idx, test_idx in kf.split(X):
-            output = train_and_log(
+            mlflow_output = train_and_log(
                 X[train_idx],
                 X[test_idx],
                 nested=True,
@@ -58,8 +61,10 @@ def get_objective_CV(
             )
             # The score logged, the Matthew correlation coefficient, is 'higher is
             # better', while we are minimizing.
-            scores.append(-output["score"])
-
+            mlflow_logs.append(mlflow_output)
+            scores.append(-mlflow_output["metrics"]["matthew_score"])
+        batch_mlflow_logger(mlflow_logs)
+        mlflow.end_run()
         return np.mean(scores)
 
     return objective
@@ -94,9 +99,11 @@ def example_hyperparameter_search(objective_getter: Callable = get_objective_CV)
 
         best_values = res_gp["x"]
         best_score = res_gp["fun"]
+        # We are minimizing, so the best_score is inverted.
         mlflow.log_metric("best_score", -best_score)
         for param, value in zip(space, best_values):
             mlflow.log_param(f"best_{param.name}", value)
+        mlflow.set_tag("Notes", "Hyperparameter search")
 
 
 if __name__ == "__main__":

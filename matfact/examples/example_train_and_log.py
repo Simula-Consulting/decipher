@@ -65,7 +65,7 @@ def experiment(
         "recMSE": lambda model: reconstruction_mse(M_train, model.X, model.M),
     }
 
-    results = train_and_log(
+    mlflow_output = train_and_log(
         X_train,
         X_test,
         shift_range=shift_range,
@@ -77,12 +77,21 @@ def experiment(
     )
 
     # Plotting #
-    with mlflow.start_run(run_id=results["mlflow_run_id"]):
+    with mlflow.start_run(run_id=mlflow_output["meta"]["mlflow_run_id"]):
         mlflow.set_tags(mlflow_tags)
-        plot_coefs(results["U"], FIGURE_PATH)
-        plot_basis(results["V"], FIGURE_PATH)
-        plot_confusion(results["x_true"], results["x_pred"], FIGURE_PATH)
-        plot_roc_curve(results["x_true"], results["p_pred"], FIGURE_PATH)
+        solver_output = mlflow_output["meta"]["results"]
+        plot_coefs(solver_output["U"], FIGURE_PATH)
+        plot_basis(solver_output["V"], FIGURE_PATH)
+        plot_confusion(
+            solver_output["x_true"],
+            solver_output["x_pred"],
+            FIGURE_PATH,
+        )
+        plot_roc_curve(
+            solver_output["x_true"],
+            solver_output["p_pred"],
+            FIGURE_PATH,
+        )
         mlflow.log_artifacts(FIGURE_PATH)
 
 
