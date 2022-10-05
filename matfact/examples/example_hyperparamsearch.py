@@ -10,7 +10,7 @@ from skopt.utils import use_named_args
 
 from matfact.data_generation import Dataset
 from matfact.experiments import train_and_log
-from matfact.experiments.main import batch_mlflow_logger
+from matfact.experiments.logging import MLflowLogger, batch_mlflow_logger
 from matfact.settings import BASE_PATH, DATASET_PATH
 
 
@@ -54,8 +54,8 @@ def get_objective_CV(
             mlflow_output = train_and_log(
                 X[train_idx],
                 X[test_idx],
-                nested=True,
                 dict_to_log=data.prefixed_metadata(),
+                logger_context=MLflowLogger(nested=True),
                 log_loss=False,
                 **hyperparams,
             )
