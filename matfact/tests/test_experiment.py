@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 import numpy as np
 import pytest
 
@@ -9,6 +11,55 @@ from matfact.experiments import (
     prediction_data,
     train_and_log,
 )
+
+
+def test_train_and_log_params():
+    """Test that the logger is given all params sent to train_and_log."""
+    # Some arbitrary data size
+    sample_size, time_span = 100, 40
+    X = np.random.choice(np.arange(5), size=(sample_size, time_span))
+
+    hyperparams = {
+        "shift_range": np.arange(-2, 3),
+        "rank": 5,
+        "lambda1": 1,
+        "lambda2": 2,
+        "lambda3": 3,
+    }
+    optimization_params = {
+        "num_epochs": 10,
+        "patience": 2,
+        "epochs_per_val": 2,
+    }
+    extra_metrics = {  # Some arbitrary extra metric to log
+        "my_metric": lambda model: np.linalg.norm(model.X),
+    }
+    all_metrics = [*extra_metrics, "loss"]  # We set log_loss=True in train_and_log
+
+    @contextmanager
+    def logger_context():
+        """Yield a logger that asserts all hyperparams and metrics are present."""
+
+        def logger(log_dict):
+            for param in hyperparams:
+                # Some params are numpy arrays, so use np.all
+                assert np.all(hyperparams[param] == log_dict["params"][param])
+            for param in optimization_params:
+                assert param not in log_dict["params"]
+            for metric in all_metrics:
+                assert metric in log_dict["metrics"]
+
+        yield logger
+
+    train_and_log(
+        X_test=X,
+        X_train=X,
+        optimization_params=optimization_params,
+        logger_context=logger_context(),
+        extra_metrics=extra_metrics,
+        log_loss=True,
+        **hyperparams
+    )
 
 
 def test_model_input_not_changed():
