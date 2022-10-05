@@ -1,5 +1,7 @@
+import pathlib
 from contextlib import contextmanager
 
+import mlflow
 import numpy as np
 import pytest
 
@@ -11,6 +13,73 @@ from matfact.experiments import (
     prediction_data,
     train_and_log,
 )
+from matfact.experiments.logging import (
+    MLflowLogger,
+    MLflowLoggerArtifact,
+    dummy_logger_context,
+)
+
+
+def _artifact_path_from_run(run: mlflow.entities.Run):
+    """Return pathlib.Path object of run artifact directory."""
+    # When artifact_uri is a file, it is a string prefixed with 'file:', then the
+    # string representation of the artifact directory.
+    file_prefix = "file:"
+    file_string = run.info.artifact_uri
+    assert file_string.startswith(file_prefix), "The artifact storage type is not file."
+    return pathlib.Path(file_string[len(file_prefix) :])
+
+
+def test_mlflow_logger(tmp_path):
+    """Test theh MLflowLogger context."""
+    mlflow.set_tracking_uri(tmp_path)
+    artifact_path = tmp_path / "artifacts"
+    artifact_path.mkdir()
+    mlflow.create_experiment("TestExperiment")
+
+    sample_size, time_span = 100, 40
+    U = V = np.random.choice(np.arange(5), size=(sample_size, time_span))
+    x_true = x_pred = np.random.choice(np.arange(5), size=(sample_size))
+    p_pred = np.random.random(size=(sample_size, 4))
+    dummy_output = {
+        "params": {},
+        "metrics": {},
+        "tags": {},
+        "meta": {
+            "results": {
+                "U": U,
+                "V": V,
+                "x_true": x_true,
+                "x_pred": x_pred,
+                "p_pred": p_pred,
+            }
+        },
+    }
+
+    with dummy_logger_context() as logger:
+        assert mlflow.active_run() is None
+        logger(dummy_output)
+
+    with MLflowLogger() as logger:
+        outer_run = mlflow.active_run()
+        assert outer_run is not None
+        logger(dummy_output)
+        with MLflowLogger(nested=True) as inner_logger:
+            inner_run = mlflow.active_run()
+            assert inner_run is not None
+            assert inner_run.data.tags["mlflow.parentRunId"] == outer_run.info.run_id
+            inner_logger(dummy_output)
+    assert mlflow.active_run() is None
+
+    with MLflowLoggerArtifact(figure_path=artifact_path) as logger:
+        run_with_artifact = mlflow.active_run()
+        logger(dummy_output)
+    stored_artifact_path = _artifact_path_from_run(run_with_artifact)
+    stored_artifacts = stored_artifact_path.glob("*")
+    supposed_to_be_stored = set(
+        ("basis_.pdf", "coefs_.pdf", "confusion_.pdf", "roc_auc_micro_.pdf")
+    )
+    assert supposed_to_be_stored == set([file.name for file in stored_artifacts])
 
 
 def test_train_and_log_params():
