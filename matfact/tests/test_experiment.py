@@ -16,8 +16,29 @@ from matfact.experiments import (
 from matfact.experiments.logging import (
     MLflowLogger,
     MLflowLoggerArtifact,
+    _aggregate_fields,
     dummy_logger_context,
 )
+
+
+def test_aggregate_fields():
+    # Field values must be floats, so define some verbose variables with arbitrary
+    # numerical values
+    foo = 1.0
+    bar = 2.0
+    data = [
+        {"field1": foo, "field2": foo},
+        {"field1": foo, "field2": bar},
+    ]
+    correct_out = {
+        "field1": foo,
+        "field2_0": foo,
+        "field2_1": bar,
+        "field2_mean": np.mean((foo, bar)),
+        "field2_std": np.std((foo, bar)),
+    }
+    out = _aggregate_fields(data)
+    assert out == correct_out
 
 
 def _artifact_path_from_run(run: mlflow.entities.Run):
