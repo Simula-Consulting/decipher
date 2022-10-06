@@ -11,6 +11,7 @@ from matfact.settings import (
     DATASET_PATH,
     default_number_of_states,
     default_observation_probabilities,
+    minimum_number_of_observations,
 )
 
 from .gaussian_generator import discretise_matrix, float_matrix
@@ -79,7 +80,7 @@ def produce_dataset(
     X = mask * Y
     X = censoring(X, missing=missing)
 
-    valid_rows = np.sum(X != 0, axis=1) > 2
+    valid_rows = np.sum(X != 0, axis=1) >= minimum_number_of_observations
 
     return X[valid_rows].astype(np.float32), M[valid_rows].astype(np.float32)
 
