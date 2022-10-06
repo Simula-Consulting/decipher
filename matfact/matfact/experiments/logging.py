@@ -125,12 +125,21 @@ def batch_mlflow_logger(log_data: list[dict]) -> None:
     mlflow_logger(new_log)
 
 
+class MLFlowRunHierarchyException(Exception):
+    pass
+
+
 class MLflowLogger:
     def __init__(self, nested=False):
         self.nested = nested
 
     def __enter__(self):
         self.run_ = mlflow.start_run(nested=self.nested)
+        if self.nested and self.run_.data.tags.get("mlflow.parentRunId", None) is None:
+            exception = MLFlowRunHierarchyException("Nested run without a parent run!")
+            # Do clean up
+            self.__exit__(type(exception), str(exception), None)
+            raise exception
         return self
 
     def __exit__(self, type, value, traceback):

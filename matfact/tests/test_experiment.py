@@ -16,6 +16,7 @@ from matfact.experiments import (
 from matfact.experiments.logging import (
     MLflowLogger,
     MLflowLoggerArtifact,
+    MLFlowRunHierarchyException,
     _aggregate_fields,
     dummy_logger_context,
 )
@@ -51,6 +52,34 @@ def _artifact_path_from_run(run: mlflow.entities.Run):
     return pathlib.Path(file_string[len(file_prefix) :])
 
 
+def test_mlflow_context_hierarchy():
+    """Test configurations of nested MLflowLoggers."""
+
+    with pytest.raises(MLFlowRunHierarchyException):
+        with MLflowLogger(nested=True):
+            pass
+    assert mlflow.active_run() is None
+
+    with pytest.raises(Exception, match="Run with UUID [0-9a-f]+ is already active."):
+        with MLflowLogger(nested=False):
+            with MLflowLogger(nested=False):
+                pass
+    assert mlflow.active_run() is None
+
+    with pytest.raises(Exception, match="Run with UUID [0-9a-f]+ is already active."):
+        with MLflowLogger(nested=False):
+            with MLflowLogger(nested=True):
+                with MLflowLogger(nested=False):
+                    pass
+    assert mlflow.active_run() is None
+
+    with MLflowLogger(nested=False):
+        with MLflowLogger(nested=True):
+            with MLflowLogger(nested=True):
+                pass
+    assert mlflow.active_run() is None
+
+
 def test_mlflow_logger(tmp_path):
     """Test theh MLflowLogger context."""
     mlflow.set_tracking_uri(tmp_path)
@@ -77,10 +106,12 @@ def test_mlflow_logger(tmp_path):
         },
     }
 
+    # The dummy logger context should not activate a new mlflow run.
     with dummy_logger_context() as logger:
         assert mlflow.active_run() is None
         logger(dummy_output)
 
+    # MLflowLogger should activate an outer run.
     with MLflowLogger() as logger:
         outer_run = mlflow.active_run()
         assert outer_run is not None
