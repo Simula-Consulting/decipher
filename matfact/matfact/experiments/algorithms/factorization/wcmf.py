@@ -37,10 +37,13 @@ class WCMF(BaseMF):
         iter_U=2,
         iter_V=2,
         learning_rate=0.001,
+        domain=np.arange(1, 5),
     ):
         self.X = X
         self.V = V
         self.W = data_weights(X) if W is None else W
+
+        self.domain = domain
 
         self.lambda1 = lambda1
         self.lambda2 = lambda2

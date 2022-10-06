@@ -18,7 +18,16 @@ class CMF(BaseMF):
     """
 
     def __init__(
-        self, X, V, D=None, J=None, K=None, lambda1=1.0, lambda2=1.0, lambda3=1.0
+        self,
+        X,
+        V,
+        D=None,
+        J=None,
+        K=None,
+        lambda1=1.0,
+        lambda2=1.0,
+        lambda3=1.0,
+        domain=np.arange(1, 5),
     ):
 
         self.X = X
@@ -34,6 +43,7 @@ class CMF(BaseMF):
 
         self.n_iter_ = 0
         self._init_matrices(D, J, K)
+        self.domain = domain
 
     @property
     def M(self):
