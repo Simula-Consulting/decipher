@@ -10,7 +10,7 @@ from skopt.utils import use_named_args
 
 from matfact.data_generation import Dataset
 from matfact.experiments import train_and_log
-from matfact.experiments.logging import MLflowLogger, batch_mlflow_logger
+from matfact.experiments.logging import MLflowBatchLogger, MLflowLogger
 from matfact.settings import BASE_PATH, DATASET_PATH
 
 
@@ -25,7 +25,7 @@ def get_objective(data: Dataset, search_space: list, **hyperparams):
         mlflow_output = train_and_log(
             X_train,
             X_test,
-            nested=True,
+            logger_context=MLflowLogger(nested=True),
             dict_to_log=data.prefixed_metadata(),
             log_loss=False,
             **hyperparams,
@@ -48,23 +48,20 @@ def get_objective_CV(
     def objective(**search_hyperparams):
         hyperparams.update(search_hyperparams)
         scores = []
-        mlflow.start_run(nested=True)
-        mlflow_logs = []
-        for train_idx, test_idx in kf.split(X):
-            mlflow_output = train_and_log(
-                X[train_idx],
-                X[test_idx],
-                dict_to_log=data.prefixed_metadata(),
-                logger_context=MLflowLogger(nested=True),
-                log_loss=False,
-                **hyperparams,
-            )
-            # The score logged, the Matthew correlation coefficient, is 'higher is
-            # better', while we are minimizing.
-            mlflow_logs.append(mlflow_output)
-            scores.append(-mlflow_output["metrics"]["matthew_score"])
-        batch_mlflow_logger(mlflow_logs)
-        mlflow.end_run()
+        with MLflowBatchLogger(nested=True) as logger:
+            for train_idx, test_idx in kf.split(X):
+                mlflow_output = train_and_log(
+                    X[train_idx],
+                    X[test_idx],
+                    dict_to_log=data.prefixed_metadata(),
+                    logger_context=MLflowLogger(nested=True),
+                    log_loss=False,
+                    **hyperparams,
+                )
+                # The score logged, the Matthew correlation coefficient, is 'higher is
+                # better', while we are minimizing.
+                logger(mlflow_output)
+                scores.append(-mlflow_output["metrics"]["matthew_score"])
         return np.mean(scores)
 
     return objective

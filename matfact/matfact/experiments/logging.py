@@ -140,6 +140,19 @@ class MLflowLogger:
         mlflow_logger(output_dict)
 
 
+class MLflowBatchLogger(MLflowLogger):
+    def __enter__(self):
+        self.output = []
+        return super().__enter__()
+
+    def __exit__(self, type, value, traceback):
+        batch_mlflow_logger(self.output)
+        return super().__exit__(type, value, traceback)
+
+    def __call__(self, output_dict):
+        self.output.append(output_dict)
+
+
 class MLflowLoggerArtifact(MLflowLogger):
     def __init__(self, figure_path, nested=False, extra_tags=None):
         super().__init__(nested)
