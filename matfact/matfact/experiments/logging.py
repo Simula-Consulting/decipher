@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+from contextlib import nullcontext
 from typing import Callable
 
 import mlflow
@@ -234,6 +234,4 @@ class MLflowLoggerArtifact(MLflowLogger):
         mlflow.log_artifacts(self.figure_path)
 
 
-@contextmanager
-def dummy_logger_context(nested=False):
-    yield lambda mlflow_output: None
+dummy_logger_context = nullcontext(lambda _: None)  # Do-nothing logger
