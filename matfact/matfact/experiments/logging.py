@@ -1,3 +1,4 @@
+import pathlib
 from contextlib import nullcontext
 from typing import Callable
 
@@ -160,8 +161,9 @@ class MLflowLogger:
     Raises MLFlowRunHierarchyExcpetion on enter if the outermost run has nested=True.
     """
 
-    def __init__(self, nested: bool = False):
+    def __init__(self, nested: bool = False, extra_tags: dict | None = None):
         self.nested = nested
+        self.extra_tags = extra_tags
 
     def __enter__(self):
         self.run_ = mlflow.start_run(nested=self.nested)
@@ -182,6 +184,8 @@ class MLflowLogger:
     def __call__(self, output_dict: dict):
         """Log an output dict to MLFlow."""
         mlflow_logger(output_dict)
+        if self.extra_tags:
+            mlflow.set_tags(self.extra_tags)
 
 
 class MLflowBatchLogger(MLflowLogger):
@@ -201,9 +205,12 @@ class MLflowBatchLogger(MLflowLogger):
     """
 
     def __init__(
-        self, nested=False, aggregate_funcs: list[AggregationFunction] | None = None
+        self,
+        nested: bool = False,
+        extra_tags: dict | None = None,
+        aggregate_funcs: list[AggregationFunction] | None = None,
     ) -> None:
-        super().__init__(nested=nested)
+        super().__init__(nested=nested, extra_tags=extra_tags)
         self.aggregate_funcs = aggregate_funcs
 
     def __enter__(self):
@@ -219,20 +226,33 @@ class MLflowBatchLogger(MLflowLogger):
         # On call we only append the dict to our list of data.
         # The actual logging happens on __exit__.
         self.output.append(output_dict)
+        if self.extra_tags:
+            mlflow.set_tags(self.extra_tags)
 
 
 class MLflowLoggerArtifact(MLflowLogger):
-    """Context manager for MLFlow logging, with artifact generation."""
+    """Context manager for MLFlow logging, with artifact logging.
 
-    def __init__(self, figure_path, nested=False, extra_tags=None):
-        super().__init__(nested)
-        self.figure_path = figure_path
-        self.extra_tags = extra_tags
+    All artifacts in artifact_path will be logged to the MLFlow run."""
+
+    def __init__(
+        self,
+        artifact_path: pathlib.Path,
+        nested: bool = False,
+        extra_tags: dict | None = None,
+    ):
+        super().__init__(nested=nested, extra_tags=extra_tags)
+        self.figure_path = artifact_path
 
     def __call__(self, output_dict):
         super().__call__(output_dict)
-        if self.extra_tags:
-            mlflow.set_tags(self.extra_tags)
+        mlflow.log_artifacts(self.figure_path)
+
+
+class MLflowLoggerDiagnostic(MLflowLoggerArtifact):
+    """Context manager for MLFlow logging, generating default diagnostic plots."""
+
+    def __call__(self, output_dict):
         solver_output = output_dict["meta"]["results"]
         plot_coefs(solver_output["U"], self.figure_path)
         plot_basis(solver_output["V"], self.figure_path)
@@ -246,7 +266,7 @@ class MLflowLoggerArtifact(MLflowLogger):
             solver_output["p_pred"],
             self.figure_path,
         )
-        mlflow.log_artifacts(self.figure_path)
+        super().__call__(output_dict)
 
 
 dummy_logger_context = nullcontext(lambda _: None)  # Do-nothing logger

@@ -16,6 +16,7 @@ from matfact.experiments import (
 from matfact.experiments.logging import (
     MLflowLogger,
     MLflowLoggerArtifact,
+    MLflowLoggerDiagnostic,
     MLFlowRunHierarchyException,
     _aggregate_fields,
     dummy_logger_context,
@@ -107,7 +108,7 @@ def test_mlflow_logger(tmp_path):
     }
 
     # The dummy logger context should not activate a new mlflow run.
-    with dummy_logger_context() as logger:
+    with dummy_logger_context as logger:
         assert mlflow.active_run() is None
         logger(dummy_output)
 
@@ -123,7 +124,13 @@ def test_mlflow_logger(tmp_path):
             inner_logger(dummy_output)
     assert mlflow.active_run() is None
 
-    with MLflowLoggerArtifact(figure_path=artifact_path) as logger:
+    with MLflowLoggerArtifact(artifact_path=artifact_path) as logger:
+        run_with_artifact = mlflow.active_run()
+        logger(dummy_output)
+    stored_artifact_path = _artifact_path_from_run(run_with_artifact)
+    assert not any(stored_artifact_path.iterdir())  # The directory should be empty.
+
+    with MLflowLoggerDiagnostic(artifact_path=artifact_path) as logger:
         run_with_artifact = mlflow.active_run()
         logger(dummy_output)
     stored_artifact_path = _artifact_path_from_run(run_with_artifact)
