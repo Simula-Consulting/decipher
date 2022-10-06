@@ -126,15 +126,39 @@ def batch_mlflow_logger(log_data: list[dict]) -> None:
 
 
 class MLFlowRunHierarchyException(Exception):
+    """MLflowLogger contexts entered in an illegal order.
+
+    For example, having a nested run as the top run."""
+
     pass
 
 
 class MLflowLogger:
-    def __init__(self, nested=False):
+    """Context manager for MLflow logging.
+
+    Wraps the code inside the corresponding with block in an MLflow run.
+
+    Example usage.
+    >>> with MLflowLogger() as logger:
+    >>>     output = get_output_data()
+    >>>     # output = {
+    >>>     #     "params": {...},
+    >>>     #     "metrics": {...},
+    >>>     #     "meta": {...},
+    >>>     # }
+    >>>     logger(output)
+
+    Raises MLFlowRunHierarchyExcpetion on enter if the outermost run has nested=True.
+    """
+
+    def __init__(self, nested: bool = False):
         self.nested = nested
 
     def __enter__(self):
         self.run_ = mlflow.start_run(nested=self.nested)
+        # MLflow does not raise an exception if the outermost run has nested=True.
+        # This is confusion behaviour, so we chose to raise an exception if
+        # the run has nested=True while also not having a parent run.
         if self.nested and self.run_.data.tags.get("mlflow.parentRunId", None) is None:
             exception = MLFlowRunHierarchyException("Nested run without a parent run!")
             # Do clean up
@@ -143,13 +167,30 @@ class MLflowLogger:
         return self
 
     def __exit__(self, type, value, traceback):
+        """End the run by calling the underlying ActiveRun's exit method."""
         return self.run_.__exit__(type, value, traceback)
 
-    def __call__(self, output_dict):
+    def __call__(self, output_dict: dict):
+        """Log an output dict to MLFlow."""
         mlflow_logger(output_dict)
 
 
 class MLflowBatchLogger(MLflowLogger):
+    """Context manager for combining multiple run data into one MLFlow run.
+
+    Given several run dictionaries, the data is aggregated together to one
+    summary run, which is logged to MLFlow. Used in for example cross validation runs,
+    where each fold is a subrun, and the entire cross validation is logged as one run.
+
+    It is possible to run MLflowBatchLogger wrapped around subrun contexts.
+    >>> with MLflowBatchLogger(nested=False) as outer_logger:
+    >>>     for subrun in subruns:
+    >>>         with MLflowLogger(nested=True) as child_logger:
+    >>>             ...
+    >>>             child_logger(run_data)
+    >>>             outer_logger(run_data)
+    """
+
     def __enter__(self):
         self.output = []
         return super().__enter__()
@@ -159,10 +200,15 @@ class MLflowBatchLogger(MLflowLogger):
         return super().__exit__(type, value, traceback)
 
     def __call__(self, output_dict):
+
+        # On call we only append the dict to our list of data.
+        # The actual logging happens on __exit__.
         self.output.append(output_dict)
 
 
 class MLflowLoggerArtifact(MLflowLogger):
+    """Context manager for MLFlow logging, with artifact generation."""
+
     def __init__(self, figure_path, nested=False, extra_tags=None):
         super().__init__(nested)
         self.figure_path = figure_path
