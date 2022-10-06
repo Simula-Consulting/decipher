@@ -7,7 +7,7 @@ import pathlib
 import numpy as np
 from scipy.stats import betabinom
 
-from matfact.settings import DATASET_PATH
+from matfact.settings import DATASET_PATH, default_observation_probabilities
 
 from .gaussian_generator import discretise_matrix, float_matrix
 from .masking import simulate_mask
@@ -31,6 +31,7 @@ def produce_dataset(
     memory_length=5,
     missing=0,
     value_range=np.arange(1, 5),
+    observation_probabilities=None,
     theta=2.5,
     seed=42,
 ):
@@ -55,10 +56,17 @@ def produce_dataset(
     M = float_matrix(N=N, T=T, r=r, domain=value_range, seed=seed)
     Y = discretise_matrix(M, domain=value_range, theta=theta, seed=seed)
 
+    if observation_probabilities is None:
+        observation_probabilities = default_observation_probabilities
+    if len(value_range) + 1 != len(observation_probabilities):
+        raise ValueError(
+            "observation_probabilities must have length one more than value_range!"
+        )
+
     # Simulate a sparse dataset.
     mask = simulate_mask(
         Y,
-        observation_proba=np.array([0.01, 0.03, 0.08, 0.12, 0.04]),
+        observation_proba=observation_probabilities,
         memory_length=memory_length,
         level=level,
         seed=seed,
@@ -115,27 +123,13 @@ class Dataset:
         T,
         rank,
         sparsity_level,
-        memory_length=5,
-        missing=0,
-        value_range=np.arange(1, 5),
-        theta=2.5,
-        seed=42,
         generation_method="DGD",
+        **kwargs,
     ):
         """Generate a Datasert"""
         if generation_method != "DGD":
             raise NotImplementedError("Only DGD generation is implemented.")
-        X, M = produce_dataset(
-            N,
-            T,
-            rank,
-            sparsity_level,
-            memory_length=memory_length,
-            missing=missing,
-            value_range=value_range,
-            theta=theta,
-            seed=seed,
-        )
+        X, M = produce_dataset(N, T, rank, sparsity_level, **kwargs)
         metadata = {
             "rank": rank,
             "sparsity_level": sparsity_level,
