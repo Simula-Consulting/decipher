@@ -7,7 +7,11 @@ import pathlib
 import numpy as np
 from scipy.stats import betabinom
 
-from matfact.settings import DATASET_PATH, default_observation_probabilities
+from matfact.settings import (
+    DATASET_PATH,
+    default_number_of_states,
+    default_observation_probabilities,
+)
 
 from .gaussian_generator import discretise_matrix, float_matrix
 from .masking import simulate_mask
@@ -30,7 +34,7 @@ def produce_dataset(
     level,
     memory_length=5,
     missing=0,
-    value_range=np.arange(1, 5),
+    number_of_states: int = default_number_of_states,
     observation_probabilities=None,
     theta=2.5,
     seed=42,
@@ -45,7 +49,7 @@ def produce_dataset(
             memory_length: Governs how much influence previous values will
                     have on observing a new value not too far into the future
             missing: How to indicate a missing value
-            value_range: Possible observed values
+            number_of_states: The number of possible states.
             theta: Confidence parameter
             seed: Reference value for pseudo-random generator
 
@@ -53,14 +57,15 @@ def produce_dataset(
             The sparse and original complete data matrices
     """
 
-    M = float_matrix(N=N, T=T, r=r, domain=value_range, seed=seed)
-    Y = discretise_matrix(M, domain=value_range, theta=theta, seed=seed)
+    domain = np.arange(1, number_of_states + 1)
+    M = float_matrix(N=N, T=T, r=r, domain=domain, seed=seed)
+    Y = discretise_matrix(M, domain=domain, theta=theta, seed=seed)
 
     if observation_probabilities is None:
         observation_probabilities = default_observation_probabilities
-    if len(value_range) + 1 != len(observation_probabilities):
+    if number_of_states + 1 != len(observation_probabilities):
         raise ValueError(
-            "observation_probabilities must have length one more than value_range!"
+            "observation_probabilities must have length one more than the number of states!"  # noqa: E501
         )
 
     # Simulate a sparse dataset.
