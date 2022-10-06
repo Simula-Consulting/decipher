@@ -12,8 +12,8 @@ from skopt.utils import use_named_args
 from matfact.data_generation import Dataset
 from matfact.experiments import train_and_log
 from matfact.experiments.logging import (
-    MLflowBatchLogger,
-    MLflowLogger,
+    MLFlowBatchLogger,
+    MLFlowLogger,
     dummy_logger_context,
 )
 from matfact.settings import BASE_PATH, DATASET_PATH
@@ -30,7 +30,7 @@ def get_objective(data: Dataset, search_space: list, **hyperparams):
         mlflow_output = train_and_log(
             X_train,
             X_test,
-            logger_context=MLflowLogger(nested=True),
+            logger_context=MLFlowLogger(nested=True),
             dict_to_log=data.prefixed_metadata(),
             log_loss=False,
             **hyperparams,
@@ -52,13 +52,13 @@ def get_objective_CV(
     """Cross validation search."""
     kf = KFold(n_splits=n_splits)
     X, _ = data.get_X_M()
-    logger_context = MLflowLogger(nested=True) if log_folds else dummy_logger_context
+    logger_context = MLFlowLogger(nested=True) if log_folds else dummy_logger_context
 
     @use_named_args(search_space)
     def objective(**search_hyperparams):
         hyperparams.update(search_hyperparams)
         scores = []
-        with MLflowBatchLogger(nested=True) as logger:
+        with MLFlowBatchLogger(nested=True) as logger:
             for train_idx, test_idx in kf.split(X):
                 mlflow_output = train_and_log(
                     X[train_idx],

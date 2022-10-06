@@ -13,7 +13,7 @@ from matfact.experiments.algorithms.utils import (
     initialize_basis,
     laplacian_kernel_matrix,
 )
-from matfact.experiments.logging import MLflowLogger
+from matfact.experiments.logging import MLFlowLogger
 from matfact.experiments.predict.clf_tree import estimate_probability_thresholds
 from matfact.experiments.simulation.dataset import prediction_data
 
@@ -117,7 +117,7 @@ def train_and_log(
     Two examples are to log each run separately or logging all folds together.
     """
     if logger_context is None:
-        logger_context = MLflowLogger()
+        logger_context = MLFlowLogger()
 
     metrics = list(extra_metrics.keys()) if extra_metrics else []
     if log_loss:

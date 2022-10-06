@@ -14,9 +14,9 @@ from matfact.experiments import (
     train_and_log,
 )
 from matfact.experiments.logging import (
-    MLflowLogger,
-    MLflowLoggerArtifact,
-    MLflowLoggerDiagnostic,
+    MLFlowLogger,
+    MLFlowLoggerArtifact,
+    MLFlowLoggerDiagnostic,
     MLFlowRunHierarchyException,
     _aggregate_fields,
     dummy_logger_context,
@@ -54,35 +54,35 @@ def _artifact_path_from_run(run: mlflow.entities.Run):
 
 
 def test_mlflow_context_hierarchy():
-    """Test configurations of nested MLflowLoggers."""
+    """Test configurations of nested MLFlowLoggers."""
 
     with pytest.raises(MLFlowRunHierarchyException):
-        with MLflowLogger(nested=True):
+        with MLFlowLogger(nested=True):
             pass
     assert mlflow.active_run() is None
 
     with pytest.raises(Exception, match="Run with UUID [0-9a-f]+ is already active."):
-        with MLflowLogger(nested=False):
-            with MLflowLogger(nested=False):
+        with MLFlowLogger(nested=False):
+            with MLFlowLogger(nested=False):
                 pass
     assert mlflow.active_run() is None
 
     with pytest.raises(Exception, match="Run with UUID [0-9a-f]+ is already active."):
-        with MLflowLogger(nested=False):
-            with MLflowLogger(nested=True):
-                with MLflowLogger(nested=False):
+        with MLFlowLogger(nested=False):
+            with MLFlowLogger(nested=True):
+                with MLFlowLogger(nested=False):
                     pass
     assert mlflow.active_run() is None
 
-    with MLflowLogger(nested=False):
-        with MLflowLogger(nested=True):
-            with MLflowLogger(nested=True):
+    with MLFlowLogger(nested=False):
+        with MLFlowLogger(nested=True):
+            with MLFlowLogger(nested=True):
                 pass
     assert mlflow.active_run() is None
 
 
 def test_mlflow_logger(tmp_path):
-    """Test theh MLflowLogger context."""
+    """Test theh MLFlowLogger context."""
     mlflow.set_tracking_uri(tmp_path)
     artifact_path = tmp_path / "artifacts"
     artifact_path.mkdir()
@@ -112,25 +112,25 @@ def test_mlflow_logger(tmp_path):
         assert mlflow.active_run() is None
         logger(dummy_output)
 
-    # MLflowLogger should activate an outer run.
-    with MLflowLogger() as logger:
+    # MLFlowLogger should activate an outer run.
+    with MLFlowLogger() as logger:
         outer_run = mlflow.active_run()
         assert outer_run is not None
         logger(dummy_output)
-        with MLflowLogger(nested=True) as inner_logger:
+        with MLFlowLogger(nested=True) as inner_logger:
             inner_run = mlflow.active_run()
             assert inner_run is not None
             assert inner_run.data.tags["mlflow.parentRunId"] == outer_run.info.run_id
             inner_logger(dummy_output)
     assert mlflow.active_run() is None
 
-    with MLflowLoggerArtifact(artifact_path=artifact_path) as logger:
+    with MLFlowLoggerArtifact(artifact_path=artifact_path) as logger:
         run_with_artifact = mlflow.active_run()
         logger(dummy_output)
     stored_artifact_path = _artifact_path_from_run(run_with_artifact)
     assert not any(stored_artifact_path.iterdir())  # The directory should be empty.
 
-    with MLflowLoggerDiagnostic(artifact_path=artifact_path) as logger:
+    with MLFlowLoggerDiagnostic(artifact_path=artifact_path) as logger:
         run_with_artifact = mlflow.active_run()
         logger(dummy_output)
     stored_artifact_path = _artifact_path_from_run(run_with_artifact)

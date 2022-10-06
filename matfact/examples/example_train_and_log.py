@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from matfact.data_generation import Dataset
 from matfact.experiments import data_weights, reconstruction_mse, train_and_log
-from matfact.experiments.logging import MLflowLoggerArtifact
+from matfact.experiments.logging import MLFlowLoggerArtifact
 from matfact.settings import DATASET_PATH, FIGURE_PATH
 
 
@@ -71,7 +71,7 @@ def experiment(
         weights=weights,
         extra_metrics=extra_metrics,
         convolution=enable_convolution,
-        logger_context=MLflowLoggerArtifact(FIGURE_PATH),
+        logger_context=MLFlowLoggerArtifact(FIGURE_PATH),
         optimization_params=optimization_params,
         **hyperparams
     )
