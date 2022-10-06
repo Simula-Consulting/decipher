@@ -277,18 +277,18 @@ class MLFlowLoggerDiagnostic(MLFlowLoggerArtifact):
         solver_output = output_dict["meta"]["results"]
         plot_coefs(solver_output["U"], self.figure_path)
         plot_basis(solver_output["V"], self.figure_path)
-        n_classes = solver_output["p_pred"].shape[1]
+        number_of_states = solver_output["p_pred"].shape[1]
         plot_confusion(
             solver_output["x_true"],
             solver_output["x_pred"],
             self.figure_path,
-            n_classes=n_classes,
+            n_classes=number_of_states,
         )
         plot_roc_curve(
             solver_output["x_true"],
             solver_output["p_pred"],
             self.figure_path,
-            classes=np.arange(1, n_classes + 1),
+            number_of_states=number_of_states,
         )
         super().__call__(output_dict)
 
