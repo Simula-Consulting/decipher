@@ -6,6 +6,8 @@ import numpy as np
 
 from matfact.plotting import plot_basis, plot_coefs, plot_confusion, plot_roc_curve
 
+AggregationFunction = Callable[[str, list[float] | list[list[float]]], dict]
+
 
 def mlflow_logger(log_data: dict) -> None:
     """Log results dictionary to MLFlow.
@@ -53,8 +55,7 @@ def _store_subruns(field_name: str, values: list[float] | list[list[float]]) -> 
 
 def _aggregate_fields(
     data: list[dict],
-    aggregate_funcs: list[Callable[[str, list[float] | list[list[float]]], dict]]
-    | None = None,
+    aggregate_funcs: list[AggregationFunction] | None = None,
 ) -> dict:
     """Combine data for fields.
 
@@ -98,7 +99,9 @@ def _aggregate_fields(
     return new_data
 
 
-def batch_mlflow_logger(log_data: list[dict]) -> None:
+def batch_mlflow_logger(
+    log_data: list[dict], aggregate_funcs: list[AggregationFunction] | None = None
+) -> None:
     """Combine and log a set of runs.
 
     Used in for example cross validation training, where all folds should be logged
@@ -119,8 +122,12 @@ def batch_mlflow_logger(log_data: list[dict]) -> None:
         "tags": {},
     }
 
-    new_log["params"] = _aggregate_fields([data["params"] for data in log_data])
-    new_log["metrics"] = _aggregate_fields([data["metrics"] for data in log_data])
+    new_log["params"] = _aggregate_fields(
+        [data["params"] for data in log_data], aggregate_funcs=aggregate_funcs
+    )
+    new_log["metrics"] = _aggregate_fields(
+        [data["metrics"] for data in log_data], aggregate_funcs=aggregate_funcs
+    )
 
     mlflow_logger(new_log)
 
@@ -191,12 +198,18 @@ class MLflowBatchLogger(MLflowLogger):
     >>>             outer_logger(run_data)
     """
 
+    def __init__(
+        self, nested=False, aggregate_funcs: list[AggregationFunction] | None = None
+    ) -> None:
+        super().__init__(nested=nested)
+        self.aggregate_funcs = aggregate_funcs
+
     def __enter__(self):
         self.output = []
         return super().__enter__()
 
     def __exit__(self, type, value, traceback):
-        batch_mlflow_logger(self.output)
+        batch_mlflow_logger(self.output, aggregate_funcs=self.aggregate_funcs)
         return super().__exit__(type, value, traceback)
 
     def __call__(self, output_dict):
