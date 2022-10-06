@@ -2,6 +2,8 @@ import numpy as np
 import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
 
+from matfact import settings
+
 from ...simulation import data_weights
 from .mfbase import BaseMF
 
@@ -109,7 +111,7 @@ class SCMF(BaseMF):
         iter_U=2,
         iter_V=2,
         learning_rate=0.001,
-        domain=np.arange(1, 5),
+        number_of_states: int = settings.default_number_of_states,
     ):
 
         self.W = data_weights(X) if W is None else W
@@ -129,7 +131,7 @@ class SCMF(BaseMF):
         self.nz_rows, self.nz_cols = np.nonzero(X)
 
         self.n_iter_ = 0
-        self.domain = domain
+        self.number_of_states = number_of_states
 
         # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)

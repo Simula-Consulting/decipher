@@ -26,7 +26,11 @@ class BaseMF(ABC):
     def predict_probability(self, observed_data, t_pred):
         """Predict the probability of the possible states at t_pred"""
         return predict_proba(
-            observed_data, self.M, t_pred, theta_mle(self.X, self.M), domain=self.domain
+            observed_data,
+            self.M,
+            t_pred,
+            theta_mle(self.X, self.M),
+            number_of_states=self.number_of_states,
         )
 
     def matrix_completion(

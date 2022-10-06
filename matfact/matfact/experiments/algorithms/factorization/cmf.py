@@ -1,5 +1,7 @@
 import numpy as np
 
+from matfact import settings
+
 from .mfbase import BaseMF
 
 
@@ -27,7 +29,7 @@ class CMF(BaseMF):
         lambda1=1.0,
         lambda2=1.0,
         lambda3=1.0,
-        domain=np.arange(1, 5),
+        number_of_states: int = settings.default_number_of_states,
     ):
 
         self.X = X
@@ -43,7 +45,7 @@ class CMF(BaseMF):
 
         self.n_iter_ = 0
         self._init_matrices(D, J, K)
-        self.domain = domain
+        self.number_of_states = number_of_states
 
     @property
     def M(self):

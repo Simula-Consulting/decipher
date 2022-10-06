@@ -133,9 +133,7 @@ def train_and_log(
     with logger_context as logger:
 
         # Create model
-        model_name, factoriser = model_factory(
-            X_train, domain=np.arange(1, 8), **hyperparams
-        )
+        model_name, factoriser = model_factory(X_train, **hyperparams)
 
         # Fit model
         results = factoriser.matrix_completion(
