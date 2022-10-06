@@ -1,3 +1,4 @@
+import functools
 from typing import Callable
 
 import mlflow
@@ -10,7 +11,11 @@ from skopt.utils import use_named_args
 
 from matfact.data_generation import Dataset
 from matfact.experiments import train_and_log
-from matfact.experiments.logging import MLflowBatchLogger, MLflowLogger
+from matfact.experiments.logging import (
+    MLflowBatchLogger,
+    MLflowLogger,
+    dummy_logger_context,
+)
 from matfact.settings import BASE_PATH, DATASET_PATH
 
 
@@ -38,11 +43,16 @@ def get_objective(data: Dataset, search_space: list, **hyperparams):
 
 
 def get_objective_CV(
-    data: Dataset, search_space: list, n_splits: int = 5, **hyperparams
+    data: Dataset,
+    search_space: list,
+    n_splits: int = 5,
+    log_folds: bool = False,
+    **hyperparams,
 ):
     """Cross validation search."""
     kf = KFold(n_splits=n_splits)
     X, _ = data.get_X_M()
+    logger_context = MLflowLogger(nested=True) if log_folds else dummy_logger_context
 
     @use_named_args(search_space)
     def objective(**search_hyperparams):
@@ -54,7 +64,7 @@ def get_objective_CV(
                     X[train_idx],
                     X[test_idx],
                     dict_to_log=data.prefixed_metadata(),
-                    logger_context=MLflowLogger(nested=True),
+                    logger_context=logger_context,
                     log_loss=False,
                     **hyperparams,
                 )
@@ -106,4 +116,6 @@ def example_hyperparameter_search(objective_getter: Callable = get_objective_CV)
 if __name__ == "__main__":
     # Set objective_getter to get_objective_CV to use cross validation.
     # Otherwise, get_objective uses simple train/test split.
-    example_hyperparameter_search(objective_getter=get_objective_CV)
+    example_hyperparameter_search(
+        objective_getter=functools.partial(get_objective_CV, log_folds=True)
+    )

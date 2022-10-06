@@ -6,6 +6,8 @@ import numpy as np
 
 from matfact.plotting import plot_basis, plot_coefs, plot_confusion, plot_roc_curve
 
+# An AggregationFunction takes a field name and list of values for that field, and
+# returns a dictionary of fields aggregated from the values.
 AggregationFunction = Callable[[str, list[float] | list[list[float]]], dict]
 
 
