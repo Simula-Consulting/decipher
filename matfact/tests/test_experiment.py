@@ -5,6 +5,7 @@ import mlflow
 import numpy as np
 import pytest
 
+from matfact import settings
 from matfact.experiments import (
     CMF,
     SCMF,
@@ -301,3 +302,17 @@ def test_value_error_loss_extra_metric():
             extra_metrics={"loss": lambda x: None},
             log_loss=True,
         )
+
+
+def test_data_weights():
+    """Test generation of data weights."""
+    data_shape = (4, 3)  # Chosen arbitrarily
+    observed_data = np.random.randint(
+        low=0, high=settings.default_number_of_states, size=data_shape
+    )
+    weight_per_class = range(settings.default_number_of_states)
+    weights = data_weights(observed_data, weight_per_class)
+
+    for i, weight in enumerate(weight_per_class):
+        state = i + 1
+        assert np.all(weights[observed_data == state] == weight)
