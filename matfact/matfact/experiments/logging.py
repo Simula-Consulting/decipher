@@ -31,8 +31,8 @@ def mlflow_logger(log_data: dict) -> None:
         mlflow.log_param(parameter, value)
     for metric, value in log_data["metrics"].items():
         if isinstance(value, list):
-            for i in range(len(value)):
-                mlflow.log_metric(metric, value[i], step=i)
+            for epoch, value_at_epoch in enumerate(value):
+                mlflow.log_metric(metric, value_at_epoch, step=epoch)
         else:
             mlflow.log_metric(metric, value)
     mlflow.set_tags(log_data["tags"])
