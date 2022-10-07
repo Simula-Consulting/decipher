@@ -15,6 +15,14 @@ def data_weights_trivial(observed_data_matrix: np.ndarray):
 def data_weights(
     observed_data_matrix: npt.NDArray[np.int_], weights: Sequence[float] | None = None
 ):
+    """Construct a weight matrix for observed data.
+
+    weights contains the weights that should be given to the various states. I.e. the
+    first element of weights is the weighing of state 1, the second element for state 2,
+    and so on.
+
+    Raises ValueError if there are observed states for which no weight is given.
+    """
     if weights is None:
         weights = settings.default_weights
 
