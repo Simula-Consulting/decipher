@@ -1,5 +1,5 @@
 import numpy as np
-from hypothesis import assume, given
+from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays, from_dtype
 
@@ -9,19 +9,20 @@ from matfact.data_generation.gaussian_generator import discretise_matrix, float_
 
 @given(
     st.data(),
-    st.lists(st.floats(min_value=-100, max_value=100), min_size=1),
+    st.integers(min_value=1),
 )
-def test_float_matrix(data, domain):
+def test_float_matrix(data, number_of_states):
     N = data.draw(st.integers(min_value=1, max_value=100))
     T = data.draw(st.integers(min_value=1, max_value=100))
     r = data.draw(st.integers(min_value=1, max_value=min(T, N)))
-    M = float_matrix(N, T, r, domain)
-    domain_min, domain_max = np.min(domain), np.max(domain)
+    M = float_matrix(N, T, r, number_of_states)
     assert not np.isnan(M).any()
 
     # Check that all values are within the range.
     # They may be slightly outside due to floating point errors, in that case
     # check that they are close to the domain limits.
+    domain_min = 1
+    domain_max = number_of_states
     if not (np.all(domain_min <= M) and np.all(M <= domain_max)):
         M_min = np.min(M)
         M_max = np.max(M)
@@ -34,15 +35,12 @@ def test_float_matrix(data, domain):
         shape=array_shapes(min_dims=2, max_dims=2),
         elements=from_dtype(np.dtype(np.float), allow_nan=False),
     ),
-    st.one_of(
-        st.lists(st.integers(min_value=-1000, max_value=1000), min_size=2),
-        arrays(int, st.integers(min_value=1, max_value=7)),
-    ),
+    # We set max number of states to some high number.
+    st.integers(min_value=1, max_value=1000),
     st.floats(),
 )
-def test_discretize_matrix(M_array, domain, theta):
-    assume(np.min(domain) != np.max(domain))
-    discretise_matrix(M_array, domain, theta)
+def test_discretize_matrix(M_array, number_of_states, theta):
+    discretise_matrix(M_array, number_of_states, theta)
 
 
 def test_dataset_read_write(tmp_path):
