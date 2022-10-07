@@ -175,7 +175,7 @@ class MLFlowLogger:
     def __enter__(self):
         self.run_ = mlflow.start_run(nested=self.nested)
         # MLFlow does not raise an exception if the outermost run has nested=True.
-        # This is confusion behaviour, so we chose to raise an exception if
+        # This is confusing behaviour, so we chose to raise an exception if
         # the run has nested=True while also not having a parent run.
         if self.nested and self.run_.data.tags.get("mlflow.parentRunId", None) is None:
             exception = MLFlowRunHierarchyException("Nested run without a parent run!")
