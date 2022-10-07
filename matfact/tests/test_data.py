@@ -69,3 +69,38 @@ def test_dataset_read_write(tmp_path):
     # to not having enough non-zero samples.
     assert X.shape[1] == M.shape[1] == T
     assert X.shape[0] <= N and M.shape[0] == X.shape[0]
+
+
+def test_dataset_metadata(tmp_path):
+    """Test Dataset metadata"""
+    dataset = Dataset()
+    metadata_fields = set(dataset.metadata)
+
+    # Some arbitrary data
+    number_of_individuals = 100
+    time_steps = 40
+    rank = 5
+    sparsity_level = 3
+    dataset.generate(number_of_individuals, time_steps, rank, sparsity_level)
+    # Assert the metadata contains the same keys as before
+    assert set(dataset.metadata) == metadata_fields
+
+    correct_metadata_subset = {
+        "N": number_of_individuals,
+        "T": time_steps,
+        "rank": rank,
+        "sparsity_level": sparsity_level,
+    }
+    # Assert that the values speciifed are in the metadata with the correct value
+    for key, value in correct_metadata_subset.items():
+        assert dataset.metadata[key] == value
+
+    # Assert that a dataset loaded from file has the correct metadata
+    dataset.save(tmp_path)
+    other_dataset = Dataset().load(tmp_path)
+    assert set(other_dataset.metadata) == metadata_fields
+    for field, value in other_dataset.metadata.items():
+        assert value == dataset.metadata[field]
+
+    # Assert that prefixing with no prefix does nothing
+    assert set(dataset.prefixed_metadata("")) == metadata_fields

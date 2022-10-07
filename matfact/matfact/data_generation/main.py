@@ -83,15 +83,17 @@ class Dataset:
         self.data_loaded = False
         self.metadata = {
             "rank": None,
-            "n_rows": None,
-            "n_columns": None,
             "sparsity_level": None,
+            "N": None,
+            "T": None,
+            "generation_method": None,
+            "number_of_states": None,
         }
 
     def __str__(self):
         return (
             "Dataset object of size"
-            f" {self.metadata['n_rows']}x{self.metadata['n_columns']} with rank"
+            f" {self.metadata['N']}x{self.metadata['T']} with rank"
             f" {self.metadata['rank']} and sparsity level"
             f" {self.metadata['sparsity_level']}"
         )
@@ -149,6 +151,7 @@ class Dataset:
             "N": N,
             "T": T,
             "generation_method": generation_method,
+            "number_of_states": len(value_range),
         }
         self.data_loaded = True
         return self
