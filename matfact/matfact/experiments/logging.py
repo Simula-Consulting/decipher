@@ -62,13 +62,13 @@ def _aggregate_fields(
 ) -> dict:
     """Combine data for fields.
 
-    If all entries has the same value for a given field, the output will have that
+    If all entries have the same value for a given field, the output will have that
     field value combination. For fields with different values for the various
     runs, however, the output will log each value of that field.
     For example, if the field "field2" is foo in the first run and bar in the second,
     the output will have the fields "field1_0": foo, "field1_1": bar.
 
-    Note that if the value is a lsit, it is interpreted as being a log over the epochs,
+    Note that if the value is a list, it is interpreted as being a log over the epochs,
     and always taken to be unique for each run.
 
     `aggregate_func` is a function Callable[field_name: str, values: list] that adds
