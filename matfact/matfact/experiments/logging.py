@@ -205,9 +205,9 @@ class MLFlowBatchLogger(MLFlowLogger):
     It is possible to run MLFlowBatchLogger wrapped around subrun contexts.
     >>> with MLFlowBatchLogger(nested=False) as outer_logger:
     >>>     for subrun in subruns:
-    >>>         with MLFlowLogger(nested=True) as child_logger:
+    >>>         with MLFlowLogger(nested=True) as inner_logger:
     >>>             ...
-    >>>             child_logger(run_data)
+    >>>             inner_logger(run_data)
     >>>             outer_logger(run_data)
     """
 
