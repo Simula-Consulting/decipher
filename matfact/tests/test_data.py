@@ -3,13 +3,18 @@ from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays, from_dtype
 
+from matfact import settings
 from matfact.data_generation import Dataset
 from matfact.data_generation.gaussian_generator import discretise_matrix, float_matrix
+
+# For very large number of states, the code is very slow. We therefore set some large
+# arbitrary max
+max_number_of_state = 1000
 
 
 @given(
     st.data(),
-    st.integers(min_value=1),
+    st.integers(min_value=1, max_value=max_number_of_state),
 )
 def test_float_matrix(data, number_of_states):
     N = data.draw(st.integers(min_value=1, max_value=100))
@@ -35,8 +40,7 @@ def test_float_matrix(data, number_of_states):
         shape=array_shapes(min_dims=2, max_dims=2),
         elements=from_dtype(np.dtype(np.float), allow_nan=False),
     ),
-    # We set max number of states to some high number.
-    st.integers(min_value=1, max_value=1000),
+    st.integers(min_value=1, max_value=max_number_of_state),
     st.floats(),
 )
 def test_discretize_matrix(M_array, number_of_states, theta):
@@ -77,7 +81,20 @@ def test_dataset_metadata(tmp_path):
     time_steps = 40
     rank = 5
     sparsity_level = 3
-    dataset = Dataset.generate(number_of_individuals, time_steps, rank, sparsity_level)
+    # Set the number of states to something different from default
+    number_of_states = settings.default_number_of_states + 1
+    observation_probabilities = np.array(
+        (*settings.default_observation_probabilities, 0.4)
+    )
+    dataset = Dataset.generate(
+        number_of_individuals,
+        time_steps,
+        rank,
+        sparsity_level,
+        number_of_states=number_of_states,
+        observation_probabilities=observation_probabilities,
+    )
+
     metadata_fields = set(dataset.metadata)
     # Assert the metadata contains the same keys as before
     assert set(dataset.metadata) == metadata_fields
@@ -87,6 +104,7 @@ def test_dataset_metadata(tmp_path):
         "T": time_steps,
         "rank": rank,
         "sparsity_level": sparsity_level,
+        "number_of_states": number_of_states,
     }
     # Assert that the values speciifed are in the metadata with the correct value
     for key, value in correct_metadata_subset.items():

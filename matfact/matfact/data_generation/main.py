@@ -129,19 +129,30 @@ class Dataset:
         rank,
         sparsity_level,
         generation_method="DGD",
+        number_of_states=default_number_of_states,
+        observation_probabilities=default_observation_probabilities,
         **kwargs,
     ):
         """Generate a Datasert"""
         if generation_method != "DGD":
             raise NotImplementedError("Only DGD generation is implemented.")
-        X, M = produce_dataset(N, T, rank, sparsity_level, **kwargs)
+        X, M = produce_dataset(
+            N,
+            T,
+            rank,
+            sparsity_level,
+            number_of_states=number_of_states,
+            observation_probabilities=observation_probabilities,
+            **kwargs,
+        )
         metadata = {
             "rank": rank,
             "sparsity_level": sparsity_level,
             "N": N,
             "T": T,
             "generation_method": generation_method,
-            "number_of_states": len(value_range),
+            "number_of_states": number_of_states,
+            "observation_probabilities": list(observation_probabilities),
         }
 
         return cls(X, M, metadata)
