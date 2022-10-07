@@ -58,9 +58,8 @@ def produce_dataset(
             The sparse and original complete data matrices
     """
 
-    domain = np.arange(1, number_of_states + 1)
-    M = float_matrix(N=N, T=T, r=r, domain=domain, seed=seed)
-    Y = discretise_matrix(M, domain=domain, theta=theta, seed=seed)
+    M = float_matrix(N=N, T=T, r=r, number_of_states=number_of_states, seed=seed)
+    Y = discretise_matrix(M, number_of_states=number_of_states, theta=theta, seed=seed)
 
     if observation_probabilities is None:
         observation_probabilities = default_observation_probabilities
