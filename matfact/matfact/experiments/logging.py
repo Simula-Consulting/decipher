@@ -82,18 +82,25 @@ def _aggregate_fields(
 
     -> {"field1": foo, "field2_0": foo, "field2_1": bar,}
     """
+    if not data:  # The list is empty
+        return {}
 
-    # Assume each entry has the same fields
-    num_entries = len(data)
-    new_data = {}
+    # All entries should have the same fields
+    fields = set(data[0])
+    for entry in data[1:]:
+        assert set(entry) == fields
+
     if aggregate_funcs is None:
         aggregate_funcs = [_store_subruns, _mean_and_std]
-    for field in data[0]:
-        values = [data[i][field] for i in range(num_entries)]
-        should_separate = (
+
+    new_data = {}
+    for field in fields:
+        values = [entry[field] for entry in data]
+        # If all values are the same, no aggregation is needed
+        should_aggregate = (
             isinstance(values[0], list | np.ndarray) or len(set(values)) > 1
         )
-        if should_separate:  # Data different, we must aggregate
+        if should_aggregate:  # Data different, we must aggregate
             for aggregation_function in aggregate_funcs:
                 new_data.update(aggregation_function(field, values))
         else:  # All runs have the same data
