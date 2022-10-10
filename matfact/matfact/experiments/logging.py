@@ -165,7 +165,7 @@ class MLFlowLogger:
     >>>     # }
     >>>     logger(output)
 
-    Raises MLFlowRunHierarchyExcpetion on enter if the outermost run has nested=True.
+    Raises MLFlowRunHierarchyException on enter if the outermost run has nested=True.
     """
 
     def __init__(self, nested: bool = False, extra_tags: dict | None = None):
