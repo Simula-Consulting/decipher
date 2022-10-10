@@ -20,7 +20,7 @@ from matfact.experiments.simulation.dataset import prediction_data
 
 def model_factory(
     X: np.ndarray,
-    shift_range: Optional[np.ndarray[Any, int]] = None,
+    shift_range: Optional[np.ndarray] = None,
     convolution: bool = False,
     weights: Optional[np.ndarray] = None,
     rank: int = 5,
@@ -144,7 +144,7 @@ def train_and_log(
         X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
         p_pred = factoriser.predict_probability(X_test_masked, t_pred)
 
-        mlflow_output = {
+        mlflow_output: dict = {
             "params": {},
             "metrics": {},
             "tags": {},

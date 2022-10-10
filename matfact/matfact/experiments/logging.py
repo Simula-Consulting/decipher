@@ -3,7 +3,7 @@ import re
 from contextlib import nullcontext
 from typing import Callable, cast
 
-import mlflow
+import mlflow  # type: ignore
 import numpy as np
 
 from matfact.plotting import plot_basis, plot_coefs, plot_confusion, plot_roc_curve
@@ -134,7 +134,7 @@ def batch_mlflow_logger(
             "tags": {},
         }
     """
-    new_log = {
+    new_log: dict = {
         "params": {},
         "metrics": {},
         "tags": {},

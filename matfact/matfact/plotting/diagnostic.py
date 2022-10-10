@@ -16,10 +16,8 @@ def plot_coefs(U, path_to_figure: pathlib.Path, fname="", n_bins=50):
 
     hist, bins = np.histogram(U.ravel(), bins=n_bins)
 
-    fig, axis = plt.subplots(
-        1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1))
-    )
-
+    fig = plt.figure(figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
+    axis = fig.gca()  # type: ignore
     axis.bar((bins[:-1] + bins[1:]) / 2, hist)
     axis.set_ylabel("Count")
     axis.set_xlabel("Coefficient")
@@ -36,10 +34,8 @@ def plot_coefs(U, path_to_figure: pathlib.Path, fname="", n_bins=50):
 def plot_basis(V, path_to_figure: pathlib.Path, fname=""):
     "Plot the basic vectors in the V matrix."
 
-    fig, axis = plt.subplots(
-        1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1))
-    )
-
+    fig = plt.figure(figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
+    axis = fig.gca()  # type: ignore
     axis.plot(V)
     axis.set_xlabel("Column coordinate")
     axis.set_ylabel("Basic vector")
@@ -79,7 +75,7 @@ def plot_confusion(x_true, x_pred, path_to_figure: pathlib.Path, n_classes=4, fn
         linewidths=0.5,
         square=True,
         cbar=False,
-        cmap=plt.cm.get_cmap("Blues", np.max(cmat)),
+        cmap=plt.cm.get_cmap("Blues", np.max(cmat)),  # type: ignore
         linecolor="k",
         ax=axis,
     )
@@ -104,9 +100,8 @@ def plot_confusion(x_true, x_pred, path_to_figure: pathlib.Path, n_classes=4, fn
 def plot_train_loss(epochs, loss_values, path_to_figure: pathlib.Path, fname=""):
     "PLot the loss values from matrix completion."
 
-    fig, axis = plt.subplots(
-        1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1))
-    )
+    fig = plt.figure(figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
+    axis = fig.gca()  # type: ignore
 
     axis.plot(epochs, loss_values, marker="o", alpha=0.7)
 
@@ -182,9 +177,8 @@ def plot_roc_curve(
     else:
         raise ValueError(f"Invalid average: {average}")
 
-    fig, axis = plt.subplots(
-        1, 1, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1))
-    )
+    fig = plt.figure(figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
+    axis = fig.gca()  # type: ignore
 
     axis.plot([0, 1], [0, 1], linestyle="--", lw=1.5, color="gray", label="Random")
     axis.plot(
@@ -204,6 +198,6 @@ def plot_roc_curve(
 
     plot_utils.set_arrowed_spines(fig, axis)
 
-    plt.tight_layout()
+    plt.tight_layout()  # type: ignore
     plt.savefig(path_to_figure / f"roc_auc_{average}_{fname}.pdf")
     plt.close()

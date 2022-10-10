@@ -15,7 +15,7 @@ This prediction algorithm is implemented in `ClassificationTree`. In addition,
 `estimate_probability_thresholds` estimates the optimal values of the thresholds.
 """
 import itertools
-from typing import Any
+from typing import Any, Sequence
 
 import numpy as np
 from scipy import optimize
@@ -31,10 +31,8 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
     The number of thresholds (tau) is one less than the number of classes.
     """
 
-    def __init__(self, thresholds: np.ndarray | None = None):
-        # To adhere to the sklearn API all arguments must have a default value, and
-        # we cannot have any logic in the constructor.
-        self.thresholds = thresholds
+    def __init__(self, thresholds: Sequence[float] | None = None):
+        self.thresholds = thresholds if thresholds is not None else []
 
     def predict(self, probabilities: np.ndarray):
         """Perform classification given probabilities for classes.
