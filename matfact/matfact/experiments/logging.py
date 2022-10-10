@@ -170,7 +170,7 @@ class MLFlowLogger:
 
     def __init__(self, nested: bool = False, extra_tags: dict | None = None):
         self.nested = nested
-        self.extra_tags = extra_tags
+        self.extra_tags = extra_tags if extra_tags else {}
 
     def __enter__(self):
         self.run_ = mlflow.start_run(nested=self.nested)
@@ -191,8 +191,7 @@ class MLFlowLogger:
     def __call__(self, output_dict: dict):
         """Log an output dict to MLFlow."""
         mlflow_logger(output_dict)
-        if self.extra_tags:
-            mlflow.set_tags(self.extra_tags)
+        mlflow.set_tags(self.extra_tags)
 
 
 class MLFlowBatchLogger(MLFlowLogger):
