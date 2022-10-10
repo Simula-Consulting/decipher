@@ -1,4 +1,5 @@
 import pathlib
+import re
 from contextlib import nullcontext
 from typing import Callable, cast
 
@@ -150,9 +151,7 @@ def batch_mlflow_logger(
 
 
 class MLFlowRunHierarchyException(Exception):
-    """MLFlowLogger contexts entered in an illegal order.
-
-    For example, having a nested run as the top run."""
+    """MLFlowLogger contexts nested illegally."""
 
     pass
 
@@ -161,6 +160,11 @@ class MLFlowLogger:
     """Context manager for MLFlow logging.
 
     Wraps the code inside the corresponding with block in an MLFlow run.
+
+    Arguments:
+     allow_nesting: loggers can be nested within each other, with inside runs being
+        logged as children in MLFlow.
+     extra_tags: these tags will be appended to each run.
 
     Example usage.
     >>> with MLFlowLogger() as logger:
@@ -172,28 +176,32 @@ class MLFlowLogger:
     >>>     # }
     >>>     logger(output)
 
-    Raises MLFlowRunHierarchyException on enter if the outermost run has nested=True.
+    Raises MLFlowRunHierarchyException on enter if loggers are nested when allow_nesting
+    is False.
     """
 
-    def __init__(self, nested: bool = False, extra_tags: dict | None = None):
-        self.nested = nested
+    def __init__(self, allow_nesting: bool = True, extra_tags: dict | None = None):
+        self.allow_nesting = allow_nesting
         self.extra_tags = extra_tags if extra_tags else {}
 
     def __enter__(self):
-        self.run_ = mlflow.start_run(nested=self.nested)
-        # MLFlow does not raise an exception if the outermost run has nested=True.
-        # This is confusing behaviour, so we chose to raise an exception if
-        # the run has nested=True while also not having a parent run.
-        if self.nested and self.run_.data.tags.get("mlflow.parentRunId", None) is None:
-            exception = MLFlowRunHierarchyException("Nested run without a parent run!")
-            # Do clean up
-            self.__exit__(type(exception), str(exception), None)
-            raise exception
+        try:
+            self.run_ = mlflow.start_run(nested=self.allow_nesting)
+        except Exception as e:
+            if re.match("Run with UUID [0-9a-f]+ is already active.", str(e)):
+                self.__exit__(type(e), str(e), e.__traceback__)
+                raise MLFlowRunHierarchyException(
+                    "allow_nesting is False, but loggers are nested!"
+                )
+
         return self
 
     def __exit__(self, type, value, traceback):
         """End the run by calling the underlying ActiveRun's exit method."""
-        return self.run_.__exit__(type, value, traceback)
+        if hasattr(self, "run_"):
+            return self.run_.__exit__(type, value, traceback)
+        else:
+            return True
 
     def __call__(self, output_dict: dict):
         """Log an output dict to MLFlow."""
@@ -209,9 +217,9 @@ class MLFlowBatchLogger(MLFlowLogger):
     where each fold is a subrun, and the entire cross validation is logged as one run.
 
     It is possible to run MLFlowBatchLogger wrapped around subrun contexts.
-    >>> with MLFlowBatchLogger(nested=False) as outer_logger:
+    >>> with MLFlowBatchLogger() as outer_logger:
     >>>     for subrun in subruns:
-    >>>         with MLFlowLogger(nested=True) as inner_logger:
+    >>>         with MLFlowLogger() as inner_logger:
     >>>             ...
     >>>             inner_logger(run_data)
     >>>             outer_logger(run_data)
@@ -219,11 +227,11 @@ class MLFlowBatchLogger(MLFlowLogger):
 
     def __init__(
         self,
-        nested: bool = False,
+        allow_nesting: bool = True,
         extra_tags: dict | None = None,
         aggregate_funcs: list[AggregationFunction] | None = None,
     ) -> None:
-        super().__init__(nested=nested, extra_tags=extra_tags)
+        super().__init__(allow_nesting=allow_nesting, extra_tags=extra_tags)
         self.aggregate_funcs = aggregate_funcs
 
     def __enter__(self):
@@ -251,10 +259,10 @@ class MLFlowLoggerArtifact(MLFlowLogger):
     def __init__(
         self,
         artifact_path: pathlib.Path,
-        nested: bool = False,
+        allow_nesting: bool = True,
         extra_tags: dict | None = None,
     ):
-        super().__init__(nested=nested, extra_tags=extra_tags)
+        super().__init__(allow_nesting=allow_nesting, extra_tags=extra_tags)
         self.figure_path = artifact_path
 
     def __call__(self, output_dict):

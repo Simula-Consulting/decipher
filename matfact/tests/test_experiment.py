@@ -77,27 +77,30 @@ def _artifact_path_from_run(run: mlflow.entities.Run):
 def test_mlflow_context_hierarchy():
     """Test configurations of nested MLFlowLoggers."""
 
-    with pytest.raises(MLFlowRunHierarchyException):
-        with MLFlowLogger(nested=True):
-            pass
+    with MLFlowLogger(allow_nesting=True):
+        pass
     assert mlflow.active_run() is None
 
-    with pytest.raises(Exception, match="Run with UUID [0-9a-f]+ is already active."):
-        with MLFlowLogger(nested=False):
-            with MLFlowLogger(nested=False):
+    with MLFlowLogger(allow_nesting=False):
+        pass
+    assert mlflow.active_run() is None
+
+    with pytest.raises(MLFlowRunHierarchyException):
+        with MLFlowLogger(allow_nesting=False):
+            with MLFlowLogger(allow_nesting=False):
                 pass
     assert mlflow.active_run() is None
 
-    with pytest.raises(Exception, match="Run with UUID [0-9a-f]+ is already active."):
-        with MLFlowLogger(nested=False):
-            with MLFlowLogger(nested=True):
-                with MLFlowLogger(nested=False):
+    with pytest.raises(MLFlowRunHierarchyException):
+        with MLFlowLogger(allow_nesting=False):
+            with MLFlowLogger(allow_nesting=True):
+                with MLFlowLogger(allow_nesting=False):
                     pass
     assert mlflow.active_run() is None
 
-    with MLFlowLogger(nested=False):
-        with MLFlowLogger(nested=True):
-            with MLFlowLogger(nested=True):
+    with MLFlowLogger(allow_nesting=False):
+        with MLFlowLogger(allow_nesting=True):
+            with MLFlowLogger(allow_nesting=True):
                 pass
     assert mlflow.active_run() is None
 
@@ -138,7 +141,7 @@ def test_mlflow_logger(tmp_path):
         outer_run = mlflow.active_run()
         assert outer_run is not None
         logger(dummy_output)
-        with MLFlowLogger(nested=True) as inner_logger:
+        with MLFlowLogger() as inner_logger:
             inner_run = mlflow.active_run()
             assert inner_run is not None
             assert inner_run.data.tags["mlflow.parentRunId"] == outer_run.info.run_id
