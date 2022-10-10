@@ -85,13 +85,13 @@ def _aggregate_fields(
     if not data:  # The list is empty
         return {}
 
+    if aggregate_funcs is None:
+        aggregate_funcs = [_store_subruns, _mean_and_std]
+
     # All entries should have the same fields
     fields = set(data[0])
     for entry in data[1:]:
         assert set(entry) == fields
-
-    if aggregate_funcs is None:
-        aggregate_funcs = [_store_subruns, _mean_and_std]
 
     new_data = {}
     for field in fields:
