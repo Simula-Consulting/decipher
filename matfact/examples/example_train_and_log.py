@@ -1,13 +1,12 @@
 import pathlib
 from itertools import product
 
-import mlflow
 import numpy as np
 import tensorflow as tf
 
 from matfact.data_generation import Dataset
 from matfact.experiments import data_weights, reconstruction_mse, train_and_log
-from matfact.plotting import plot_basis, plot_coefs, plot_confusion, plot_roc_curve
+from matfact.experiments.logging import MLFlowLoggerDiagnostic
 from matfact.settings import DATASET_PATH, FIGURE_PATH
 
 
@@ -65,25 +64,17 @@ def experiment(
         "recMSE": lambda model: reconstruction_mse(M_train, model.X, model.M),
     }
 
-    results = train_and_log(
+    train_and_log(
         X_train,
         X_test,
         shift_range=shift_range,
         weights=weights,
         extra_metrics=extra_metrics,
         convolution=enable_convolution,
+        logger_context=MLFlowLoggerDiagnostic(FIGURE_PATH, extra_tags=mlflow_tags),
         optimization_params=optimization_params,
         **hyperparams
     )
-
-    # Plotting #
-    with mlflow.start_run(run_id=results["mlflow_run_id"]):
-        mlflow.set_tags(mlflow_tags)
-        plot_coefs(results["U"], FIGURE_PATH)
-        plot_basis(results["V"], FIGURE_PATH)
-        plot_confusion(results["x_true"], results["x_pred"], FIGURE_PATH)
-        plot_roc_curve(results["x_true"], results["p_pred"], FIGURE_PATH)
-        mlflow.log_artifacts(FIGURE_PATH)
 
 
 def main():

@@ -1,3 +1,4 @@
+import functools
 from typing import Callable
 
 import mlflow
@@ -10,6 +11,11 @@ from skopt.utils import use_named_args
 
 from matfact.data_generation import Dataset
 from matfact.experiments import train_and_log
+from matfact.experiments.logging import (
+    MLFlowBatchLogger,
+    MLFlowLogger,
+    dummy_logger_context,
+)
 from matfact.settings import BASE_PATH, DATASET_PATH
 
 
@@ -21,45 +27,51 @@ def get_objective(data: Dataset, search_space: list, **hyperparams):
     @use_named_args(search_space)
     def objective(**search_hyperparams):
         hyperparams.update(search_hyperparams)
-        output = train_and_log(
+        mlflow_output = train_and_log(
             X_train,
             X_test,
-            nested=True,
+            logger_context=MLFlowLogger(),
             dict_to_log=data.prefixed_metadata(),
             log_loss=False,
             **hyperparams,
         )
         # The score logged, the Matthew correlation coefficient, is 'higher is
         # better', while we are minimizing.
-        return -output["score"]
+        return -mlflow_output["metrics"]["matthew_score"]
 
     return objective
 
 
 def get_objective_CV(
-    data: Dataset, search_space: list, n_splits: int = 5, **hyperparams
+    data: Dataset,
+    search_space: list,
+    n_splits: int = 5,
+    log_folds: bool = False,
+    **hyperparams,
 ):
     """Cross validation search."""
     kf = KFold(n_splits=n_splits)
     X, _ = data.get_X_M()
+    logger_context = MLFlowLogger() if log_folds else dummy_logger_context
 
     @use_named_args(search_space)
     def objective(**search_hyperparams):
         hyperparams.update(search_hyperparams)
         scores = []
-        for train_idx, test_idx in kf.split(X):
-            output = train_and_log(
-                X[train_idx],
-                X[test_idx],
-                nested=True,
-                dict_to_log=data.prefixed_metadata(),
-                log_loss=False,
-                **hyperparams,
-            )
-            # The score logged, the Matthew correlation coefficient, is 'higher is
-            # better', while we are minimizing.
-            scores.append(-output["score"])
-
+        with MLFlowBatchLogger() as logger:
+            for train_idx, test_idx in kf.split(X):
+                mlflow_output = train_and_log(
+                    X[train_idx],
+                    X[test_idx],
+                    dict_to_log=data.prefixed_metadata(),
+                    logger_context=logger_context,
+                    log_loss=False,
+                    **hyperparams,
+                )
+                # The score logged, the Matthew correlation coefficient, is 'higher is
+                # better', while we are minimizing.
+                logger(mlflow_output)
+                scores.append(-mlflow_output["metrics"]["matthew_score"])
         return np.mean(scores)
 
     return objective
@@ -94,12 +106,16 @@ def example_hyperparameter_search(objective_getter: Callable = get_objective_CV)
 
         best_values = res_gp["x"]
         best_score = res_gp["fun"]
+        # We are minimizing, so the best_score is inverted.
         mlflow.log_metric("best_score", -best_score)
         for param, value in zip(space, best_values):
             mlflow.log_param(f"best_{param.name}", value)
+        mlflow.set_tag("Notes", "Hyperparameter search")
 
 
 if __name__ == "__main__":
     # Set objective_getter to get_objective_CV to use cross validation.
     # Otherwise, get_objective uses simple train/test split.
-    example_hyperparameter_search(objective_getter=get_objective_CV)
+    example_hyperparameter_search(
+        objective_getter=functools.partial(get_objective_CV, log_folds=True)
+    )

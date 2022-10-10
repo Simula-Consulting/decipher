@@ -4,7 +4,6 @@ produced in the `datasets` directory.
 """
 from typing import Any, Callable, Optional, Type
 
-import mlflow
 import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
@@ -14,6 +13,7 @@ from matfact.experiments.algorithms.utils import (
     initialize_basis,
     laplacian_kernel_matrix,
 )
+from matfact.experiments.logging import MLFlowLogger
 from matfact.experiments.predict.clf_tree import estimate_probability_thresholds
 from matfact.experiments.simulation.dataset import prediction_data
 
@@ -71,10 +71,11 @@ def model_factory(
 def train_and_log(
     X_train: np.ndarray,
     X_test: np.ndarray,
+    *,
     dict_to_log: Optional[dict] = None,
     extra_metrics: Optional[dict[str, Callable[[Type[BaseMF]], float]]] = None,
     log_loss: bool = True,
-    nested: bool = False,
+    logger_context=None,
     use_threshold_optimization: bool = True,
     optimization_params: Optional[dict[str, Any]] = None,
     **hyperparams,
@@ -115,6 +116,8 @@ def train_and_log(
     loss function of each training run.
     Two examples are to log each run separately or logging all folds together.
     """
+    if logger_context is None:
+        logger_context = MLFlowLogger()
 
     metrics = list(extra_metrics.keys()) if extra_metrics else []
     if log_loss:
@@ -127,64 +130,68 @@ def train_and_log(
     if optimization_params is None:
         optimization_params = {}
 
-    mlflow.start_run(nested=nested)
+    with logger_context as logger:
 
-    # Create model
-    model_name, factoriser = model_factory(X_train, **hyperparams)
+        # Create model
+        model_name, factoriser = model_factory(X_train, **hyperparams)
 
-    # Fit model
-    results = factoriser.matrix_completion(
-        extra_metrics=extra_metrics, **optimization_params
-    )
-
-    # Predict
-    X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
-    p_pred = factoriser.predict_probability(X_test_masked, t_pred)
-
-    if use_threshold_optimization:
-        # Find the optimal threshold values
-        X_train_masked, t_pred_train, x_true_train = prediction_data(
-            X_train, "last_observed"
+        # Fit model
+        results = factoriser.matrix_completion(
+            extra_metrics=extra_metrics, **optimization_params
         )
-        p_pred_train = factoriser.predict_probability(X_train_masked, t_pred_train)
-        classification_tree = estimate_probability_thresholds(
-            x_true_train, p_pred_train
+
+        # Predict
+        X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
+        p_pred = factoriser.predict_probability(X_test_masked, t_pred)
+
+        mlflow_output = {
+            "params": {},
+            "metrics": {},
+            "tags": {},
+            "meta": {},
+        }
+        if use_threshold_optimization:
+            # Find the optimal threshold values
+            X_train_masked, t_pred_train, x_true_train = prediction_data(
+                X_train, "last_observed"
+            )
+            p_pred_train = factoriser.predict_probability(X_train_masked, t_pred_train)
+            classification_tree = estimate_probability_thresholds(
+                x_true_train, p_pred_train
+            )
+            threshold_values = {
+                f"classification_tree_{key}": value
+                for key, value in classification_tree.get_params().items()
+            }
+            mlflow_output["params"].update(threshold_values)
+
+            # Use threshold values on the test set
+            x_pred = classification_tree.predict(p_pred)
+        else:
+            # Simply choose the class with the highest probability
+            # Class labels are 1-indexed, so add one to the arg index.
+            x_pred = 1 + np.argmax(p_pred, axis=1)
+
+        # Score
+        score = matthews_corrcoef(x_pred, x_true)
+        results.update(
+            {
+                "score": score,
+                "p_pred": p_pred,
+                "x_pred": x_pred,
+                "x_true": x_true,
+            }
         )
-        threshold_values = {
-            f"classification_tree_{key}": value
-            for key, value in classification_tree.get_params().items()
-        }
-        results.update(threshold_values)
-        mlflow.log_params(threshold_values)
+        mlflow_output["meta"]["results"] = results
 
-        # Use threshold values on the test set
-        x_pred = classification_tree.predict(p_pred)
-    else:
-        # Simply choose the class with the highest probability
-        # Class labels are 1-indexed, so add one to the arg index.
-        x_pred = 1 + np.argmax(p_pred, axis=1)
+        # Logging
+        mlflow_output["params"].update(hyperparams)
+        mlflow_output["params"]["model_name"] = model_name
+        if dict_to_log:
+            mlflow_output["params"].update(dict_to_log)
 
-    # Score
-    score = matthews_corrcoef(x_pred, x_true)
-    results.update(
-        {
-            "score": score,
-            "p_pred": p_pred,
-            "x_pred": x_pred,
-            "x_true": x_true,
-        }
-    )
-
-    # Logging
-    mlflow.log_params(hyperparams)
-    mlflow.log_param("model_name", model_name)
-    if dict_to_log:
-        mlflow.log_params(dict_to_log)
-
-    mlflow.log_metric("matthew_score", score)
-    for metric in metrics:
-        for epoch, metric_value in zip(results["epochs"], results[metric]):
-            mlflow.log_metric(metric, metric_value, step=epoch)
-    results["mlflow_run_id"] = mlflow.active_run().info.run_id
-    mlflow.end_run()
-    return results
+        mlflow_output["metrics"]["matthew_score"] = score
+        for metric in metrics:
+            mlflow_output["metrics"][metric] = results[metric]
+        logger(mlflow_output)
+    return mlflow_output
