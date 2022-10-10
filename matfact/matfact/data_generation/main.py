@@ -76,19 +76,13 @@ class Dataset:
 
     This class simplifies generating, loading, and saving datasets.
     Most methods returns the Dataset object, so that it is chainable, as
-    >>> Dataset().load(some_path).get_X_M()
+    >>> Dataset.from_file(some_path).get_X_M()
     """
 
-    def __init__(self):
-        self.data_loaded = False
-        self.metadata = {
-            "rank": None,
-            "sparsity_level": None,
-            "N": None,
-            "T": None,
-            "generation_method": None,
-            "number_of_states": None,
-        }
+    def __init__(self, X: np.ndarray, M: np.ndarray, metadata: dict):
+        self.X = X
+        self.M = M
+        self.metadata = metadata
 
     def __str__(self):
         return (
@@ -98,27 +92,25 @@ class Dataset:
             f" {self.metadata['sparsity_level']}"
         )
 
-    def load(self, path: pathlib.Path):
+    @classmethod
+    def from_file(cls, path: pathlib.Path):
         """Load dataset from file"""
-        assert not self.data_loaded, "Data is already loaded!"
-
-        self.X, self.M = np.load(path / "X.npy"), np.load(path / "M.npy")
+        X, M = np.load(path / "X.npy"), np.load(path / "M.npy")
         with (path / "dataset_metadata.json").open("r") as metadata_file:
-            self.metadata.update(json.load(metadata_file))
-        self.data_loaded = True
-        return self
+            metadata = json.load(metadata_file)
+        return cls(X, M, metadata)
 
     def save(self, path: pathlib.Path):
         """Store dataset to file"""
-        assert self.data_loaded, "No data is loaded or generated!"
         np.save(path / "X.npy", self.X)
         np.save(path / "M.npy", self.M)
         with (path / "dataset_metadata.json").open("w") as metadata_file:
             metadata_file.write(json.dumps(self.metadata))
         return self
 
+    @classmethod
     def generate(
-        self,
+        cls,
         N,
         T,
         rank,
@@ -131,10 +123,9 @@ class Dataset:
         generation_method="DGD",
     ):
         """Generate a Datasert"""
-        assert not self.data_loaded, "Data is already loaded!"
         if generation_method != "DGD":
             raise NotImplementedError("Only DGD generation is implemented.")
-        self.X, self.M = produce_dataset(
+        X, M = produce_dataset(
             N,
             T,
             rank,
@@ -145,7 +136,7 @@ class Dataset:
             theta=theta,
             seed=seed,
         )
-        self.metadata = {
+        metadata = {
             "rank": rank,
             "sparsity_level": sparsity_level,
             "N": N,
@@ -153,12 +144,11 @@ class Dataset:
             "generation_method": generation_method,
             "number_of_states": len(value_range),
         }
-        self.data_loaded = True
-        return self
+
+        return cls(X, M, metadata)
 
     def get_X_M(self):
-        """Return the X and M matrix, after asserting data has been loaded."""
-        assert self.data_loaded
+        """Return the X and M matrix."""
         return self.X, self.M
 
     def get_split_X_M(self, ratio=0.8):

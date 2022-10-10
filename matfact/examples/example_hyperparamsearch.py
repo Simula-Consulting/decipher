@@ -91,9 +91,9 @@ def example_hyperparameter_search(objective_getter: Callable = get_objective_CV)
 
     # Load data
     try:
-        data = Dataset().load(DATASET_PATH)
+        data = Dataset.from_file(DATASET_PATH)
     except FileNotFoundError:  # No data loaded
-        data = Dataset().generate(1000, 40, 5, 5)
+        data = Dataset.generate(1000, 40, 5, 5)
 
     with mlflow.start_run():
         res_gp = gp_minimize(
