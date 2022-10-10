@@ -1,6 +1,6 @@
 import pathlib
 from contextlib import nullcontext
-from typing import Callable
+from typing import Callable, cast
 
 import mlflow
 import numpy as np
@@ -38,17 +38,24 @@ def mlflow_logger(log_data: dict) -> None:
     mlflow.set_tags(log_data["tags"])
 
 
-def _mean_and_std(field_name: str, values: list[float] | list[list[float]]) -> dict:
+def _mean_and_std(
+    field_name: str, values: list[str] | list[float] | list[list[float]]
+) -> dict:
     """Return a dict with mean and standard deviation of the values.
 
     If the entries of values are lists, use the last element of each, i.e. the mean
     and std at the last epoch.
     """
     if isinstance(values[0], list):
-        values = [value[-1] for value in values]
+        values = [value[-1] for value in cast(list[list[float]], values)]
+    if isinstance(values[0], float):
+        mean = np.mean(values)
+        std = np.std(values)
+    else:
+        mean = std = float("nan")
     return {
-        f"{field_name}_mean": np.mean(values),
-        f"{field_name}_std": np.std(values),
+        f"{field_name}_mean": mean,
+        f"{field_name}_std": std,
     }
 
 

@@ -42,6 +42,27 @@ def test_aggregate_fields():
     out = _aggregate_fields(data)
     assert out == correct_out
 
+    foo_string = "type1"
+    bar_string = "type2"
+    data = [
+        {"field1": foo_string, "field2": foo_string},
+        {"field1": foo_string, "field2": bar_string},
+    ]
+    correct_out = {
+        "field1": foo_string,
+        "field2_0": foo_string,
+        "field2_1": bar_string,
+        "field2_mean": float("nan"),
+        "field2_std": float("nan"),
+    }
+    out = _aggregate_fields(data)
+    assert set(correct_out) == set(out)
+    for field, correct_value in correct_out.items():
+        if isinstance(correct_value, float) and np.isnan(correct_value):
+            assert np.isnan(out[field])
+        else:
+            assert out[field] == correct_value
+
 
 def _artifact_path_from_run(run: mlflow.entities.Run):
     """Return pathlib.Path object of run artifact directory."""
