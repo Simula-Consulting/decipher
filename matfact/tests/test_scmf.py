@@ -68,8 +68,8 @@ def _generate_SCMF_logs() -> dict[str, np.ndarray]:
     iterations = 4  # Number of iterations to run the solver
 
     np.random.seed(42)
-    X = np.random.random((N, T))  # Inital observation matrix
-    V = np.random.random((T, r))  # Inital basic profiles
+    X = np.random.randint(low=0, high=4, size=(N, T))  # Initial observation matrix
+    V = np.random.random((T, r))  # Initial basic profiles
     s_budget = np.arange(-10, 11)
 
     # Allocate space for the logs
