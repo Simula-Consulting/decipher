@@ -8,6 +8,7 @@ import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
 from matfact.experiments import CMF, SCMF, WCMF, BaseMF
+from matfact.experiments.algorithms.risk_prediction import predict_state
 from matfact.experiments.algorithms.utils import (
     finite_difference_matrix,
     initialize_basis,
@@ -156,21 +157,16 @@ def train_and_log(
                 X_train, "last_observed"
             )
             p_pred_train = factoriser.predict_probability(X_train_masked, t_pred_train)
-            classification_tree = estimate_probability_thresholds(
-                x_true_train, p_pred_train
-            )
+            estimator = estimate_probability_thresholds(x_true_train, p_pred_train)
             threshold_values = {
                 f"classification_tree_{key}": value
-                for key, value in classification_tree.get_params().items()
+                for key, value in estimator.get_params().items()
             }
             mlflow_output["params"].update(threshold_values)
-
-            # Use threshold values on the test set
-            x_pred = classification_tree.predict(p_pred)
         else:
-            # Simply choose the class with the highest probability
-            # Class labels are 1-indexed, so add one to the arg index.
-            x_pred = 1 + np.argmax(p_pred, axis=1)
+            estimator = None
+
+        x_pred = predict_state(p_pred, estimator)
 
         # Score
         score = matthews_corrcoef(x_pred, x_true)
