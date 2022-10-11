@@ -121,22 +121,23 @@ def test_dataset_metadata(tmp_path):
     assert set(dataset.prefixed_metadata("")) == metadata_fields
 
 
-def test_generate_higher_states():
+def test_generate_higher_states(monkeypatch):
     """Test Dataset generation with different number of states."""
 
     # Some arbitrary data
-    # We must have a large number of individuals to ensure that each state is present.
-    number_of_individuals = 20000
+    number_of_individuals = 2000
     time_steps = 100
     rank = 5
     sparsity_level = 1
     # Set the number of states to something different from default
     number_of_states = settings.default_number_of_states + 1
+    # Disable masking by setting all observation probabilities to one
     observation_probabilities = np.ones(number_of_states + 1)
 
-    # observation_probabilities = np.zeros(number_of_states + 1)
-    # observation_probabilities[-2:] = 0.5
-    # observation_probabilities[0]=1
+    # Disable censoring, in order to avoid masking out the states we want to assert.
+    monkeypatch.setattr(
+        "matfact.data_generation.main.censoring", lambda X, missing=0: X
+    )
     dataset = Dataset.generate(
         number_of_individuals,
         time_steps,
