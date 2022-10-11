@@ -107,7 +107,7 @@ def test_mlflow_context_hierarchy():
 
 
 def test_mlflow_logger(tmp_path):
-    """Test theh MLFlowLogger context."""
+    """Test the MLFlowLogger context."""
     mlflow.set_tracking_uri(tmp_path)
     artifact_path = tmp_path / "artifacts"
     artifact_path.mkdir()

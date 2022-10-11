@@ -2,7 +2,7 @@ import numpy as np
 
 
 def predict_proba(Y, M, t_pred, theta, number_of_states):
-    """Predict probailities of future results in longitudinal data.
+    """Predict probabilities of future results in longitudinal data.
 
     Args:
         Y: A (M x T) longitudinal data matrix. Each row is a longitudinal vector with

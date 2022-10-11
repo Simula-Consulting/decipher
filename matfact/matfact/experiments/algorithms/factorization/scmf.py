@@ -77,11 +77,11 @@ class SCMF(BaseMF):
         W (optional): Weight matrix for the discrepancy term. Default is
             set to the output of `experiments.simulation.data_weights(X)`.
         D (optional): Forward difference matrix
-        J (optional): A matrix used to impose a minimum value in the basic vecors V
+        J (optional): A matrix used to impose a minimum value in the basic vectors V
         K (optional): Convolutional matrix
         lambda: Regularization coefficients
         iter_U, iter_V: The number of steps with gradient descent (GD) per factor update
-        learning_rate: Stepsize used in the GD
+        learning_rate: Step size used in the GD
 
 
     Discussion:

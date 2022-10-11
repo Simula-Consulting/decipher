@@ -1,5 +1,5 @@
 """This module demonstrates how to generate synthetic data developed to
-esemble the screening data used in the DeCipher project.
+resemble the screening data used in the DeCipher project.
 """
 import json
 import pathlib
@@ -133,7 +133,7 @@ class Dataset:
         observation_probabilities=default_observation_probabilities,
         **kwargs,
     ):
-        """Generate a Datasert"""
+        """Generate a Dataset"""
         if generation_method != "DGD":
             raise NotImplementedError("Only DGD generation is implemented.")
         X, M = produce_dataset(

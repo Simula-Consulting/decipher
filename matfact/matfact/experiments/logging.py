@@ -80,7 +80,7 @@ def _aggregate_fields(
     and always taken to be unique for each run.
 
     `aggregate_func` is a function Callable[field_name: str, values: list] that adds
-    extra fields for values that are not equal accross runs. By default, mean and
+    extra fields for values that are not equal across runs. By default, mean and
     standard deviation.
 
     data = [

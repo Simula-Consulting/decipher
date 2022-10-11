@@ -47,7 +47,7 @@ def reconstruction_mse(true_matrix, observed_matrix, reconstructed_matrix):
     Arguments:
      true_matrix: the ground truth dense matrix
      observed_matrix: the observed, censored matrix
-     reconstructed_matrix: the reconstruced, dense matrix
+     reconstructed_matrix: the reconstructed, dense matrix
 
     Returns:
      recMSE

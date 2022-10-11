@@ -106,7 +106,7 @@ def test_dataset_metadata(tmp_path):
         "sparsity_level": sparsity_level,
         "number_of_states": number_of_states,
     }
-    # Assert that the values speciifed are in the metadata with the correct value
+    # Assert that the values specified are in the metadata with the correct value
     for key, value in correct_metadata_subset.items():
         assert dataset.metadata[key] == value
 
