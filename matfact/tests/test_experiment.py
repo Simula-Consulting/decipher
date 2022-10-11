@@ -5,6 +5,7 @@ import mlflow
 import numpy as np
 import pytest
 
+from matfact.data_generation import Dataset
 from matfact.experiments import (
     CMF,
     SCMF,
@@ -13,6 +14,7 @@ from matfact.experiments import (
     prediction_data,
     train_and_log,
 )
+from matfact.experiments.algorithms.risk_prediction import fill_history
 from matfact.experiments.logging import (
     MLFlowLogger,
     MLFlowLoggerArtifact,
@@ -21,6 +23,30 @@ from matfact.experiments.logging import (
     _aggregate_fields,
     dummy_logger_context,
 )
+
+
+def test_fill_history():
+    N = 100
+    T = 40
+    rank = 4
+    sparsity_level = 4
+    theta = 4
+    data = Dataset().generate(N=N, T=T, rank=rank, sparsity_level=sparsity_level)
+    X, M = data.get_X_M()
+    for use_predictions in [True, False]:
+        filled_observations = fill_history(
+            X, M, theta, use_predictions_as_observations=use_predictions
+        )
+
+        # Check that we only filled after the last observation
+        for i, history in enumerate(X):
+            filled_history = filled_observations[i]
+
+            last_observation = np.max(np.nonzero(history))
+            # Assert that nothing was filled before last observation
+            assert np.all(filled_history[: last_observation + 1] == 0)
+            # Assert everything filled after last observation
+            assert np.all(filled_history[last_observation + 1 :] != 0)
 
 
 def test_aggregate_fields():
