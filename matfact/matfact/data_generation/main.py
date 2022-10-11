@@ -145,6 +145,10 @@ class Dataset:
             observation_probabilities=observation_probabilities,
             **kwargs,
         )
+        number_of_individuals = X.shape[0]
+        if number_of_individuals == 0:
+            raise RuntimeError("Data generation produced no valid screening data!")
+
         metadata = {
             "rank": rank,
             "sparsity_level": sparsity_level,

@@ -119,3 +119,31 @@ def test_dataset_metadata(tmp_path):
 
     # Assert that prefixing with no prefix does nothing
     assert set(dataset.prefixed_metadata("")) == metadata_fields
+
+
+def test_generate_higher_states():
+    """Test Dataset generation with different number of states."""
+
+    # Some arbitrary data
+    # We must have a large number of individuals to ensure that each state is present.
+    number_of_individuals = 20000
+    time_steps = 100
+    rank = 5
+    sparsity_level = 1
+    # Set the number of states to something different from default
+    number_of_states = settings.default_number_of_states + 1
+    observation_probabilities = np.ones(number_of_states + 1)
+
+    # observation_probabilities = np.zeros(number_of_states + 1)
+    # observation_probabilities[-2:] = 0.5
+    # observation_probabilities[0]=1
+    dataset = Dataset.generate(
+        number_of_individuals,
+        time_steps,
+        rank,
+        sparsity_level,
+        number_of_states=number_of_states,
+        observation_probabilities=observation_probabilities,
+    )
+    for state in range(1, number_of_states + 1):
+        assert state in dataset.X
