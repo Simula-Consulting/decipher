@@ -65,7 +65,7 @@ def experiment(
     TODO: more clearly separate train and predict
     """
     # Setup and loading #
-    dataset = Dataset().load(dataset_path)
+    dataset = Dataset.from_file(dataset_path)
     X_train, X_test, M_train, M_test = dataset.get_split_X_M()
 
     # Simulate data for a prediction task by selecting the last data point in each
@@ -131,7 +131,7 @@ def experiment(
 
 def main():
     # Generate some data
-    Dataset().generate(N=1000, T=50, rank=5, sparsity_level=6).save(DATASET_PATH)
+    Dataset.generate(N=1000, T=50, rank=5, sparsity_level=6).save(DATASET_PATH)
 
     USE_GPU = False
     if not USE_GPU:

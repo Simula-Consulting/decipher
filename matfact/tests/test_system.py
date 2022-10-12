@@ -25,7 +25,7 @@ def test_train(tmp_path):
         "rank": 5,
         "sparsity_level": 6,
     }
-    Dataset().generate(**dataset_params).save(tmp_path)
+    Dataset.generate(**dataset_params).save(tmp_path)
 
     mlflow_tags = {
         "Developer": "Developer Name",
