@@ -36,9 +36,9 @@ def test_float_matrix(data, number_of_states):
 
 @given(
     arrays(
-        np.float,
+        float,
         shape=array_shapes(min_dims=2, max_dims=2),
-        elements=from_dtype(np.dtype(np.float), allow_nan=False),
+        elements=from_dtype(np.dtype(float), allow_nan=False),
     ),
     st.integers(min_value=1, max_value=max_number_of_state),
     st.floats(),
