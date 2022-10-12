@@ -4,6 +4,9 @@ from contextlib import contextmanager
 import mlflow
 import numpy as np
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from hypothesis.extra.numpy import array_shapes, arrays
 
 from matfact import settings
 from matfact.experiments import (
@@ -22,6 +25,7 @@ from matfact.experiments.logging import (
     _aggregate_fields,
     dummy_logger_context,
 )
+from matfact.plotting.diagnostic import _alternative_delta, _calculate_delta
 
 
 def test_aggregate_fields():
@@ -161,7 +165,13 @@ def test_mlflow_logger(tmp_path):
     stored_artifact_path = _artifact_path_from_run(run_with_artifact)
     stored_artifacts = stored_artifact_path.glob("*")
     supposed_to_be_stored = set(
-        ("basis_.pdf", "coefs_.pdf", "confusion_.pdf", "roc_auc_micro_.pdf")
+        (
+            "basis_.pdf",
+            "coefs_.pdf",
+            "confusion_.pdf",
+            "roc_auc_micro_.pdf",
+            "certainty_plot.pdf",
+        )
     )
     assert supposed_to_be_stored == set([file.name for file in stored_artifacts])
 
@@ -316,3 +326,68 @@ def test_data_weights():
     for i, weight in enumerate(weight_per_class):
         state = i + 1
         assert np.all(weights[observed_data == state] == weight)
+
+
+def test_delta_score():
+    test_cases = [
+        {
+            "probabilities": np.array([[1, 0, 0], [1, 0, 0]]),
+            "correct": np.array([0, 0]),
+            "expected_delta": np.array([-1, -1]),
+        },
+        {
+            "probabilities": np.array([[1, 0, 0], [1, 0, 0]]),
+            "correct": np.array([1, 1]),
+            "expected_delta": np.array([1, 1]),
+        },
+        {
+            "probabilities": np.array([[0, 1, 0], [0, 0, 1]]),
+            "correct": np.array([1, 0]),
+            "expected_delta": np.array([-1, 1]),
+        },
+        {
+            "probabilities": np.array([[0.5, 0.5, 0], [0.5, 0, 0.5]]),
+            "correct": np.array([0, 1]),
+            "expected_delta": np.array([0, 0.5]),
+        },
+    ]
+
+    for test_case in test_cases:
+        assert np.all(
+            _calculate_delta(test_case["probabilities"], test_case["correct"])
+            == test_case["expected_delta"]
+        )
+        assert np.all(
+            _calculate_delta(test_case["probabilities"], test_case["correct"])
+            == _alternative_delta(test_case["probabilities"], test_case["correct"])
+        )
+
+
+def _normalize_row(array: np.ndarray) -> np.ndarray:
+    row_sum = np.sum(array, axis=1)
+    return array / np.where(row_sum, row_sum, 1)[:, None]  # Guard against zero division
+
+
+@given(st.data())
+def test_delta_score_hyp(data):
+    probabilities = data.draw(
+        arrays(
+            float,
+            array_shapes(min_dims=2, max_dims=2),
+            elements=st.floats(min_value=0, max_value=1),
+        )
+    )
+    probabilities = _normalize_row(probabilities)
+    number_of_individuals, number_of_states = probabilities.shape
+    correct = data.draw(
+        st.lists(
+            st.integers(min_value=0, max_value=number_of_states - 1),
+            min_size=number_of_individuals,
+            max_size=number_of_individuals,
+        )
+    )
+
+    assert np.all(
+        _calculate_delta(probabilities, correct)
+        == _alternative_delta(probabilities, correct)
+    )

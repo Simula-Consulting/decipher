@@ -6,7 +6,13 @@ from typing import Callable, cast
 import mlflow  # type: ignore
 import numpy as np
 
-from matfact.plotting import plot_basis, plot_coefs, plot_confusion, plot_roc_curve
+from matfact.plotting import (
+    plot_basis,
+    plot_certainty,
+    plot_coefs,
+    plot_confusion,
+    plot_roc_curve,
+)
 
 # An AggregationFunction takes a field name and list of values for that field, and
 # returns a dictionary of fields aggregated from the values.
@@ -289,6 +295,9 @@ class MLFlowLoggerDiagnostic(MLFlowLoggerArtifact):
             solver_output["p_pred"],
             self.figure_path,
             number_of_states=number_of_states,
+        )
+        plot_certainty(
+            solver_output["p_pred"], solver_output["x_true"], self.figure_path
         )
         super().__call__(output_dict)
 

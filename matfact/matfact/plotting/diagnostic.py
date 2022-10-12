@@ -1,5 +1,5 @@
 import pathlib
-from typing import Optional
+from typing import Optional, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -206,41 +206,53 @@ def plot_roc_curve(
     plt.close()
 
 
-def _calculate_delta(probabilities: np.ndarray, correct_index: np.ndarray):
-    """Calculate the delta value from a list of probabilites for different classes.
+def _calculate_delta(probabilities: np.ndarray, correct_indices: np.ndarray):
+    """Calculate the delta value from a list of probabilities for different classes.
 
     Args:
-        probabilities: (N x domain.size) with probabilities for each class.
-        correct_index: (N) the index of the correct class per individual.
+        probabilities: (N x number_of_states) with probabilities for each state.
+        correct_indices: (N) the index of the correct state per individual.
 
-    Given the list probabilities, where each element corresponds to the class of
+    Given the list probabilities, where each element corresponds to the state of
     that index, compute the delta value."""
 
+    # Slice tuple used to extract the correct entries
+    correct_entries = (np.arange(len(correct_indices)), correct_indices)
     # We find the highest probability that is not the correct answer
     # Make array where probability of the correct class is masked out
     mask = np.ones_like(probabilities)
-    for i, correct_index in enumerate(correct_index):
-        mask[i, int(correct_index)] = 0
+    mask[correct_entries] = 0
     masked_probabilities = probabilities * mask
     masked_max = np.max(masked_probabilities, axis=1)
-    correct_probabilities = probabilities[
-        np.arange(len(probabilities)), int(correct_index)
-    ]
+    correct_probabilities = probabilities[correct_entries]
     return masked_max - correct_probabilities
+
+
+def _alternative_delta(
+    probabilities: Sequence[Sequence[float]] | np.ndarray,
+    correct_indices: Sequence[int] | np.ndarray,
+) -> list[float]:
+    deltas = []
+    for estimates, correct in zip(probabilities, correct_indices):
+        incorrect_estimates = (*estimates[:correct], *estimates[correct + 1 :])
+        deltas.append(max(incorrect_estimates, default=0) - estimates[correct])
+    return deltas
 
 
 def plot_certainty(p_pred, x_true, path_to_figure: Optional[pathlib.Path] = None):
     """Plot the certainty difference delta.
 
-    p_pred is an (N x domain.size) ndarray, where N is the number of
-    individuals and domain.size is the number of classes.
+    p_pred is an (number_of_individuals x number_of_states) ndarray.
 
-    Given some classification prediction, let delta = p_max - p_(max - 1), i.e.
-    the difference in probability between the most likely class and the second most
-    likely class.
+    Given some classification prediction, let delta = p_(max not correct) - p_correct,
+    i.e. the difference in probability between the most likely state that is not
+    correct and the state that is correct. For a perfect classifier, this score is -1,
+    as the probabilities of all states that are not correct are 0. The worst score is
+    +1, where the classifier is completely certain of the wrong state.
+
     We want to plot the distribution of delta for the individuals N."""
 
-    correct_index = x_true - 1  # x_true is one-indexed
+    correct_index = x_true.astype(int) - 1  # x_true is one-indexed
     deltas = _calculate_delta(p_pred, correct_index)
     sns.displot(deltas, kind="ecdf").set(xlim=(-1, 1))  # deltas are elements in [-1, 1]
 
