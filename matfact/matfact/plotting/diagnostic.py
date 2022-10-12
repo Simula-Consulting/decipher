@@ -206,7 +206,10 @@ def plot_roc_curve(
     plt.close()
 
 
-def _calculate_delta(probabilities: np.ndarray, correct_indices: np.ndarray):
+def _calculate_delta(
+    probabilities: Sequence[Sequence[float]] | np.ndarray,
+    correct_indices: Sequence[int] | np.ndarray,
+) -> list[float]:
     """Calculate the delta value from a list of probabilities for different classes.
 
     Args:
@@ -215,26 +218,11 @@ def _calculate_delta(probabilities: np.ndarray, correct_indices: np.ndarray):
 
     Given the list probabilities, where each element corresponds to the state of
     that index, compute the delta value."""
-
-    # Slice tuple used to extract the correct entries
-    correct_entries = (np.arange(len(correct_indices)), correct_indices)
-    # We find the highest probability that is not the correct answer
-    # Make array where probability of the correct class is masked out
-    mask = np.ones_like(probabilities)
-    mask[correct_entries] = 0
-    masked_probabilities = probabilities * mask
-    masked_max = np.max(masked_probabilities, axis=1)
-    correct_probabilities = probabilities[correct_entries]
-    return masked_max - correct_probabilities
-
-
-def _alternative_delta(
-    probabilities: Sequence[Sequence[float]] | np.ndarray,
-    correct_indices: Sequence[int] | np.ndarray,
-) -> list[float]:
     deltas = []
     for estimates, correct in zip(probabilities, correct_indices):
         incorrect_estimates = (*estimates[:correct], *estimates[correct + 1 :])
+        # Set default=0 for the edge case that there is only one state, in which
+        # case incorrect_estimates is empty.
         deltas.append(max(incorrect_estimates, default=0) - estimates[correct])
     return deltas
 
