@@ -129,22 +129,24 @@ def test_generate_higher_states(monkeypatch):
     time_steps = 100
     rank = 5
     sparsity_level = 1
-    # Set the number of states to something different from default
-    number_of_states = settings.default_number_of_states + 1
-    # Disable masking by setting all observation probabilities to one
-    observation_probabilities = np.ones(number_of_states + 1)
-
     # Disable censoring, in order to avoid masking out the states we want to assert.
     monkeypatch.setattr(
         "matfact.data_generation.main.censoring", lambda X, missing=0: X
     )
-    dataset = Dataset.generate(
-        number_of_individuals,
-        time_steps,
-        rank,
-        sparsity_level,
-        number_of_states=number_of_states,
-        observation_probabilities=observation_probabilities,
-    )
-    for state in range(1, number_of_states + 1):
-        assert state in dataset.X
+    for i in [-1, 0, 1]:
+        # Set the number of states to something different from default
+        number_of_states = settings.default_number_of_states + i
+        # Disable masking by setting all observation probabilities to one
+        observation_probabilities = np.ones(number_of_states + 1)
+
+        dataset = Dataset.generate(
+            number_of_individuals,
+            time_steps,
+            rank,
+            sparsity_level,
+            number_of_states=number_of_states,
+            observation_probabilities=observation_probabilities,
+        )
+        states_observed = set(dataset.X.flatten())
+        states_required = set(range(number_of_states + 1))
+        assert states_observed == states_required
