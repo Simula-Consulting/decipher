@@ -84,7 +84,7 @@ def test_dataset_metadata(tmp_path):
     # Set the number of states to something different from default
     number_of_states = settings.default_number_of_states + 1
     observation_probabilities = np.array(
-        (*settings.default_observation_probabilities, 0.4)
+        (*settings.default_observation_probabilities, 0.4)  # 0.4 chosen arbitrarily
     )
     dataset = Dataset.generate(
         number_of_individuals,
