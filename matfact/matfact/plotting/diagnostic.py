@@ -162,7 +162,7 @@ def plot_roc_curve(
 ):
     "Plot a ROC curve"
 
-    x_ohe = label_binarize(x_true, classes=np.arange(1, number_of_states + 1))
+    x_ohe = label_binarize(x_true, classes=range(1, number_of_states + 1))
 
     fpr, tpr, roc_auc = {}, {}, {}
     for i in range(x_ohe.shape[1]):
