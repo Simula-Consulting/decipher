@@ -11,13 +11,6 @@ FIGURE_PATH = RESULT_PATH / "figures"
 default_number_of_states = 4
 
 
-# Defer the import to later to avoid circular import
-def get_default_weight_function():
-    from matfact.experiments import data_weights
-
-    return data_weights
-
-
 default_weights = range(1, default_number_of_states + 1)
 
 
