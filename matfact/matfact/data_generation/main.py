@@ -36,7 +36,7 @@ def produce_dataset(
     memory_length=5,
     missing=0,
     number_of_states: int = default_number_of_states,
-    observation_probabilities=None,
+    observation_probabilities: np.ndarray | None = None,
     theta=2.5,
     seed=42,
 ):
@@ -51,6 +51,8 @@ def produce_dataset(
                     have on observing a new value not too far into the future
             missing: How to indicate a missing value
             number_of_states: The number of possible states.
+            observation_probabilities: array of observation probabilities
+                for the different classes.
             theta: Confidence parameter
             seed: Reference value for pseudo-random generator
 
