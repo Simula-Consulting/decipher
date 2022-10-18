@@ -39,6 +39,15 @@ def _simulate_history(
     censoring: int = 0,
     rnd=None,
 ) -> np.ndarray:
+    """Simulate history for one individual.
+
+    Args:
+        age_min_pts: the first point of the time discretization.
+        age_max_pts: the last point of the time discretization.
+        time_grid: the time discretized age partitions.
+        cencoring: the value of non-observed entries.
+        rnd: np.random.RandomState instance
+    """
 
     history = np.ones(np.max(time_grid)) * censoring
 
