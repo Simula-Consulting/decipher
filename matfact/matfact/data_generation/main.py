@@ -58,6 +58,7 @@ def produce_dataset(
 
     Returns:
             The sparse and original complete data matrices
+            The name of the generation method
     """
 
     M = float_matrix(N=N, T=T, r=r, number_of_states=number_of_states, seed=seed)
@@ -83,7 +84,7 @@ def produce_dataset(
 
     valid_rows = np.sum(X != 0, axis=1) >= minimum_number_of_observations
 
-    return X[valid_rows].astype(np.float32), M[valid_rows].astype(np.float32)
+    return X[valid_rows].astype(np.float32), M[valid_rows].astype(np.float32), "DGD"
 
 
 class Dataset:
@@ -130,22 +131,24 @@ class Dataset:
         T,
         rank,
         sparsity_level,
-        generation_method="DGD",
+        produce_dataset_function=produce_dataset,
         number_of_states=default_number_of_states,
         observation_probabilities=default_observation_probabilities,
-        **kwargs,
     ):
-        """Generate a Dataset"""
-        if generation_method != "DGD":
-            raise NotImplementedError("Only DGD generation is implemented.")
-        X, M = produce_dataset(
+        """Generate a Dataset
+
+        produce_dataset_function should be a callable with signature
+        Callable(
+            N, T, rank, sparsity_level, *, number_of_states, observation_probabilities
+        ) -> observed_matrix: ndarray, latent_matrix: ndarray, generation_name: str.
+        """
+        X, M, generation_name = produce_dataset_function(
             N,
             T,
             rank,
             sparsity_level,
             number_of_states=number_of_states,
             observation_probabilities=observation_probabilities,
-            **kwargs,
         )
         number_of_individuals = X.shape[0]
         if number_of_individuals == 0:
@@ -156,7 +159,7 @@ class Dataset:
             "sparsity_level": sparsity_level,
             "N": N,
             "T": T,
-            "generation_method": generation_method,
+            "generation_method": generation_name,
             "number_of_states": number_of_states,
             "observation_probabilities": list(observation_probabilities),
         }
