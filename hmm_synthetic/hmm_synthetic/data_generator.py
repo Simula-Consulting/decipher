@@ -4,7 +4,9 @@ from backend.transition import inital_state, next_state
 from backend.utils import age_partitions_pts
 
 
-def simulate_state_histories(n_samples, points_per_year, seed=42):
+def simulate_state_histories(
+    n_samples: int, points_per_year: int, seed: int = 42
+) -> np.ndarray:
     """Create a matrix of simulated state histories
 
     Args:
@@ -36,8 +38,8 @@ def _simulate_history(
     age_min_pts: int,
     age_max_pts: int,
     time_grid: np.ndarray,
+    rnd: np.random.Generator,
     censoring: int = 0,
-    rnd=None,
 ) -> np.ndarray:
     """Simulate history for one individual.
 

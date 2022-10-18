@@ -1,3 +1,5 @@
+import pathlib
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -6,7 +8,7 @@ from . import plot_config, plot_utils
 plot_config.setup()
 
 
-def mask_missing(history, missing=0):
+def mask_missing(history: np.ndarray, missing: int = 0) -> np.ndarray:
     """Mask entries with non-observed values as np.nan.
 
     TODO: This should probably be removed in the future, as
@@ -16,7 +18,12 @@ def mask_missing(history, missing=0):
     return history
 
 
-def sample_histories(histories, size, rnd, risk_stratify=False):
+def sample_histories(
+    histories: np.ndarray,
+    size: int,
+    rnd: np.random.Generator,
+    risk_stratify: bool = False,
+):
     """Sample size histories from all histories.
 
     Args:
@@ -41,15 +48,18 @@ def sample_histories(histories, size, rnd, risk_stratify=False):
 
 
 def plot_history_panel(
-    histories,
-    path_to_figure,
-    points_per_year,
-    age_min=16,
-    age_max=100,
-    fname="",
-    rnd=None,
+    histories: np.ndarray,
+    path_to_figure: pathlib.Path,
+    points_per_year: int,
+    age_min: int = 16,
+    age_max: int = 100,
+    fname: str = "",
+    rnd: np.random.Generator | None = None,
 ):
     """Plot a panel of state histories."""
+
+    if rnd is None:
+        rnd = np.random.default_rng()
 
     fig, axes = plt.subplots(
         3, 2, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(3, 2))

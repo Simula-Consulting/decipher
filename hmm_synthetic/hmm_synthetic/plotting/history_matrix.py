@@ -1,3 +1,5 @@
+import pathlib
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -8,7 +10,7 @@ from . import plot_config, plot_utils
 plot_config.setup()
 
 
-def mask_missing(history, missing=0):
+def mask_missing(history: np.ndarray, missing: int = 0) -> np.ndarray:
     """Mask entries with non-observed values as np.nan.
 
     TODO: This should probably be removed in the future, as
@@ -21,7 +23,7 @@ def mask_missing(history, missing=0):
     return history
 
 
-def sample_histories(histories, size, seed):
+def sample_histories(histories: np.ndarray, size: int, seed: int) -> np.ndarray:
     """Sample size histories from all histories.
 
     TODO: this is a special case of history_panel::smaple_histories"""
@@ -32,7 +34,7 @@ def sample_histories(histories, size, seed):
     return histories[idx]
 
 
-def set_cbar(hmap, axis):
+def set_cbar(hmap, axis):  # type: ignore
     """Add and configure colorbar.
 
     Assumes that there is a current activated figure.
@@ -44,7 +46,13 @@ def set_cbar(hmap, axis):
     cbar.ax.set_xticklabels(cbar.ax.get_xticklabels(), va="center", ha="right")
 
 
-def plot_history_matrix(histories, path_to_figure, n_samples=500, alpha=0.6, fname=""):
+def plot_history_matrix(
+    histories: np.ndarray,
+    path_to_figure: pathlib.Path,
+    n_samples: int = 500,
+    alpha: float = 0.6,
+    fname: str = "",
+) -> None:
     """Crate an heatplot of all the generated histories."""
 
     cmap = ListedColormap(

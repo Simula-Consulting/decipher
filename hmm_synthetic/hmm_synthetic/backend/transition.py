@@ -3,7 +3,9 @@ import numpy as np
 from .utils import age_group_idx, lambda_sr, p_init_state
 
 
-def inital_state(init_age_pts: int, time_grid, rnd=None) -> int:
+def inital_state(
+    init_age_pts: int, time_grid: np.ndarray, rnd: np.random.Generator | None = None
+) -> int:
     """Sample a state at first screening."""
 
     if rnd is None:
@@ -44,9 +46,9 @@ def legal_transition_lambdas(current_state: int, time_idx: int) -> np.ndarray:
 def next_state(
     age_at_exit_pts: int,
     current_state: int,
-    time_grid: np.array,
+    time_grid: np.ndarray,
+    rnd: np.random.Generator,
     censoring: int = 0,
-    rnd=None,
 ) -> int:
     """Returns next female state."""
 

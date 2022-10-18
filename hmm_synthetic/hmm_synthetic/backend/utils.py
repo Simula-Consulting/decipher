@@ -1,4 +1,7 @@
+from typing import Sequence
+
 import numpy as np
+import numpy.typing as npt
 import scipy.stats as stats
 
 age_partitions = np.array(
@@ -20,7 +23,7 @@ age_partitions = np.array(
 # ).astype(int)
 
 
-def age_partitions_pts(points_per_year):
+def age_partitions_pts(points_per_year: int) -> npt.NDArray[np.int_]:
     """Convert age partitions from year to time discretization."""
 
     #   a = floor(pts / n) + a0    <==>    pts = (a - a0) * n
@@ -62,7 +65,9 @@ lambda_sr = np.array(
 # fmt: on
 
 
-def age_group_idx(a: int, age_partitions_pts) -> int:
+def age_group_idx(
+    a: int, age_partitions_pts: Sequence[tuple[int, int]] | npt.NDArray[np.int_]
+) -> int:
     """Returns index i: tau_i <= a < tau_{i+1}."""
 
     for i, (tau_p, tau_pp) in enumerate(age_partitions_pts):
