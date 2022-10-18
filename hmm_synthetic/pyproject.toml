@@ -21,6 +21,9 @@ azure-storage-blob = "^12.8.1"
 pre-commit = "^2.12.1"
 python-dotenv = "^0.18.0"
 
+[tool.poetry.group.dev.dependencies]
+data-science-types = "^0.2.23"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
