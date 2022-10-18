@@ -227,7 +227,11 @@ def _calculate_delta(
     return deltas
 
 
-def plot_certainty(p_pred, x_true, path_to_figure: Optional[pathlib.Path] = None):
+def plot_certainty(
+    p_pred: Sequence[Sequence[float]] | np.ndarray,
+    x_true: np.ndarray,
+    path_to_figure: Optional[pathlib.Path] = None,
+):
     """Plot the certainty difference delta.
 
     p_pred is an (number_of_individuals x number_of_states) ndarray.
