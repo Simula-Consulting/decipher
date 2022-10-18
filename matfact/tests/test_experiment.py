@@ -326,6 +326,7 @@ def test_data_weights():
 
 
 def test_delta_score():
+    """Test delta score calculated as expected."""
     test_cases = [
         {
             "probabilities": np.array([[1, 0, 0], [1, 0, 0]]),
