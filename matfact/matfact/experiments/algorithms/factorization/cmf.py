@@ -1,5 +1,7 @@
 import numpy as np
 
+from matfact import settings
+
 from .mfbase import BaseMF
 
 
@@ -12,13 +14,22 @@ class CMF(BaseMF):
             X: Sparse data matrix used to estimate factor matrices
             V: Initial estimate for basic vectors
             D (optional): Forward difference matrix
-            J (optional): A martix used to impose a minimum value in the basic vecors V
+            J (optional): A matrix used to impose a minimum value in the basic vectors V
             K (optional): Convolutional matrix
             lambda: Regularization coefficients
     """
 
     def __init__(
-        self, X, V, D=None, J=None, K=None, lambda1=1.0, lambda2=1.0, lambda3=1.0
+        self,
+        X,
+        V,
+        D=None,
+        J=None,
+        K=None,
+        lambda1=1.0,
+        lambda2=1.0,
+        lambda3=1.0,
+        number_of_states: int = settings.default_number_of_states,
     ):
 
         self.X = X
@@ -34,6 +45,7 @@ class CMF(BaseMF):
 
         self.n_iter_ = 0
         self._init_matrices(D, J, K)
+        self.number_of_states = number_of_states
 
     @property
     def M(self):

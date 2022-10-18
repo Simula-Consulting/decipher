@@ -93,7 +93,7 @@ def estimate_probability_thresholds(
         y_pred_proba: Vector of predicted probabilities.
 
     Returns:
-        A ClassificationTree object instantiated with the estimated probaility
+        A ClassificationTree object instantiated with the estimated probability
         thresholds. This object may be saved to disk using scikit-learn routines.
     """
     check_X_y(y_predicted_probabilities, y_true)

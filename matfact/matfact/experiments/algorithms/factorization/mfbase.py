@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-import numpy as np
 from tqdm import tqdm
 
 from ..convergence import convergence_monitor
@@ -24,10 +23,14 @@ class BaseMF(ABC):
     def loss(self):
         return
 
-    def predict_probability(self, observed_data, t_pred, domain=np.arange(1, 5)):
+    def predict_probability(self, observed_data, t_pred):
         """Predict the probability of the possible states at t_pred"""
         return predict_proba(
-            observed_data, self.M, t_pred, theta_mle(self.X, self.M), domain=domain
+            observed_data,
+            self.M,
+            t_pred,
+            theta_mle(self.X, self.M),
+            number_of_states=self.number_of_states,
         )
 
     def matrix_completion(

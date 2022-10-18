@@ -80,7 +80,7 @@ def _aggregate_fields(
     and always taken to be unique for each run.
 
     `aggregate_func` is a function Callable[field_name: str, values: list] that adds
-    extra fields for values that are not equal accross runs. By default, mean and
+    extra fields for values that are not equal across runs. By default, mean and
     standard deviation.
 
     data = [
@@ -277,15 +277,18 @@ class MLFlowLoggerDiagnostic(MLFlowLoggerArtifact):
         solver_output = output_dict["meta"]["results"]
         plot_coefs(solver_output["U"], self.figure_path)
         plot_basis(solver_output["V"], self.figure_path)
+        number_of_states = solver_output["p_pred"].shape[1]
         plot_confusion(
             solver_output["x_true"],
             solver_output["x_pred"],
             self.figure_path,
+            n_classes=number_of_states,
         )
         plot_roc_curve(
             solver_output["x_true"],
             solver_output["p_pred"],
             self.figure_path,
+            number_of_states=number_of_states,
         )
         super().__call__(output_dict)
 

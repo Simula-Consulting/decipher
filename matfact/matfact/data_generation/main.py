@@ -1,5 +1,5 @@
 """This module demonstrates how to generate synthetic data developed to
-esemble the screening data used in the DeCipher project.
+resemble the screening data used in the DeCipher project.
 """
 import json
 import pathlib
@@ -7,7 +7,12 @@ import pathlib
 import numpy as np
 from scipy.stats import betabinom
 
-from matfact.settings import DATASET_PATH
+from matfact.settings import (
+    DATASET_PATH,
+    default_number_of_states,
+    default_observation_probabilities,
+    minimum_number_of_observations,
+)
 
 from .gaussian_generator import discretise_matrix, float_matrix
 from .masking import simulate_mask
@@ -30,7 +35,8 @@ def produce_dataset(
     level,
     memory_length=5,
     missing=0,
-    value_range=np.arange(1, 5),
+    number_of_states: int = default_number_of_states,
+    observation_probabilities: np.ndarray | None = None,
     theta=2.5,
     seed=42,
 ):
@@ -44,21 +50,31 @@ def produce_dataset(
             memory_length: Governs how much influence previous values will
                     have on observing a new value not too far into the future
             missing: How to indicate a missing value
-            value_range: Possible observed values
+            number_of_states: The number of possible states.
+            observation_probabilities: array of observation probabilities
+                for the different classes.
             theta: Confidence parameter
             seed: Reference value for pseudo-random generator
 
     Returns:
             The sparse and original complete data matrices
+            The name of the generation method
     """
 
-    M = float_matrix(N=N, T=T, r=r, domain=value_range, seed=seed)
-    Y = discretise_matrix(M, domain=value_range, theta=theta, seed=seed)
+    M = float_matrix(N=N, T=T, r=r, number_of_states=number_of_states, seed=seed)
+    Y = discretise_matrix(M, number_of_states=number_of_states, theta=theta, seed=seed)
+
+    if observation_probabilities is None:
+        observation_probabilities = default_observation_probabilities
+    if number_of_states + 1 != len(observation_probabilities):
+        raise ValueError(
+            "observation_probabilities must have length one more than the number of states!"  # noqa: E501
+        )
 
     # Simulate a sparse dataset.
     mask = simulate_mask(
         Y,
-        observation_proba=np.array([0.01, 0.03, 0.08, 0.12, 0.04]),
+        observation_proba=observation_probabilities,
         memory_length=memory_length,
         level=level,
         seed=seed,
@@ -66,9 +82,9 @@ def produce_dataset(
     X = mask * Y
     X = censoring(X, missing=missing)
 
-    valid_rows = np.sum(X != 0, axis=1) > 2
+    valid_rows = np.sum(X != 0, axis=1) >= minimum_number_of_observations
 
-    return X[valid_rows].astype(np.float32), M[valid_rows].astype(np.float32)
+    return X[valid_rows].astype(np.float32), M[valid_rows].astype(np.float32), "DGD"
 
 
 class Dataset:
@@ -115,34 +131,37 @@ class Dataset:
         T,
         rank,
         sparsity_level,
-        memory_length=5,
-        missing=0,
-        value_range=np.arange(1, 5),
-        theta=2.5,
-        seed=42,
-        generation_method="DGD",
+        produce_dataset_function=produce_dataset,
+        number_of_states=default_number_of_states,
+        observation_probabilities=default_observation_probabilities,
     ):
-        """Generate a Datasert"""
-        if generation_method != "DGD":
-            raise NotImplementedError("Only DGD generation is implemented.")
-        X, M = produce_dataset(
+        """Generate a Dataset
+
+        produce_dataset_function should be a callable with signature
+        Callable(
+            N, T, rank, sparsity_level, *, number_of_states, observation_probabilities
+        ) -> observed_matrix: ndarray, latent_matrix: ndarray, generation_name: str.
+        """
+        X, M, generation_name = produce_dataset_function(
             N,
             T,
             rank,
             sparsity_level,
-            memory_length=memory_length,
-            missing=missing,
-            value_range=value_range,
-            theta=theta,
-            seed=seed,
+            number_of_states=number_of_states,
+            observation_probabilities=observation_probabilities,
         )
+        number_of_individuals = X.shape[0]
+        if number_of_individuals == 0:
+            raise RuntimeError("Data generation produced no valid screening data!")
+
         metadata = {
             "rank": rank,
             "sparsity_level": sparsity_level,
             "N": N,
             "T": T,
-            "generation_method": generation_method,
-            "number_of_states": len(value_range),
+            "generation_method": generation_name,
+            "number_of_states": number_of_states,
+            "observation_probabilities": list(observation_probabilities),
         }
 
         return cls(X, M, metadata)

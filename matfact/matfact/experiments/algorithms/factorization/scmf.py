@@ -2,6 +2,8 @@ import numpy as np
 import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
 
+from matfact import settings
+
 from ...simulation import data_weights
 from .mfbase import BaseMF
 
@@ -75,11 +77,11 @@ class SCMF(BaseMF):
         W (optional): Weight matrix for the discrepancy term. Default is
             set to the output of `experiments.simulation.data_weights(X)`.
         D (optional): Forward difference matrix
-        J (optional): A matrix used to impose a minimum value in the basic vecors V
+        J (optional): A matrix used to impose a minimum value in the basic vectors V
         K (optional): Convolutional matrix
         lambda: Regularization coefficients
         iter_U, iter_V: The number of steps with gradient descent (GD) per factor update
-        learning_rate: Stepsize used in the GD
+        learning_rate: Step size used in the GD
 
 
     Discussion:
@@ -109,6 +111,7 @@ class SCMF(BaseMF):
         iter_U=2,
         iter_V=2,
         learning_rate=0.001,
+        number_of_states: int = settings.default_number_of_states,
     ):
 
         self.W = data_weights(X) if W is None else W
@@ -128,6 +131,7 @@ class SCMF(BaseMF):
         self.nz_rows, self.nz_cols = np.nonzero(X)
 
         self.n_iter_ = 0
+        self.number_of_states = number_of_states
 
         # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)

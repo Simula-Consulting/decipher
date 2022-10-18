@@ -1,8 +1,8 @@
 import numpy as np
 
 
-def predict_proba(Y, M, t_pred, theta, domain=np.arange(1, 5)):
-    """Predict probailities of future results in longitudinal data.
+def predict_proba(Y, M, t_pred, theta, number_of_states):
+    """Predict probabilities of future results in longitudinal data.
 
     Args:
         Y: A (M x T) longitudinal data matrix. Each row is a longitudinal vector with
@@ -10,10 +10,10 @@ def predict_proba(Y, M, t_pred, theta, domain=np.arange(1, 5)):
         M: The data matrix computed from factor matrices derived from X (M = U @ V.T).
         t_pred: Time of predictions for each row in Y.
         theta: A confidence parameter (estimated from data in utils.py)
-        domain: The possible values at t_pred
+        number_of_states: the number of possible states.
 
     Returns:
-        A (M x domain.size) matrix of probability estimates.
+        A (M x number_of_states) matrix of probability estimates.
     """
 
     logl = np.ones((Y.shape[0], M.shape[0]))
@@ -24,7 +24,8 @@ def predict_proba(Y, M, t_pred, theta, domain=np.arange(1, 5)):
             -1.0 * theta * ((y[omega])[None, :] - M[:, omega]) ** 2, axis=1
         )
 
-    proba_z = np.empty((Y.shape[0], domain.shape[0]))
+    proba_z = np.empty((Y.shape[0], number_of_states))
+    domain = np.arange(1, number_of_states + 1)
     for i in range(Y.shape[0]):
 
         proba_z[i] = np.exp(logl[i]) @ np.exp(

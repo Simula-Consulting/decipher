@@ -20,7 +20,7 @@ def _scale_to_domain(X: np.ndarray, domain_min: float, domain_max: float) -> np.
     return domain_min + (domain_max - domain_min) * (X - X_min) / (X_max - X_min)
 
 
-def float_matrix(N, T, r, domain, seed=42):
+def float_matrix(N, T, r, number_of_states: int, seed=42):
     """Generate real-valued profiles.
 
     The rank must be such that r <= min(N, T).
@@ -54,25 +54,26 @@ def float_matrix(N, T, r, domain, seed=42):
 
     M = U @ V.T
 
-    return _scale_to_domain(M, np.min(domain), np.max(domain))
+    return _scale_to_domain(M, 1, number_of_states)
 
 
-def discretise_matrix(M, domain, theta, seed=42):
+def discretise_matrix(M, number_of_states: int, theta, seed=42):
     """Convert a <float> basis to <int>."""
 
     np.random.seed(seed)
     N, T = M.shape
-    domain = np.array(domain)  # If list is given, convert to numpy array
-    Z = len(domain)
+    domain = np.arange(1, number_of_states + 1)
 
-    X_float_scaled = _scale_to_domain(M, np.min(domain), np.max(domain))
+    X_float_scaled = _scale_to_domain(M, 1, number_of_states)
 
-    domain_repeated = np.repeat(domain, N).reshape((N, Z), order="F")
+    domain_repeated = np.repeat(domain, N).reshape((N, number_of_states), order="F")
 
     D = np.empty_like(X_float_scaled)
     for j in range(T):
 
-        column_repeated = np.repeat(X_float_scaled[:, j], Z).reshape((N, Z), order="C")
+        column_repeated = np.repeat(X_float_scaled[:, j], number_of_states).reshape(
+            (N, number_of_states), order="C"
+        )
 
         pdf = probability_model(column_repeated, theta, domain_repeated)
         cdf = np.cumsum(pdf / np.reshape(np.sum(pdf, axis=1), (N, 1)), axis=1)

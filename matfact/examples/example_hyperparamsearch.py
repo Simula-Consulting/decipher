@@ -78,7 +78,7 @@ def get_objective_CV(
 
 
 def example_hyperparameter_search(objective_getter: Callable = get_objective_CV):
-    """Example implementaion of hyperparameter search.
+    """Example implementation of hyperparameter search.
 
     objective_getter: callable returning an objective function."""
     tf.config.set_visible_devices([], "GPU")

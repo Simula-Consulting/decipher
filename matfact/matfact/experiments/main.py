@@ -1,4 +1,4 @@
-"""This module demonstrates how to instatiate matrix factorization models
+"""This module demonstrates how to instantiate matrix factorization models
 for matrix completion and risk prediction. The example is based on synthetic data
 produced in the `datasets` directory.
 """
@@ -84,8 +84,8 @@ def train_and_log(
 
     Params:
     X_train, X_test: Train and test data.
-    dict_to_log:  optional dictionary assosiated with the run, logged with MLFlow.
-    extra_metrics: opional dictionary of metrics logged in each epoch of training.
+    dict_to_log:  optional dictionary associated with the run, logged with MLFlow.
+    extra_metrics: optional dictionary of metrics logged in each epoch of training.
         See `BaseMF.matrix_completion` for more details.
     log_loss: Whether the loss function as function of epoch should be logged
         in MLFlow. Note that this is slow.
