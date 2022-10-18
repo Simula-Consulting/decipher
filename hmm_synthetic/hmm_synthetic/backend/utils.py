@@ -21,7 +21,8 @@ age_partitions = np.array(
 
 
 def age_partitions_pts(points_per_year):
-    # Converting between years and grid a grid with n points per year:
+    """Convert age partitions from year to time discretization."""
+
     #   a = floor(pts / n) + a0    <==>    pts = (a - a0) * n
     return np.round((age_partitions - np.min(age_partitions)) * points_per_year).astype(
         int

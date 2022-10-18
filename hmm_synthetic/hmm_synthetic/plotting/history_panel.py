@@ -7,12 +7,28 @@ plot_config.setup()
 
 
 def mask_missing(history, missing=0):
+    """Mask entries with non-observed values as np.nan.
+
+    TODO: This should probably be removed in the future, as
+    it seems like an unnecessary function..."""
 
     history[history == missing] = np.nan
     return history
 
 
 def sample_histories(histories, size, rnd, risk_stratify=False):
+    """Sample size histories from all histories.
+
+    Args:
+        histories: (number_of_individuals x time_points) array of all histories
+        size: number of histories to sample
+        rnd: instance of a random generator
+        risk_stragtify; if True, samples with higher maximum risk are more
+            likely to be sampled
+
+    Returns:
+        The sampled histories, (size x time_points).
+    """
 
     s_max = np.ones(histories.shape[0])
 

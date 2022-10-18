@@ -38,6 +38,7 @@ def set_fig_size(width=None, height=None, fraction=1, subplots=(1, 1)):
 
 
 def set_arrowed_spines(fig, ax):
+    """Create arrows for the x- and y-axis."""
 
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()

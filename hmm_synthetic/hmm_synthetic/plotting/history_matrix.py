@@ -9,12 +9,22 @@ plot_config.setup()
 
 
 def mask_missing(history, missing=0):
+    """Mask entries with non-observed values as np.nan.
+
+    TODO: This should probably be removed in the future, as
+    it seems like an unnecessary function...
+
+    TODO: This is also a copy of hitory_panel::mask_missing
+    """
 
     history[history == missing] = np.nan
     return history
 
 
 def sample_histories(histories, size, seed):
+    """Sample size histories from all histories.
+
+    TODO: this is a special case of history_panel::smaple_histories"""
 
     np.random.seed(seed)
     idx = np.random.choice(range(histories.shape[0]), size=size)
@@ -23,6 +33,10 @@ def sample_histories(histories, size, seed):
 
 
 def set_cbar(hmap, axis):
+    """Add and configure colorbar.
+
+    Assumes that there is a current activated figure.
+    """
 
     cbar = plt.colorbar(hmap.get_children()[0], ax=axis, shrink=0.5)
     cbar.set_ticks(np.linspace(1, 4, 4))
@@ -31,6 +45,7 @@ def set_cbar(hmap, axis):
 
 
 def plot_history_matrix(histories, path_to_figure, n_samples=500, alpha=0.6, fname=""):
+    """Crate an heatplot of all the generated histories."""
 
     cmap = ListedColormap(
         [
