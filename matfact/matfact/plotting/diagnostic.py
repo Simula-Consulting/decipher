@@ -216,8 +216,9 @@ def _calculate_delta(
         probabilities: (N x number_of_states) with probabilities for each state.
         correct_indices: (N) the index of the correct state per individual.
 
-    Given the list probabilities, where each element corresponds to the state of
-    that index, compute the delta value."""
+    Returns:
+        The delta score per sample (individual).
+    """
     deltas = []
     for estimates, correct in zip(probabilities, correct_indices):
         incorrect_estimates = (*estimates[:correct], *estimates[correct + 1 :])
