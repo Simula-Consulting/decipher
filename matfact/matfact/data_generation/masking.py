@@ -13,12 +13,8 @@ def simulate_mask(D, observation_proba, memory_length, level, seed=42):
     for t in range(T - 1):
 
         # Find last remembered values
-        observed_cols = (
-            t
-            + 1
-            - np.argmax(
-                observed_values[:, t + 1 : max(0, t - memory_length) : -1] != 0, axis=1
-            )
+        observed_cols = (t + 1) - np.argmax(
+            observed_values[:, t + 1 : max(0, t - memory_length) : -1] != 0, axis=1
         )
         last_remembered_values = observed_values[np.arange(N), observed_cols]
 
