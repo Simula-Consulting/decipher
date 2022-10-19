@@ -110,6 +110,9 @@ def experiment(
     # Estimate the mostl likely prediction result from the probabilities
     x_pred = 1.0 + np.argmax(p_pred, axis=1)
 
+    # We set the backend to have the figure show on Mac.
+    # See https://matplotlib.org/stable/users/explain/backends.html for a reference
+    # on the matplotlib backends.
     matplotlib.use("MacOSX")
     plot_certainty(p_pred, x_true)
 
