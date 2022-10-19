@@ -22,6 +22,7 @@ from matfact.experiments.logging import (
     _aggregate_fields,
     dummy_logger_context,
 )
+from matfact.plotting.diagnostic import _calculate_delta
 
 
 def test_aggregate_fields():
@@ -161,7 +162,13 @@ def test_mlflow_logger(tmp_path):
     stored_artifact_path = _artifact_path_from_run(run_with_artifact)
     stored_artifacts = stored_artifact_path.glob("*")
     supposed_to_be_stored = set(
-        ("basis_.pdf", "coefs_.pdf", "confusion_.pdf", "roc_auc_micro_.pdf")
+        (
+            "basis_.pdf",
+            "coefs_.pdf",
+            "confusion_.pdf",
+            "roc_auc_micro_.pdf",
+            "certainty_plot.pdf",
+        )
     )
     assert supposed_to_be_stored == set([file.name for file in stored_artifacts])
 
@@ -316,3 +323,21 @@ def test_data_weights():
     for i, weight in enumerate(weight_per_class):
         state = i + 1
         assert np.all(weights[observed_data == state] == weight)
+
+
+@pytest.mark.parametrize(
+    "probabilities,correct_index,expected_delta",
+    [
+        [np.array([[1, 0, 0], [1, 0, 0]]), np.array([0, 0]), np.array([-1, -1])],
+        [np.array([[1, 0, 0], [1, 0, 0]]), np.array([1, 1]), np.array([1, 1])],
+        [np.array([[0, 1, 0], [0, 0, 1]]), np.array([1, 0]), np.array([-1, 1])],
+        [
+            np.array([[0.5, 0.5, 0.0], [0.5, 0.0, 0.5]]),
+            np.array([0, 1]),
+            np.array([0.0, 0.5]),
+        ],
+    ],
+)
+def test_delta_score(probabilities, correct_index, expected_delta):
+    """Test delta score calculated as expected."""
+    assert np.all(_calculate_delta(probabilities, correct_index) == expected_delta)

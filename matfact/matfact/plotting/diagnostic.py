@@ -1,4 +1,5 @@
 import pathlib
+from typing import Optional, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -203,3 +204,53 @@ def plot_roc_curve(
     plt.tight_layout()  # type: ignore
     plt.savefig(path_to_figure / f"roc_auc_{average}_{fname}.pdf")
     plt.close()
+
+
+def _calculate_delta(
+    probabilities: Sequence[Sequence[float]] | np.ndarray,
+    correct_indices: Sequence[int] | np.ndarray,
+) -> list[float]:
+    """Calculate the delta value from a list of probabilities for different classes.
+
+    Args:
+        probabilities: (N x number_of_states) with probabilities for each state.
+        correct_indices: (N) the index of the correct state per individual.
+
+    Returns:
+        The delta score per sample (individual).
+    """
+    deltas = []
+    for estimates, correct in zip(probabilities, correct_indices):
+        incorrect_estimates = (*estimates[:correct], *estimates[correct + 1 :])
+        # Set default=0 for the edge case that there is only one state, in which
+        # case incorrect_estimates is empty.
+        deltas.append(max(incorrect_estimates, default=0) - estimates[correct])
+    return deltas
+
+
+def plot_certainty(
+    p_pred: Sequence[Sequence[float]] | np.ndarray,
+    x_true: np.ndarray,
+    path_to_figure: Optional[pathlib.Path] = None,
+):
+    """Plot the certainty difference delta.
+
+    p_pred is an (number_of_individuals x number_of_states) ndarray.
+
+    Given some classification prediction, let delta = p_(max not correct) - p_correct,
+    i.e. the difference in probability between the most likely state that is not
+    correct and the state that is correct. For a perfect classifier, this score is -1,
+    as the probabilities of all states that are not correct are 0. The worst score is
+    +1, where the classifier is completely certain of the wrong state.
+
+    We want to plot the distribution of delta for the individuals N."""
+
+    correct_index = x_true.astype(int) - 1  # x_true is one-indexed
+    deltas = _calculate_delta(p_pred, correct_index)
+    # deltas are elements in [-1, 1]
+    distribution_plot = sns.displot(deltas, kind="ecdf").set(xlim=(-1, 1))
+
+    if path_to_figure is None:
+        distribution_plot.show()
+    else:
+        distribution_plot.savefig(path_to_figure / "certainty_plot.pdf")
