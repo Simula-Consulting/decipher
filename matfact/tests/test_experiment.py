@@ -325,33 +325,19 @@ def test_data_weights():
         assert np.all(weights[observed_data == state] == weight)
 
 
-def test_delta_score():
+@pytest.mark.parametrize(
+    "probabilities,correct_index,expected_delta",
+    [
+        [np.array([[1, 0, 0], [1, 0, 0]]), np.array([0, 0]), np.array([-1, -1])],
+        [np.array([[1, 0, 0], [1, 0, 0]]), np.array([1, 1]), np.array([1, 1])],
+        [np.array([[0, 1, 0], [0, 0, 1]]), np.array([1, 0]), np.array([-1, 1])],
+        [
+            np.array([[0.5, 0.5, 0.0], [0.5, 0.0, 0.5]]),
+            np.array([0, 1]),
+            np.array([0.0, 0.5]),
+        ],
+    ],
+)
+def test_delta_score(probabilities, correct_index, expected_delta):
     """Test delta score calculated as expected."""
-    test_cases = [
-        {
-            "probabilities": np.array([[1, 0, 0], [1, 0, 0]]),
-            "correct": np.array([0, 0]),
-            "expected_delta": np.array([-1, -1]),
-        },
-        {
-            "probabilities": np.array([[1, 0, 0], [1, 0, 0]]),
-            "correct": np.array([1, 1]),
-            "expected_delta": np.array([1, 1]),
-        },
-        {
-            "probabilities": np.array([[0, 1, 0], [0, 0, 1]]),
-            "correct": np.array([1, 0]),
-            "expected_delta": np.array([-1, 1]),
-        },
-        {
-            "probabilities": np.array([[0.5, 0.5, 0], [0.5, 0, 0.5]]),
-            "correct": np.array([0, 1]),
-            "expected_delta": np.array([0, 0.5]),
-        },
-    ]
-
-    for test_case in test_cases:
-        assert np.all(
-            _calculate_delta(test_case["probabilities"], test_case["correct"])
-            == test_case["expected_delta"]
-        )
+    assert np.all(_calculate_delta(probabilities, correct_index) == expected_delta)
