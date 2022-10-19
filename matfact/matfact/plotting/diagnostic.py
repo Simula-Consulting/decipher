@@ -247,10 +247,10 @@ def plot_certainty(
 
     correct_index = x_true.astype(int) - 1  # x_true is one-indexed
     deltas = _calculate_delta(p_pred, correct_index)
-    sns.displot(deltas, kind="ecdf").set(xlim=(-1, 1))  # deltas are elements in [-1, 1]
+    # deltas are elements in [-1, 1]
+    distribution_plot = sns.displot(deltas, kind="ecdf").set(xlim=(-1, 1))
 
     if path_to_figure is None:
-        plt.show()
+        distribution_plot.show()
     else:
-        plt.savefig(path_to_figure / "certainty_plot.pdf")
-        plt.close()
+        distribution_plot.savefig(path_to_figure / "certainty_plot.pdf")
