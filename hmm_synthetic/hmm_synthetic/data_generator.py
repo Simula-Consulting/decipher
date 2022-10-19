@@ -1,7 +1,8 @@
 import numpy as np
-from backend.sojourn import time_exit_state
-from backend.transition import inital_state, next_state
-from backend.utils import age_partitions_pts
+
+from .backend.sojourn import time_exit_state
+from .backend.transition import inital_state, next_state
+from .backend.utils import age_partitions_pts
 
 
 def simulate_state_histories(
@@ -18,13 +19,14 @@ def simulate_state_histories(
 
     """
 
-    rnd = np.random.RandomState(seed=seed)
+    rnd = np.random.default_rng(seed=seed)
 
     # Time grid defined by temporal resolution
     time_grid = age_partitions_pts(points_per_year)
 
     histories = []
-    age_min_pts, age_max_pts = 0, np.max(time_grid)
+    age_min_pts = 0
+    age_max_pts = np.max(time_grid).astype(int)  # Convert from np.int_
 
     for _ in range(n_samples):
         histories.append(

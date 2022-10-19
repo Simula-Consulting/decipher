@@ -1,6 +1,3 @@
-"""
-"""
-
 import numpy as np
 
 from .transition import legal_transition_lambdas

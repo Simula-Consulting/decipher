@@ -65,9 +65,10 @@ def plot_history_matrix(
     )
     cmap.set_under("white", alpha=alpha)
 
-    fig, axis = plt.subplots(
-        1, 1, figsize=plot_utils.set_fig_size(430, fraction=1.0, subplots=(1, 1))
+    fig = plt.figure(
+        figsize=plot_utils.set_fig_size(430, fraction=1.0, subplots=(1, 1))
     )
+    axis: plt.Axes = fig.gca()  # type: ignore
 
     hmap = sns.heatmap(
         histories[:n_samples],
@@ -76,17 +77,17 @@ def plot_history_matrix(
         vmax=4.5,
         cmap=cmap,
         cbar=False,
-        xticklabels=False,
-        yticklabels=False,
+        xticklabels=False,  # type: ignore
+        yticklabels=False,  # type: ignore
     )
 
     axis.set_xlabel("Age")
     axis.set_ylabel("History")
 
-    axis.axhline(y=0, color="k", linewidth=1)
-    axis.axhline(y=n_samples, color="k", linewidth=1)
-    axis.axvline(x=0, color="k", linewidth=1)
-    axis.axvline(x=histories.shape[1], color="k", linewidth=1)
+    axis.axhline(y=0, color="k", linewidth=1)  # type: ignore
+    axis.axhline(y=n_samples, color="k", linewidth=1)  # type: ignore
+    axis.axvline(x=0, color="k", linewidth=1)  # type: ignore
+    axis.axvline(x=histories.shape[1], color="k", linewidth=1)  # type: ignore
 
     # ax.tick_params(axis='both', labelbottom=False, labelleft=False)
 

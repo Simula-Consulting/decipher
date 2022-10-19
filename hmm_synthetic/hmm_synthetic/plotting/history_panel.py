@@ -1,4 +1,5 @@
 import pathlib
+from typing import cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -61,28 +62,39 @@ def plot_history_panel(
     if rnd is None:
         rnd = np.random.default_rng()
 
-    fig, axes = plt.subplots(
+    fig, axes_ = plt.subplots(
         3, 2, figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(3, 2))
     )
 
+    # The type hinting of plt.subplots is wrong. The axes return type is
+    # typed to be List[List[plt.Axes]], however it is actually a numpy array.
+    # We therefore cast manually here.
+    #
+    # This workaround should be removed as soon as the stubs are corrected.
+    #
+    # Versions:
+    #  - matplotlib: 3.6.0
+    #  - data-science-types: 0.2.23
+    axes = cast(np.ndarray, axes_)
+
     histories = sample_histories(histories, 6, rnd)
 
+    axis: plt.Axes
     for i, axis in enumerate(axes.ravel()):
-
         history = histories[i]
         time_grid = np.linspace(0, histories.shape[1], 6)
 
-        axis.plot(mask_missing(history), marker="o", linestyle="")
+        axis.plot(mask_missing(history), marker="o", linestyle="")  # type: ignore
 
         axis.set_ylabel("States")
         axis.set_yticks([1, 2, 3, 4])
-        axis.set_yticklabels([1, 2, 3, 4])
+        axis.set_yticklabels([1, 2, 3, 4])  # type: ignore
 
-        axis.set_ylim([0.5, 4.5])
+        axis.set_ylim(0.5, 4.5)
 
         axis.set_xlabel("Age")
         axis.set_xticks(time_grid)
-        axis.set_xticklabels(np.round(time_grid / points_per_year + age_min, 2))
+        axis.set_xticklabels(np.round(time_grid / points_per_year + age_min, 2))  # type: ignore # noqa: E501
 
         plot_utils.set_arrowed_spines(fig, axis)
 

@@ -1,9 +1,10 @@
 import numpy as np
-from data_generator import simulate_state_histories
-from plotting.history_matrix import plot_history_matrix
-from plotting.history_panel import plot_history_panel
 
+from hmm_synthetic.data_generator import simulate_state_histories
 from hmm_synthetic.settings import FIGURE_PATH
+
+from .plotting.history_matrix import plot_history_matrix
+from .plotting.history_panel import plot_history_panel
 
 
 def main():
