@@ -1,4 +1,5 @@
 from contextlib import nullcontext
+from typing import ContextManager
 
 import numpy as np
 import pytest
@@ -190,6 +191,7 @@ def test_next_state(current_state: int, seed: int, age_partitions: np.ndarray) -
     min_state = 1
     # After this state, next state is always censored.
     automatic_censored_state = max_state + 1
+    cm: ContextManager
     if not (min_state <= current_state <= max_state):  # Illegal state
         cm = pytest.raises(ValueError, match="Invalid current state")
     else:
