@@ -3,7 +3,8 @@ import numpy as np
 from hmm_synthetic.plotting import history_panel
 
 
-def test_sample_histories():
+def test_sample_histories() -> None:
+    """Test that histories are sampled correctly."""
     histories = np.array(
         [
             [3, 1, 2, 4, 1, 3, 1, 1, 1, 2],
