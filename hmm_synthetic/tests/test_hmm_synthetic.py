@@ -14,53 +14,68 @@ def test_an_exception() -> None:
         5 / 0
 
 
-def test__simulate_history() -> None:
-    age_partitions = np.array(
+# The fixture is static, and to play nicely with
+# hypothesis, we do not want it to be function-scoped.
+# See https://hypothesis.readthedocs.io/en/latest/healthchecks.html#hypothesis.HealthCheck.function_scoped_fixture  # noqa: E501
+# for a detailed reference.
+# An alternative is to simply suppress the warning from Hypothesis, but we concluded
+# it was better to make the scope module. This is safe, as the fixture is completely
+# static.
+@pytest.fixture(scope="module")
+def age_partitions():
+    return np.array(
         [
-            (16, 20),
-            (20, 25),
-            (25, 30),
-            (30, 35),
-            (35, 40),
-            (40, 50),
-            (50, 60),
-            (60, 100),
+            [0, 20],
+            [20, 45],
+            [45, 70],
+            [70, 95],
+            [95, 120],
+            [120, 170],
+            [170, 220],
+            [220, 420],
         ]
     )
+
+
+@pytest.fixture
+def rnd():
+    return np.random.default_rng(seed=42)
+
+
+@given(seed=st.integers(min_value=0))
+def test__simulate_history(seed: int, age_partitions) -> None:
     maximum_age = np.max(age_partitions)
     start_time = 5
     end_time = 60
-    number_of_iterations = 10
 
-    for seed in range(number_of_iterations):
-        rnd = np.random.default_rng(seed=seed)
-        history = data_generator._simulate_history(
-            age_min_pts=start_time,
-            age_max_pts=end_time,
-            time_grid=age_partitions,
-            rnd=rnd,
-        )
+    history = data_generator._simulate_history(
+        age_min_pts=start_time,
+        age_max_pts=end_time,
+        time_grid=age_partitions,
+        rnd=np.random.default_rng(seed=seed),
+    )
 
-        assert history.shape == (maximum_age,)
-        assert np.all(history[:start_time] == 0)
-        assert np.all(history[end_time:] == 0)
-        assert history[start_time] != 0
+    assert history.shape == (maximum_age,)
+    assert np.all(history[:start_time] == 0)
+    assert np.all(history[end_time:] == 0)
+    assert history[start_time] != 0
 
-    with pytest.raises(ValueError):  # Negative min makes no sense.
-        history = data_generator._simulate_history(
-            age_min_pts=-1,
-            age_max_pts=end_time,
-            time_grid=age_partitions,
-            rnd=rnd,
-        )
 
-    with pytest.raises(ValueError):  # Max should not be larger than the grid.
-        history = data_generator._simulate_history(
-            age_min_pts=start_time,
-            age_max_pts=maximum_age + 1,
-            time_grid=age_partitions,
-            rnd=rnd,
-        )
+def test__simulate_history_illegal_min_max_age(age_partitions, rnd):
+    maximum_age = np.max(age_partitions)
+    start_time = 5
+    end_time = 60
+
+    # TODO: Should the below test be changed to in general test any min value
+    # smaller than the minimum of the age partitions (which specifically is 0)?
+    for min_age, max_age in [(-1, end_time), (start_time, maximum_age + 1)]:
+        with pytest.raises(ValueError):  # Negative min makes no sense.
+            data_generator._simulate_history(
+                age_min_pts=min_age,
+                age_max_pts=max_age,
+                time_grid=age_partitions,
+                rnd=rnd,
+            )
 
 
 ###################
@@ -68,72 +83,33 @@ def test__simulate_history() -> None:
 ###################
 
 
-def test_age_partitions_pts() -> None:
+def test_age_partitions_pts(age_partitions) -> None:
     # Program was written with 4 in mind, so choose 5 to find any assumptions about 4
     points_per_year = 5
-    expected_result = np.array(
-        [
-            [0, 20],
-            [20, 45],
-            [45, 70],
-            [70, 95],
-            [95, 120],
-            [120, 170],
-            [170, 220],
-            [220, 420],
-        ]
-    )
+    expected_result = age_partitions
 
     result = utils.age_partitions_pts(points_per_year)
     assert np.all(result == expected_result)
 
 
-def test_age_group_idx() -> None:
-    """Test the age_group_idx function.
-
-    TODO: There are lots of unhandled edge cases here, which
-    we should handle. F.ex. empty partiion list, negative numbers, a number
-    that is smaller than the smamllest partiion number...
-    """
-    age_partitions = [
-        [0, 20],
-        [20, 45],
-        [45, 70],
-        [70, 95],
-        [95, 120],
-        [120, 170],
-        [170, 220],
-        [220, 420],
-    ]
-
-    # Values and correct indices to check
-    to_find = [[0, 0], [10, 0], [20, 1], [30, 1], [200, 6], [220, 7], [420, 7]]
-
-    for value, correct_index in to_find:
-        computed_index = utils.age_group_idx(value, age_partitions)
-        assert computed_index == correct_index
-
-    illegal_ages = [-1, 1000]
-    for age in illegal_ages:
-        with pytest.raises(ValueError):
-            utils.age_group_idx(age, age_partitions)
+@pytest.mark.parametrize(
+    "age, correct_index",
+    [[0, 0], [10, 0], [20, 1], [30, 1], [200, 6], [220, 7], [420, 7]],
+)
+def test_age_group_idx_correct(age_partitions, age, correct_index):
+    computed_index = utils.age_group_idx(age, age_partitions)
+    assert computed_index == correct_index
 
 
-def test_initial_state() -> None:
+@pytest.mark.parametrize("illegal_age", [-1, 1000])
+def test_age_group_idx_raises(age_partitions, illegal_age):
+    with pytest.raises(ValueError):
+        utils.age_group_idx(illegal_age, age_partitions)
+
+
+def test_initial_state(age_partitions) -> None:
 
     ### Test that the correct state is predicted ###
-    age_partitions = np.array(
-        [
-            [0, 20],
-            [20, 45],
-            [45, 70],
-            [70, 95],
-            [95, 120],
-            [120, 170],
-            [170, 220],
-            [220, 420],
-        ]
-    )
     seed = 42
 
     result = transition.initial_state(
@@ -142,32 +118,24 @@ def test_initial_state() -> None:
     expected_state = 1
     assert result == expected_state
 
-    ### Test that setting probability to zero for a state makes it never appear ###
-    probabilities = np.array(
-        [
-            [0, 0.5, 0.5],
-            [0, 0.5, 0.5],
-        ]
-    )
 
-    age_partitions = np.array(
-        [
-            [0, 10],
-            [10, 100],
-        ]
-    )
-
+@given(st.integers(min_value=0), st.integers(min_value=1, max_value=3))
+def test_initial_state_probabilities(seed, illegal_state) -> None:
     rnd = np.random.default_rng(seed=seed)
-    number_of_iterations = 10
-    for _ in range(number_of_iterations):
-        state = transition.initial_state(
-            5,
-            age_partitions,
-            initial_state_probabilities=probabilities,
-            rnd=rnd,
-        )
-        # We set probability of state zero to zero, so should never be produced.
-        assert state != 1
+    ### Test that setting probability to zero for a state makes it never appear ###
+    probabilities = np.full((2, 3), 0.5)
+    probabilities[:, illegal_state - 1] = 0
+
+    age_partitions = np.array([[0, 10], [10, 100]])
+
+    state = transition.initial_state(
+        5,  # Arbitrary initial time
+        age_partitions,
+        initial_state_probabilities=probabilities,
+        rnd=rnd,
+    )
+    # We set probability of state zero to zero, so should never be produced.
+    assert state != illegal_state
 
 
 def test_legal_transition_lambdas():
@@ -201,26 +169,13 @@ def test_legal_transition_lambdas():
             transition.legal_transition_lambdas(state, age_group_idx)
 
 
-@given(st.integers())
-def test_next_state(current_state: int):
-    age_partitions = np.array(
-        [
-            [0, 20],
-            [20, 45],
-            [45, 70],
-            [70, 95],
-            [95, 120],
-            [120, 170],
-            [170, 220],
-            [220, 420],
-        ]
-    )
+@given(current_state=st.integers(), seed=st.integers(min_value=0))
+def test_next_state(current_state: int, seed: int, age_partitions):
     age = 30  # Chosen arbitrarily
-    seed = 42
     censoring_value = 0
     rnd = np.random.default_rng(seed=seed)
 
-    max_state = 3
+    max_state = 4
     min_state = 1
     # After this state, next state is always censored.
     automatic_censored_state = max_state + 1
@@ -247,30 +202,16 @@ def test_next_state(current_state: int):
         assert next_state in allowed_states
 
 
-@given(st.integers())
-def test_time_exit_state(current_age_pts: int) -> None:
-    age_partitions = np.array(
-        [
-            [0, 20],
-            [20, 45],
-            [45, 70],
-            [70, 95],
-            [95, 120],
-            [120, 170],
-            [170, 220],
-            [220, 420],
-        ]
-    )
+@given(current_age_pts=st.integers(), seed=st.integers(min_value=0))
+def test_time_exit_state(current_age_pts: int, seed: int, age_partitions) -> None:
     age_max_pts = np.max(age_partitions)
-    seed = 42
     state = 2  # Chosen arbitrarily
-    rnd = np.random.default_rng(seed=seed)
     exit_time = sojourn.time_exit_state(
         current_age_pts,
         age_max_pts=age_max_pts,
         state=state,
         time_grid=age_partitions,
-        rnd=rnd,
+        rnd=np.random.default_rng(seed=seed),
     )
-    assert exit_time <= age_max_pts
-    assert exit_time > 1
+    assert exit_time + current_age_pts <= age_max_pts
+    assert exit_time > 0
