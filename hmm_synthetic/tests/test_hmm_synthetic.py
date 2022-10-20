@@ -9,11 +9,6 @@ from hmm_synthetic import data_generator
 from hmm_synthetic.backend import sojourn, transition, utils
 
 
-def test_an_exception() -> None:
-    with pytest.raises(ZeroDivisionError):
-        5 / 0
-
-
 # The fixture is static, and to play nicely with
 # hypothesis, we do not want it to be function-scoped.
 # See https://hypothesis.readthedocs.io/en/latest/healthchecks.html#hypothesis.HealthCheck.function_scoped_fixture  # noqa: E501
@@ -22,7 +17,8 @@ def test_an_exception() -> None:
 # it was better to make the scope module. This is safe, as the fixture is completely
 # static.
 @pytest.fixture(scope="module")
-def age_partitions():
+def age_partitions() -> np.ndarray:
+    """Return the default age partition array."""
     return np.array(
         [
             [0, 20],
@@ -38,12 +34,14 @@ def age_partitions():
 
 
 @pytest.fixture
-def rnd():
+def rnd() -> np.random.Generator:
+    """Return a numpy random generator instance."""
     return np.random.default_rng(seed=42)
 
 
 @given(seed=st.integers(min_value=0))
-def test__simulate_history(seed: int, age_partitions) -> None:
+def test__simulate_history(seed: int, age_partitions: np.ndarray) -> None:
+    """Test that the history generated passes some sanity checks."""
     maximum_age = np.max(age_partitions)
     start_time = 5
     end_time = 60
@@ -61,7 +59,10 @@ def test__simulate_history(seed: int, age_partitions) -> None:
     assert history[start_time] != 0
 
 
-def test__simulate_history_illegal_min_max_age(age_partitions, rnd):
+def test__simulate_history_illegal_min_max_age(
+    age_partitions: np.ndarray, rnd: np.random.Generator
+) -> None:
+    """Test that ValueError is raised for illegal min/max ages in history generator."""
     maximum_age = np.max(age_partitions)
     start_time = 5
     end_time = 60
@@ -83,7 +84,8 @@ def test__simulate_history_illegal_min_max_age(age_partitions, rnd):
 ###################
 
 
-def test_age_partitions_pts(age_partitions) -> None:
+def test_age_partitions_pts(age_partitions: np.ndarray) -> None:
+    """Test that the age_partitions are as expected."""
     # Program was written with 4 in mind, so choose 5 to find any assumptions about 4
     points_per_year = 5
     expected_result = age_partitions
@@ -96,19 +98,25 @@ def test_age_partitions_pts(age_partitions) -> None:
     "age, correct_index",
     [[0, 0], [10, 0], [20, 1], [30, 1], [200, 6], [220, 7], [420, 7]],
 )
-def test_age_group_idx_correct(age_partitions, age, correct_index):
+def test_age_group_idx_correct(
+    age_partitions: np.ndarray, age: int, correct_index: int
+) -> None:
+    """Test that the correct age partition index is returned."""
     computed_index = utils.age_group_idx(age, age_partitions)
     assert computed_index == correct_index
 
 
 @pytest.mark.parametrize("illegal_age", [-1, 1000])
-def test_age_group_idx_raises(age_partitions, illegal_age):
+def test_age_group_idx_raises(age_partitions: np.ndarray, illegal_age: int):
+    """Test that illegal ages raises ValueError in age_group_idx."""
     with pytest.raises(ValueError):
         utils.age_group_idx(illegal_age, age_partitions)
 
 
-def test_initial_state(age_partitions) -> None:
+def test_initial_state(age_partitions: np.ndarray) -> None:
+    """Test that the correct initial state is generated.
 
+    TODO: This test is very naive, and should be updated."""
     ### Test that the correct state is predicted ###
     seed = 42
 
@@ -120,7 +128,8 @@ def test_initial_state(age_partitions) -> None:
 
 
 @given(st.integers(min_value=0), st.integers(min_value=1, max_value=3))
-def test_initial_state_probabilities(seed, illegal_state) -> None:
+def test_initial_state_probabilities(seed: int, illegal_state: int) -> None:
+    """Test that a state of zero probability is never set as initial state."""
     rnd = np.random.default_rng(seed=seed)
     ### Test that setting probability to zero for a state makes it never appear ###
     probabilities = np.full((2, 3), 0.5)
@@ -138,7 +147,8 @@ def test_initial_state_probabilities(seed, illegal_state) -> None:
     assert state != illegal_state
 
 
-def test_legal_transition_lambdas():
+def test_legal_transition_lambdas() -> None:
+    """Test that legal_transition_lambdas returns the correct values."""
     # Array of shape (number_of_age_partitions x number_of_possible_transitions).
     # The transitions are
     # N0->L1  L1->H2   H2->C3   L1->N0   H2->L1   N0->D4   L1->D4   H2->D4   C3->D4
@@ -170,7 +180,8 @@ def test_legal_transition_lambdas():
 
 
 @given(current_state=st.integers(), seed=st.integers(min_value=0))
-def test_next_state(current_state: int, seed: int, age_partitions):
+def test_next_state(current_state: int, seed: int, age_partitions: np.ndarray) -> None:
+    """Test that the next state follows the rules for transitioning."""
     age = 30  # Chosen arbitrarily
     censoring_value = 0
     rnd = np.random.default_rng(seed=seed)
@@ -204,6 +215,7 @@ def test_next_state(current_state: int, seed: int, age_partitions):
 
 @given(current_age_pts=st.integers(), seed=st.integers(min_value=0))
 def test_time_exit_state(current_age_pts: int, seed: int, age_partitions) -> None:
+    """Test that the generated exit time is legal."""
     age_max_pts = np.max(age_partitions)
     state = 2  # Chosen arbitrarily
     exit_time = sojourn.time_exit_state(
