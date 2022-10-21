@@ -40,7 +40,7 @@ def float_matrix(N, T, r, number_of_states: int, seed=42):
     if r > min(N, T):
         raise ValueError("Rank r cannot be larger than either N or T.")
 
-    np.random.seed(seed)
+    rnd = np.random.default_rng(seed=seed)
 
     centers = np.linspace(70, 170, r)
     x = np.linspace(0, T, T)
@@ -50,7 +50,7 @@ def float_matrix(N, T, r, number_of_states: int, seed=42):
     for i_r in range(r):
         V[:, i_r] = 1 + 3.0 * np.exp(-5e-4 * (x - centers[i_r]) ** 2)
 
-    U = np.random.gamma(shape=1.0, scale=1.0, size=(N, r))
+    U = rnd.gamma(shape=1.0, scale=1.0, size=(N, r))
 
     M = U @ V.T
 
