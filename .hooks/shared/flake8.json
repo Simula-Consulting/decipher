@@ -1,0 +1,5 @@
+{
+    "name": "Flake8 linter",
+    "command": "poetry run flake8 .",
+    "onlyOn": "**/*.py"
+}
