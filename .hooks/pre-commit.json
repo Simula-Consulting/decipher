@@ -1,0 +1,28 @@
+{
+  "steps": [
+    {
+      "name": "End of file",
+      "command": "end-of-file-fixer"
+    },
+    {
+      "name": "Check Json",
+      "command": "check-json"
+    },
+    {
+      "name": "Check for large files",
+      "command": "check-added-large-files"
+    },
+    {
+      "name": "Check YAML format",
+      "command": "check-yaml"
+    },
+    {
+      "name": "Check no merge conflict",
+      "command": "check-merge-conflict"
+    },
+    {
+      "name": "Check mixed line ending types",
+      "command": "mixed-line-ending"
+    }
+  ]
+}
