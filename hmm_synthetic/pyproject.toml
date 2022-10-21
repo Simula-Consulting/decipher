@@ -13,7 +13,6 @@ matplotlib = "^3.6.0"
 seaborn = "^0.12.0"
 
 [tool.poetry.group.dev.dependencies]
-data-science-types = "^0.2.23"
 pytest = "^6.2.4"
 black = "^22.3.0"
 flake8 = "^3.9.2"

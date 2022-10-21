@@ -95,17 +95,6 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
-name = "data-science-types"
-version = "0.2.23"
-description = "Type stubs for Python machine learning libraries"
-category = "dev"
-optional = false
-python-versions = ">=3.6"
-
-[package.extras]
-dev = ["black", "flake8", "flake8-pyi", "matplotlib", "mypy (==0.770)", "numpy", "pandas", "pytest"]
-
-[[package]]
 name = "distlib"
 version = "0.3.6"
 description = "Distribution utilities"
@@ -609,7 +598,7 @@ testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.12"
-content-hash = "e9a9d04e53c6c137a5f5054e5323c8e397b9688d8568d06e32057a7a981dd548"
+content-hash = "f8d8eb76ba6fca89ab74d542e97f261ba7d7316f52b0a8d41952127ac33fab68"
 
 [metadata.files]
 atomicwrites = [
@@ -728,10 +717,6 @@ contourpy = [
 cycler = [
     {file = "cycler-0.11.0-py3-none-any.whl", hash = "sha256:3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3"},
     {file = "cycler-0.11.0.tar.gz", hash = "sha256:9c87405839a19696e837b3b818fed3f5f69f16f1eec1a1ad77e043dcea9c772f"},
-]
-data-science-types = [
-    {file = "data-science-types-0.2.23.tar.gz", hash = "sha256:8096b9a35a8a187bf9a122b4707c97de841d810744690ee2a4ac30c6462e0d16"},
-    {file = "data_science_types-0.2.23-py3-none-any.whl", hash = "sha256:bca319abc0e53a0316f9fcb887937e942477cb9e5fc63c8581e0b0438903b977"},
 ]
 distlib = [
     {file = "distlib-0.3.6-py2.py3-none-any.whl", hash = "sha256:f35c4b692542ca110de7ef0bea44d73981caeb34ca0b9b6b2e6d7790dda8f80e"},
