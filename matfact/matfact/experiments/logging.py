@@ -6,6 +6,7 @@ from typing import Callable, cast
 import mlflow  # type: ignore
 import numpy as np
 
+from matfact import settings
 from matfact.plotting import (
     plot_basis,
     plot_certainty,
@@ -274,9 +275,12 @@ class MLFlowLoggerArtifact(MLFlowLogger):
         artifact_path: pathlib.Path,
         allow_nesting: bool = True,
         extra_tags: dict | None = None,
+        create_artifact_path: bool = settings.create_path_default,
     ):
         super().__init__(allow_nesting=allow_nesting, extra_tags=extra_tags)
         self.figure_path = artifact_path
+        if create_artifact_path:
+            artifact_path.mkdir(parents=True, exist_ok=True)
 
     def __call__(self, output_dict):
         super().__call__(output_dict)
