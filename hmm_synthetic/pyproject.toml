@@ -19,7 +19,6 @@ black = "^22.3.0"
 flake8 = "^3.9.2"
 mypy = "^0.982"
 isort = "^5.8.0"
-pre-commit = "^2.12.1"
 hypothesis = "^6.56.3"
 
 [build-system]
