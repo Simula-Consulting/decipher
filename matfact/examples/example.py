@@ -113,7 +113,10 @@ def experiment(
     # We set the backend to have the figure show on Mac.
     # See https://matplotlib.org/stable/users/explain/backends.html for a reference
     # on the matplotlib backends.
-    matplotlib.use("MacOSX")
+    try:
+        matplotlib.use("MacOSX")
+    except ImportError:  # We are not on a Mac
+        pass
     plot_certainty(p_pred, x_true)
 
     # Log some metrics
