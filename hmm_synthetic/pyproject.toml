@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "hmm_synthetic"
+version = "0.1.0"
+description = "Data generation using HMM"
+authors = ["Thorvald M. Ballestad"]
+license = "No license" # Set to something appropriate, but use Proprietary if you don't know.
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+numpy = "^1.23.2"
+scipy = "^1.9.1"
+matplotlib = "^3.6.0"
+seaborn = "^0.12.0"
+
+[tool.poetry.group.dev.dependencies]
+data-science-types = "^0.2.23"
+pytest = "^6.2.4"
+black = "^22.3.0"
+flake8 = "^3.9.2"
+mypy = "^0.982"
+isort = "^5.8.0"
+pre-commit = "^2.12.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.mypy]
+python_version = "3.10"
+files = "**/*.py"
+disallow_untyped_defs = true
+
+[tool.isort]
+profile = "black"
