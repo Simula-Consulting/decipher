@@ -90,6 +90,9 @@ def time_exit_state(
     """Returns the amount of time a female spends in the current state."""
 
     # Need t > 0.
+    # TODO: Is this line correct, or does it assume ints?
+    # exit_time can output a number x s.t. 0 < x < 1.
+    # Should the test instead be <= 0?
     if abs(age_max_pts - current_age_pts) <= 1:
         return age_max_pts
 

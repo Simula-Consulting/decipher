@@ -1,7 +1,7 @@
 import numpy as np
 
 from .backend.sojourn import time_exit_state
-from .backend.transition import inital_state, next_state
+from .backend.transition import initial_state, next_state
 from .backend.utils import age_partitions_pts
 
 
@@ -56,7 +56,9 @@ def _simulate_history(
     history = np.ones(np.max(time_grid)) * censoring
 
     # Sample the initial state
-    current_state = inital_state(init_age_pts=age_min_pts, time_grid=time_grid, rnd=rnd)
+    current_state = initial_state(
+        init_age_pts=age_min_pts, time_grid=time_grid, rnd=rnd
+    )
 
     # Iterate until censoting age
     current_age_pts = age_min_pts

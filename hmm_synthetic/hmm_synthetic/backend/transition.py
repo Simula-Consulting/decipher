@@ -3,18 +3,24 @@ import numpy as np
 from .utils import age_group_idx, lambda_sr, p_init_state
 
 
-def inital_state(
-    init_age_pts: int, time_grid: np.ndarray, rnd: np.random.Generator | None = None
+def initial_state(
+    init_age_pts: int,
+    time_grid: np.ndarray,
+    initial_state_probabilities: np.ndarray | None = None,
+    rnd: np.random.Generator | None = None,
 ) -> int:
     """Sample a state at first screening."""
 
+    if initial_state_probabilities is None:
+        initial_state_probabilities = p_init_state.copy()
     if rnd is None:
-        return np.random.choice(
-            [1, 2, 3, 4], p=p_init_state[age_group_idx(init_age_pts, time_grid)]
-        )
+        rnd = np.random.default_rng()
+
+    number_of_states = initial_state_probabilities.shape[1]
 
     return rnd.choice(
-        [1, 2, 3, 4], p=p_init_state[age_group_idx(init_age_pts, time_grid)]
+        range(1, number_of_states + 1),
+        p=initial_state_probabilities[age_group_idx(init_age_pts, time_grid)],
     )
 
 
