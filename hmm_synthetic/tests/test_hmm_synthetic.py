@@ -55,8 +55,11 @@ def test__simulate_history(seed: int, age_partitions: np.ndarray) -> None:
     )
 
     assert history.shape == (maximum_age,)
-    assert np.all(history[:start_time] == 0)
-    assert np.all(history[end_time:] == 0)
+    assert np.all(history[:start_time] == 0)  # No values set before start_time
+    assert np.all(history[end_time:] == 0)  # No values set after end_time
+    # The start time should never be zero.
+    # It may happen that times between start and end are zero, a process
+    # called censoring.
     assert history[start_time] != 0
 
 
