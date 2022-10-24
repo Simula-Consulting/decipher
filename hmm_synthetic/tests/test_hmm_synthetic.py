@@ -60,6 +60,7 @@ def test__simulate_history(seed: int, age_partitions: np.ndarray) -> None:
     assert history[start_time] != 0
 
 
+@pytest.mark.xfail(reason="not implemented")
 def test__simulate_history_illegal_min_max_age(
     age_partitions: np.ndarray, rnd: np.random.Generator
 ) -> None:
@@ -107,6 +108,7 @@ def test_age_group_idx_correct(
     assert computed_index == correct_index
 
 
+@pytest.mark.xfail(reason="not implemented")
 @pytest.mark.parametrize("illegal_age", [-1, 1000])
 def test_age_group_idx_raises(age_partitions: np.ndarray, illegal_age: int):
     """Test that illegal ages raises ValueError in age_group_idx."""
@@ -215,6 +217,7 @@ def test_next_state(current_state: int, seed: int, age_partitions: np.ndarray) -
         assert next_state in allowed_states
 
 
+@pytest.mark.skip(reason="Correct behavior not specified")
 @given(current_age_pts=st.integers(), seed=st.integers(min_value=0))
 def test_time_exit_state(current_age_pts: int, seed: int, age_partitions) -> None:
     """Test that the generated exit time is legal."""
