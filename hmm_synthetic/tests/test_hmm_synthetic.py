@@ -119,16 +119,13 @@ def test_age_group_idx_raises(age_partitions: np.ndarray, illegal_age: int):
         utils.age_group_idx(illegal_age, age_partitions)
 
 
-def test_initial_state(age_partitions: np.ndarray) -> None:
+def test_initial_state(age_partitions: np.ndarray, rnd: np.random.Generator) -> None:
     """Test that the correct initial state is generated.
 
     TODO: This test is very naive, and should be updated."""
     ### Test that the correct state is predicted ###
-    seed = 42
 
-    result = transition.initial_state(
-        30, age_partitions, rnd=np.random.default_rng(seed=seed)
-    )
+    result = transition.initial_state(30, age_partitions, rnd=rnd)
     expected_state = 1
     assert result == expected_state
 
