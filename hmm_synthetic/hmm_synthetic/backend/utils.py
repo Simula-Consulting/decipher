@@ -55,21 +55,24 @@ lambda_sr = np.array(
 
 
 def age_group_idx(
-    a: int, age_partitions_pts: Sequence[tuple[int, int]] | npt.NDArray[np.int_]
+    age: int, age_partitions_pts: Sequence[int] | npt.NDArray[np.int_]
 ) -> int:
-    """Returns index i: tau_i <= a < tau_{i+1}."""
-    if a < age_partitions_pts[0][0]:
+    """Returns index i: tau_i <= age < tau_{i+1}.
+
+    TODO: What is the correct behavior in the case that age == max(age_partitions)?
+    Then, no index fulfills the criterion age < tau_{i+1}.
+    """
+    if age < age_partitions_pts[0]:
         raise ValueError("Age is smaller than the first age partition!")
-    if a > age_partitions_pts[-1][-1]:
+    if age > age_partitions_pts[-1]:
         raise ValueError("Age is higher than the last age partition!")
 
-    for i, (tau_p, tau_pp) in enumerate(age_partitions_pts):
-
-        if np.logical_and(tau_p <= a, a < tau_pp):
-            return i
-
-    # If a = tau_pp at the last age group
-    return i
+    # Iterate through the partitions, from younger to older, and break at the first
+    # partition older than age.
+    for age_partition_index, partition_limit_upper in enumerate(age_partitions_pts[1:]):
+        if age < partition_limit_upper:
+            break
+    return age_partition_index
 
 
 def _start_end_times(N, time_grid, params, rnd=None):
