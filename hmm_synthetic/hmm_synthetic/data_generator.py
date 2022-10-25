@@ -52,8 +52,15 @@ def _simulate_history(
         cencoring: the value of non-observed entries.
         rnd: np.random.RandomState instance
     """
+    if age_max_pts <= age_min_pts:
+        raise ValueError("The min age must be smaller than the max age.")
+    if age_min_pts < 0:
+        raise ValueError("Minimum age cannot be negative.")
+    max_age = np.max(time_grid)
+    if age_max_pts > max_age:
+        raise ValueError("The maximum age cannot exceed the time partitions.")
 
-    history = np.ones(np.max(time_grid)) * censoring
+    history = np.ones(max_age) * censoring
 
     # Sample the initial state
     current_state = initial_state(
