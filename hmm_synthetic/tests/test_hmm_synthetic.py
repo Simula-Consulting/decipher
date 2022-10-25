@@ -133,7 +133,7 @@ def test_initial_state_probabilities(seed: int, illegal_state: int) -> None:
     probabilities = np.full((2, 3), 0.5)
     probabilities[:, illegal_state - 1] = 0
 
-    age_partitions = np.array([[0, 10], [10, 100]])
+    age_partitions = np.array([0, 10, 100])
 
     state = transition.initial_state(
         5,  # Arbitrary initial time
