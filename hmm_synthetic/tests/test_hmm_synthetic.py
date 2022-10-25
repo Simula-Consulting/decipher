@@ -141,7 +141,6 @@ def test_age_group_idx_correct(
     assert computed_index == correct_index
 
 
-@pytest.mark.xfail(reason="not implemented")
 @pytest.mark.parametrize("illegal_age", [-1, 1000])
 def test_age_group_idx_raises(age_partitions: np.ndarray, illegal_age: int):
     """Test that illegal ages raises ValueError in age_group_idx."""
