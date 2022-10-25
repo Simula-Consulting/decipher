@@ -1,33 +1,31 @@
-# hmm_synthetic
-[![CI](https://github.com/Simula-Consulting/hmm_synthetic/actions/workflows/test.yml/badge.svg)](https://github.com/Simula-Consulting/hmm_synthetic/actions/workflows/test.yml)
+# Hidden Markov model (HMM)
+[![CI](https://github.com/Simula-Consulting/decipher/actions/workflows/python-app.yaml/badge.svg)](https://github.com/Simula-Consulting/decipher/actions/workflows/python-app.yaml)
 
 Data generation using HMM
 
-The minimal Python version is 3.8. For other dependencies, refer to `pyproject.toml`.
+Implemented is only the synthetic data generation.
+Prediction of parameters is _not_ part of this package.
+
+The minimal Python version is 3.10. For other dependencies, refer to `pyproject.toml`.
 Dependencies are managed with [poetry](https://python-poetry.org/docs/).
 
 ## Installation
 ```bash
 # install poetry, if not installed yet
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+curl -sSL https://install.python-poetry.org | python3 -
 # install project
 poetry install
 ```
-Development dependendies can be ignored by appending the last command with `--no-dev`.
+Development dependendies can be ignored by appending the last command with `--without dev`.
 
 ## Usage
-After installing, run
-```
-python main.py
-```
+The package is intended as a framework for developers.
+Examples of usage to come.
 
 ## Development
 
 For a development install, please install the development requirements.
-Then install the pre-commit hook (<https://pre-commit.com/>):
-```
-pre-commit install
-```
+Refer to the root of the repo for setting up Git hooks with Mookme.
 
 ### Testing
 
@@ -39,4 +37,4 @@ python -m pytest
 
 ### Continuous integration
 
-All tests are run using GitHub actions on _push_ and _pull requests_.
+All tests are run using GitHub actions on _pull requests_.
