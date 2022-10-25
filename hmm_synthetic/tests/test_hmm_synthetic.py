@@ -20,18 +20,7 @@ from hmm_synthetic.backend import sojourn, transition, utils
 @pytest.fixture(scope="module")
 def age_partitions() -> np.ndarray:
     """Return the default age partition array."""
-    return np.array(
-        [
-            [0, 20],
-            [20, 45],
-            [45, 70],
-            [70, 95],
-            [95, 120],
-            [120, 170],
-            [170, 220],
-            [220, 420],
-        ]
-    )
+    return np.array([0, 20, 45, 70, 95, 120, 170, 220, 420])
 
 
 @pytest.fixture

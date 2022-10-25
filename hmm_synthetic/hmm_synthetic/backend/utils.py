@@ -4,18 +4,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy.stats as stats
 
-age_partitions = np.array(
-    [
-        (16, 20),
-        (20, 25),
-        (25, 30),
-        (30, 35),
-        (35, 40),
-        (40, 50),
-        (50, 60),
-        (60, 100),
-    ]
-)
+age_partitions = np.array([16, 20, 25, 30, 35, 40, 50, 60, 100])
 
 # Converting to pts.
 # age_partitions_pts = np.round(
