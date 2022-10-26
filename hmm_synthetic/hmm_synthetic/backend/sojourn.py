@@ -54,13 +54,13 @@ def kappa(age, current_state, t, i, time_grid, l=None) -> float:  # noqa: E741
 
 
 def search_l(
-    u_random_variable,
-    age_partition_index,
-    current_age_pts,
-    state,
-    time_grid,
-    n_age_partitions=8,
-):
+    u_random_variable: float,
+    age_partition_index: int,
+    current_age_pts: int,
+    state: int,
+    time_grid: Sequence[int] | npt.NDArray[np.int_],
+    n_age_partitions: int = 8,
+) -> int:
     """Find the partition satisfying the probability requirement.
 
     Find l such that
