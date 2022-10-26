@@ -83,29 +83,31 @@ def search_l(
     P[T_s(a) < tau_l - a] < u.
     """
 
-    if np.isclose(age_partition_index, n_age_partitions - 1):
+    if age_partition_index == n_age_partitions - 1:
         return age_partition_index
 
-    for l in range(age_partition_index, n_age_partitions):  # noqa: E741
+    for l_partition_index_candidate in range(age_partition_index, n_age_partitions):
 
-        tau_lp = time_grid[l + 1]
+        partition_upper_limit = time_grid[l_partition_index_candidate + 1]
 
-        t = tau_lp - current_age_pts
+        t = partition_upper_limit - current_age_pts
 
         # Evaluate the sojourn time CDF at this time step.
         cdf = 1.0 - np.exp(
             sum(
                 [
                     kappa(current_age_pts, state, t, i, time_grid)
-                    for i in range(l - age_partition_index + 1)
+                    for i in range(
+                        l_partition_index_candidate - age_partition_index + 1
+                    )
                 ]
             )
         )
 
         if cdf > u_random_variable:
-            return l - 1
+            return l_partition_index_candidate - 1
 
-    return l - 1
+    return l_partition_index_candidate - 1
 
 
 def exit_time(
