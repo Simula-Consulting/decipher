@@ -118,6 +118,9 @@ def test_scmf():
         observed = logs[attribute]
         # Use allclose instead of array_equal, to allow for refactoring
         # that cuases different round off (for example avoiding sqrt).
+        # atol of 1e-6 chosen by an educated guess to allow for
+        # floating point variations (which differs across machines)
+        # while still being small enough to catch errors.
         assert np.allclose(correct, observed, atol=1e-06)
         if not np.array_equal(correct, observed):
             warnings.warn(
