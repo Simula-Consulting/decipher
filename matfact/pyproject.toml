@@ -33,3 +33,25 @@ profile = "black"
 
 [tool.mypy]
 plugins = "numpy.typing.mypy_plugin"
+
+[[tool.mypy.overrides]]
+module = [
+    "matplotlib.*",
+    #
+    "scipy.*",
+    #
+    "mlflow",
+    #
+    "tensorflow",
+    #
+    "skopt.*",
+    #
+    "seaborn",
+    #
+    "sklearn.base",
+    "sklearn.metrics",
+    "sklearn.preprocessing",
+    "sklearn.model_selection",
+    "sklearn.utils"
+]
+ignore_missing_imports = true
