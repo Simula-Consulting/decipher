@@ -1,0 +1,5 @@
+{
+    "name": "Black formatter",
+    "command": "poetry run black {matchedFiles}",
+    "onlyOn": "**/*.py"
+}
