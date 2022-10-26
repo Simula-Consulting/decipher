@@ -99,8 +99,13 @@ def search_l(
 
 
 def exit_time(
-    u_random_variable, age, state, age_partition_index, l_partition_index, time_grid
-):
+    u_random_variable: float,
+    age: int,
+    state: int,
+    age_partition_index: int,
+    l_partition_index: int,
+    time_grid: Sequence[int] | npt.NDArray[np.int_],
+) -> float:
     """Random exit time from current state.
 
     Notation used
