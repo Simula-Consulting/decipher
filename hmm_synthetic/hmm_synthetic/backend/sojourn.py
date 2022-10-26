@@ -54,6 +54,17 @@ def kappa(age, current_state, t, i, time_grid, l=None) -> float:  # noqa: E741
 
 
 def search_l(u, k, current_age_pts, state, time_grid, n_age_partitions=8):
+    """Find the partition satisfying the probability requirement.
+
+    Find l such that
+    P[T_s(a) < tau_l - age] < u < P[T_s(a) < tau_{l+1} - q],
+    where
+    P[T_s(a) > t] = exp( kappa_0^s + kappa_1^s + sum_{i=2}^n kappa_i^s )
+                  = exp( sum_i kappa_i^s)
+
+    In other words, find the largest l such that
+    P[T_s(a) < tau_l - a] < u.
+    """
 
     if np.isclose(k, n_age_partitions - 1):
         return k
@@ -81,7 +92,15 @@ def search_l(u, k, current_age_pts, state, time_grid, n_age_partitions=8):
 
 
 def exit_time(u, a, s, k, l, time_grid):  # noqa: E741
-    """Random exit time from current state."""
+    """Random exit time from current state.
+
+    Notation used
+    - u: random uniform variable
+    - a: age
+    - s: state
+    - k: the partition index of the age
+    - l: the partition index of the exit age (ish)
+    """
 
     sum_kappa = sum([kappa(a, s, None, i, time_grid, l=l) for i in range(1, l - k + 1)])
 
