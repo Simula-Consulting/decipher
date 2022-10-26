@@ -53,7 +53,14 @@ def kappa(age, current_state, t, i, time_grid, l=None) -> float:  # noqa: E741
     return kappa_m(age, current_state, i, time_grid)
 
 
-def search_l(u, k, current_age_pts, state, time_grid, n_age_partitions=8):
+def search_l(
+    u_random_variable,
+    age_partition_index,
+    current_age_pts,
+    state,
+    time_grid,
+    n_age_partitions=8,
+):
     """Find the partition satisfying the probability requirement.
 
     Find l such that
@@ -66,10 +73,10 @@ def search_l(u, k, current_age_pts, state, time_grid, n_age_partitions=8):
     P[T_s(a) < tau_l - a] < u.
     """
 
-    if np.isclose(k, n_age_partitions - 1):
-        return k
+    if np.isclose(age_partition_index, n_age_partitions - 1):
+        return age_partition_index
 
-    for l in range(k, n_age_partitions):  # noqa: E741
+    for l in range(age_partition_index, n_age_partitions):  # noqa: E741
 
         tau_lp = time_grid[l + 1]
 
@@ -80,12 +87,12 @@ def search_l(u, k, current_age_pts, state, time_grid, n_age_partitions=8):
             sum(
                 [
                     kappa(current_age_pts, state, t, i, time_grid)
-                    for i in range(l - k + 1)
+                    for i in range(l - age_partition_index + 1)
                 ]
             )
         )
 
-        if cdf > u:
+        if cdf > u_random_variable:
             return l - 1
 
     return l - 1
