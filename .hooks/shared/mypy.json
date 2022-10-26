@@ -1,5 +1,5 @@
 {
     "name": "MyPy",
-    "command": "poetry run mypy --ignore-missing-imports .",
+    "command": "poetry run mypy {matchedFiles}",
     "onlyOn": "**/*.py"
 }

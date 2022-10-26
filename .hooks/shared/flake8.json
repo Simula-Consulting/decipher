@@ -1,5 +1,5 @@
 {
     "name": "Flake8 linter",
-    "command": "poetry run flake8 .",
+    "command": "poetry run flake8 {matchedFiles}",
     "onlyOn": "**/*.py"
 }
