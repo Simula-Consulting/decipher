@@ -40,7 +40,11 @@ jobs:
         npx mookme run --all -t pre-commit
     - name: Test matfact with pytest
       run: |
-        cd matfact && poetry run pytest -Wignore
+        cd matfact
+        poetry run pytest -Wignore
+        poetry run mypy .
     - name: Test HMM with pytest
       run: |
-        cd hmm_synthetic && poetry run pytest -Wignore
+        cd hmm_synthetic
+        poetry run pytest -Wignore
+        poetry run mypy .
