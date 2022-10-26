@@ -91,7 +91,9 @@ def search_l(u, k, current_age_pts, state, time_grid, n_age_partitions=8):
     return l - 1
 
 
-def exit_time(u, a, s, k, l, time_grid):  # noqa: E741
+def exit_time(
+    u_random_variable, age, state, age_partition_index, l_partition_index, time_grid
+):
     """Random exit time from current state.
 
     Notation used
@@ -102,9 +104,16 @@ def exit_time(u, a, s, k, l, time_grid):  # noqa: E741
     - l: the partition index of the exit age (ish)
     """
 
-    sum_kappa = sum([kappa(a, s, None, i, time_grid, l=l) for i in range(1, l - k + 1)])
+    sum_kappa = sum(
+        [
+            kappa(age, state, None, i, time_grid, l=l_partition_index)
+            for i in range(1, l_partition_index - age_partition_index + 1)
+        ]
+    )
 
-    return (sum_kappa - np.log(1 - u)) / sum(legal_transition_lambdas(s, l))
+    return (sum_kappa - np.log(1 - u_random_variable)) / sum(
+        legal_transition_lambdas(state, l_partition_index)
+    )
 
 
 def time_exit_state(
