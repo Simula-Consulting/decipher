@@ -42,13 +42,23 @@ def kappa_m(age, current_state, m, time_grid) -> float:
     return -1.0 * s_km
 
 
-def kappa(age, current_state, t, i, time_grid, l=None) -> float:  # noqa: E741
+def kappa(
+    age: int,
+    current_state: int,
+    t: int | None,
+    i: int,
+    time_grid: Sequence[int] | npt.NDArray[np.int_],
+    l_partition_index: int | None = None,
+) -> float:  # noqa: E741
 
+    assert (
+        t is not None or l_partition_index is not None
+    ), "either t or l must be specified"
     if i == 0:
         return kappa_0(age, current_state, t, time_grid)
 
     if i == 1:
-        return kappa_1(age, current_state, t, time_grid, l=l)
+        return kappa_1(age, current_state, t, time_grid, l=l_partition_index)
 
     return kappa_m(age, current_state, i, time_grid)
 
@@ -118,7 +128,7 @@ def exit_time(
 
     sum_kappa = sum(
         [
-            kappa(age, state, None, i, time_grid, l=l_partition_index)
+            kappa(age, state, None, i, time_grid, l_partition_index=l_partition_index)
             for i in range(1, l_partition_index - age_partition_index + 1)
         ]
     )
