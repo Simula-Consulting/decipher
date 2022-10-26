@@ -93,7 +93,7 @@ def time_exit_state(
     age_max_pts: int,
     state: int,
     time_grid: Sequence[int] | npt.NDArray[np.int_],
-    rnd=None,
+    rnd: np.random.Generator,
 ) -> float:
     """Returns the amount of time a female spends in the current state."""
 
