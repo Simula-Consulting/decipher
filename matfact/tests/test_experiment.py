@@ -346,6 +346,7 @@ FOO = 1.0
 BAR = 2.0
 
 
+# Better to test by mocking and inspecting what is called/accessed?
 @pytest.mark.parametrize(
     "data, correct_out",
     [
@@ -391,3 +392,13 @@ BAR = 2.0
 def test__mean_and_std(data, correct_out):
     out = _mean_and_std(**data)
     assert out == correct_out
+
+    assert _mean_and_std.__name__ == "_mean_and_std"
+    assert _mean_and_std.__doc__.startswith(
+        "Return a dict with mean and standard deviation of the values"
+    )
+    assert _mean_and_std.__annotations__ == {
+        "field_name": str,
+        "values": list[str] | list[float] | list[list[float]],
+        "return": dict,
+    }

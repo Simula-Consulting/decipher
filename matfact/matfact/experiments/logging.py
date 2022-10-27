@@ -1,3 +1,4 @@
+import functools
 import pathlib
 import re
 from contextlib import nullcontext
@@ -46,7 +47,16 @@ def mlflow_logger(log_data: dict) -> None:
     mlflow.set_tags(log_data["tags"])
 
 
+wrapper_assignments_no_annotation = [
+    part for part in functools.WRAPPER_ASSIGNMENTS if part != "__annotations__"
+]
+wrap_without_annotations = functools.partial(
+    functools.wraps, assigned=wrapper_assignments_no_annotation
+)
+
+
 def only_last_in_list(func):
+    @wrap_without_annotations(func)
     def wrapper(
         field_name: str, values: list[str] | list[float] | list[list[float]]
     ) -> dict:
@@ -61,6 +71,7 @@ def only_last_in_list(func):
 
 
 def only_floats(func):
+    @wrap_without_annotations(func)
     def wrapper(
         field_name: str, values: list[str] | list[float] | list[list[float]]
     ) -> dict:
