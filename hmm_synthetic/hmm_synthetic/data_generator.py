@@ -53,9 +53,9 @@ def _simulate_history(
         rnd: np.random.RandomState instance
     """
     if age_max_pts <= age_min_pts:
-        raise ValueError("The min age must be smaller than the max age.")
+        raise ValueError("The minimum age must be smaller than the maximum age.")
     if age_min_pts < 0:
-        raise ValueError("Minimum age cannot be negative.")
+        raise ValueError("The minimum age cannot be negative.")
     max_age = np.max(time_grid)
     if age_max_pts > max_age:
         raise ValueError("The maximum age cannot exceed the time partitions.")
