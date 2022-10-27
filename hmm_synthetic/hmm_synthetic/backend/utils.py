@@ -72,7 +72,7 @@ def age_group_idx(
         raise ValueError("Age is higher than the last age partition!")
     if len(age_partitions_pts) <= 1:
         raise ValueError(
-            "age_partition_pts must have at least two elements to define a partition!"
+            "age_partitions_pts must have at least two elements to define a partition!"
         )
 
     # Break at the first partition where the age is smaller than the upper limit
