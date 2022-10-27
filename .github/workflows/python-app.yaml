@@ -44,9 +44,7 @@ jobs:
       run: |
         cd matfact
         poetry run pytest -Wignore
-        poetry run mypy .
     - name: Test HMM with pytest
       run: |
         cd hmm_synthetic
         poetry run pytest -Wignore
-        poetry run mypy .
