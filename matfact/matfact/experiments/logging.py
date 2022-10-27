@@ -47,25 +47,25 @@ def mlflow_logger(log_data: dict) -> None:
 
 
 def _mean_and_std(
-    field_name: str, values_: list[str] | list[float] | list[list[float]]
+    field_name: str, values: list[str] | list[float] | list[list[float]]
 ) -> dict:
     """Return a dict with mean and standard deviation of the values.
 
     If the entries of values are lists, use the last element of each, i.e. the mean
     and std at the last epoch.
     """
-    values: list[float] | list[str]
-    if isinstance(values_[0], list):
-        values = [value[-1] for value in cast(list[list[float]], values_)]
+    _values: list[float] | list[str]
+    if isinstance(values[0], list):
+        _values = [value[-1] for value in cast(list[list[float]], values)]
     else:
-        values = cast(list[float] | list[str], values_)
+        _values = cast(list[float] | list[str], values)
 
     mean: float
     std: float
-    if isinstance(values[0], float):
-        values = cast(list[float], values)
-        mean = cast(float, np.mean(values))
-        std = cast(float, np.std(values))
+    if isinstance(_values[0], float):
+        _values = cast(list[float], _values)
+        mean = cast(float, np.mean(_values))
+        std = cast(float, np.std(_values))
     else:
         mean = std = float("nan")
     return {
