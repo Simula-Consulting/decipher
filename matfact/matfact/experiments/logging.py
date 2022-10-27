@@ -47,16 +47,30 @@ def mlflow_logger(log_data: dict) -> None:
     mlflow.set_tags(log_data["tags"])
 
 
-wrapper_assignments_no_annotation = [
-    part for part in functools.WRAPPER_ASSIGNMENTS if part != "__annotations__"
-]
-wrap_without_annotations = functools.partial(
-    functools.wraps, assigned=wrapper_assignments_no_annotation
+# Modified functools.wraps which does not update the annotations.
+_wrap_without_annotations = functools.partial(
+    functools.wraps,
+    assigned=[
+        part for part in functools.WRAPPER_ASSIGNMENTS if part != "__annotations__"
+    ],
 )
+
+# We here define some 'filters' for the aggregation functions.
+# They filter the input to the format that the aggregation functions expect.
+# For example, to pick out only the last element of each sublist in the case of
+# a list of lists, decorate the aggregator function with only_last_in_list.
+# Another example is the only_on_fields, which lets the user manually define
+# which fields the aggregation function should run on.
+#
+# Importantly, the function that is exposed as the 'final' aggregation function
+# must have the signature
+# Callable[[field_name: str, values: list[str] | list[float] | list[list[float]], dict]
 
 
 def only_last_in_list(func):
-    @wrap_without_annotations(func)
+    """If values is a list of lists, filter out the last element of each sublist."""
+
+    @_wrap_without_annotations(func)
     def wrapper(
         field_name: str, values: list[str] | list[float] | list[list[float]]
     ) -> dict:
@@ -71,7 +85,9 @@ def only_last_in_list(func):
 
 
 def only_floats(func):
-    @wrap_without_annotations(func)
+    """Only run func on values that are floats."""
+
+    @_wrap_without_annotations(func)
     def wrapper(
         field_name: str, values: list[str] | list[float] | list[list[float]]
     ) -> dict:
@@ -88,7 +104,9 @@ def only_floats(func):
 
 
 def only_on_fields(func, fields: list[str]):
-    @wrap_without_annotations(func)
+    """Only run func on certain fields."""
+
+    @_wrap_without_annotations(func)
     def wrapper(
         field_name: str, values: list[str] | list[float] | list[list[float]]
     ) -> dict:
@@ -102,11 +120,7 @@ def only_on_fields(func, fields: list[str]):
 @only_floats
 @only_last_in_list
 def _mean_and_std(field_name: str, values: list[float]) -> dict:
-    """Return a dict with mean and standard deviation of the values.
-
-    If the entries of values are lists, use the last element of each, i.e. the mean
-    and std at the last epoch.
-    """
+    """Return a dict with mean and standard deviation of the values."""
     mean = np.mean(values)
     std = np.std(values)
 
@@ -116,7 +130,10 @@ def _mean_and_std(field_name: str, values: list[float]) -> dict:
     }
 
 
-def _store_subruns(field_name: str, values: list[float] | list[list[float]]) -> dict:
+def _store_subruns(
+    field_name: str, values: list[str] | list[float] | list[list[float]]
+) -> dict:
+    """Store each subrun's value as an enumerated field in parent."""
     return {f"{field_name}_{i}": value for i, value in enumerate(values)}
 
 
