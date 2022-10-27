@@ -63,33 +63,10 @@ def test__simulate_history(seed: int, age_partitions: np.ndarray) -> None:
     assert history[start_time] != 0
 
 
-def test__simulate_history_illegal_min_max_age(
-    age_partitions: np.ndarray, rnd: np.random.Generator
-) -> None:
-    """Test that ValueError is raised for illegal min/max ages in history generator."""
-    maximum_age = np.max(age_partitions)
-    start_time = 5
-    end_time = 60
-
-    # TODO: Should the below test be changed to in general test any min value
-    # smaller than the minimum of the age partitions (which specifically is 0)?
-    for min_age, max_age in [
-        (-1, end_time),  # Negative start time
-        (start_time, maximum_age + 1),  # End time after max age
-        (maximum_age, start_time),  # Start time before end time
-    ]:
-        with pytest.raises(ValueError):
-            data_generator._simulate_history(
-                age_min_pts=min_age,
-                age_max_pts=max_age,
-                time_grid=age_partitions,
-                rnd=rnd,
-            )
-
-
 maximum_age = 420  # The largest number in age_partitions
+# Some arbitrarily chosen values
 start_time = 5
-end_time = 60
+end_time = 400
 
 
 @pytest.mark.parametrize(
@@ -100,7 +77,7 @@ end_time = 60
         (maximum_age, start_time),  # Start time before end time
     ],
 )
-def test__simulate_history_illegal_min_max_age_2(
+def test__simulate_history_illegal_min_max_age(
     min: int, max: int, age_partitions: np.ndarray, rnd: np.random.Generator
 ) -> None:
     """Test that ValueError is raised for illegal min/max ages in history generator."""
