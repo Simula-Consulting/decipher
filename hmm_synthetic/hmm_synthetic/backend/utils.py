@@ -4,18 +4,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy.stats as stats
 
-age_partitions = np.array(
-    [
-        (16, 20),
-        (20, 25),
-        (25, 30),
-        (30, 35),
-        (35, 40),
-        (40, 50),
-        (50, 60),
-        (60, 100),
-    ]
-)
+age_partitions = np.array([16, 20, 25, 30, 35, 40, 50, 60, 100])
 
 # Converting to pts.
 # age_partitions_pts = np.round(
@@ -66,21 +55,36 @@ lambda_sr = np.array(
 
 
 def age_group_idx(
-    a: int, age_partitions_pts: Sequence[tuple[int, int]] | npt.NDArray[np.int_]
+    age: int, age_partitions_pts: Sequence[int] | npt.NDArray[np.int_]
 ) -> int:
-    """Returns index i: tau_i <= a < tau_{i+1}."""
-    if a < age_partitions_pts[0][0]:
+    """Returns index i: tau_i <= age < tau_{i+1}.
+
+    TODO: What is the correct behavior in the case that age == max(age_partitions)?
+    Then, no index fulfills the criterion age < tau_{i+1}.
+    As of now, we have chosen to take the last partition to be inclusive, i.e.
+    age <= tau_{max}, as this was the case in the original code, and we have reason
+    to believe that our dataset will contain ages including the endpoint of the
+    oldest partition.
+    """
+    if age < age_partitions_pts[0]:
         raise ValueError("Age is smaller than the first age partition!")
-    if a > age_partitions_pts[-1][-1]:
+    if age > age_partitions_pts[-1]:
         raise ValueError("Age is higher than the last age partition!")
+    if len(age_partitions_pts) <= 1:
+        raise ValueError(
+            "age_partitions_pts must have at least two elements to define a partition!"
+        )
 
-    for i, (tau_p, tau_pp) in enumerate(age_partitions_pts):
-
-        if np.logical_and(tau_p <= a, a < tau_pp):
-            return i
-
-    # If a = tau_pp at the last age group
-    return i
+    # Break at the first partition where the age is smaller than the upper limit
+    # The last partition is different from the rest, as it has an inclusive upper limit,
+    # as opposed to the rest which have exclusive lower limit.
+    # Due to this, we do not return inside the loop but break.
+    # For the last partition, the if statement will thus never be True, but it will
+    # nevertheless reach the return statement.
+    for i, partition_upper_limit in enumerate(age_partitions_pts[1:]):
+        if age < partition_upper_limit:
+            break
+    return i  # pylint: disable=undefined-loop-variable  # Guard at beginning assures iterator is not empty
 
 
 def _start_end_times(N, time_grid, params, rnd=None):
