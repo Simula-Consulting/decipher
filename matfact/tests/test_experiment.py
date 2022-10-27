@@ -392,6 +392,7 @@ BAR = 2.0
     ],
 )
 def test__mean_and_std(data, correct_out):
+    """Test that _mean_and_std aggregates correctly and has correct attributes."""
     out = _mean_and_std(**data)
     assert out == correct_out
 
@@ -449,6 +450,16 @@ BAR = 2.0
     ],
 )
 def test_filter_decorator(test_data):
+    """Test aggregation decorators.
+
+    Assert that the decorators correctly filters the values, and only runs
+    the aggregation function when appropriate.
+
+    given test_data["values"] the wrapper should filter such that
+    test_data["filtered_values"] are passed to the aggregation function.
+    If not test_data["should_be_called], the aggregation function should not be called.
+    """
+
     def inner(field_name, values):
         assert field_name == test_data["field_name"]
         assert test_data.get("should_be_called", True)
