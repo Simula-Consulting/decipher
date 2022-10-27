@@ -60,7 +60,6 @@ def search_l(u, k, current_age_pts, state, time_grid, n_age_partitions=8):
 
     for l in range(k, n_age_partitions):  # noqa: E741
 
-        # _, tau_lp = time_grid[l]
         tau_lp = time_grid[l + 1]
 
         t = tau_lp - current_age_pts
