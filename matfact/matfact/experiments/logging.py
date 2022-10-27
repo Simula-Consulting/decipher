@@ -6,6 +6,7 @@ from typing import Callable, cast
 import mlflow  # type: ignore
 import numpy as np
 
+from matfact import settings
 from matfact.plotting import (
     plot_basis,
     plot_certainty,
@@ -53,11 +54,18 @@ def _mean_and_std(
     If the entries of values are lists, use the last element of each, i.e. the mean
     and std at the last epoch.
     """
+    _values: list[float] | list[str]
     if isinstance(values[0], list):
-        values = [value[-1] for value in cast(list[list[float]], values)]
-    if isinstance(values[0], float):
-        mean = np.mean(values)
-        std = np.std(values)
+        _values = [value[-1] for value in cast(list[list[float]], values)]
+    else:
+        _values = cast(list[float] | list[str], values)
+
+    mean: float
+    std: float
+    if isinstance(_values[0], float):
+        _values = cast(list[float], _values)
+        mean = cast(float, np.mean(_values))
+        std = cast(float, np.std(_values))
     else:
         mean = std = float("nan")
     return {
@@ -267,9 +275,12 @@ class MLFlowLoggerArtifact(MLFlowLogger):
         artifact_path: pathlib.Path,
         allow_nesting: bool = True,
         extra_tags: dict | None = None,
+        create_artifact_path: bool = settings.create_path_default,
     ):
         super().__init__(allow_nesting=allow_nesting, extra_tags=extra_tags)
         self.figure_path = artifact_path
+        if create_artifact_path:
+            artifact_path.mkdir(parents=True, exist_ok=True)
 
     def __call__(self, output_dict):
         super().__call__(output_dict)

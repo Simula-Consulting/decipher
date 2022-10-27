@@ -67,9 +67,9 @@ def _generate_SCMF_logs() -> dict[str, np.ndarray]:
     r = 5
     iterations = 4  # Number of iterations to run the solver
 
-    np.random.seed(42)
-    X = np.random.randint(low=0, high=4, size=(N, T))  # Initial observation matrix
-    V = np.random.random((T, r))  # Initial basic profiles
+    rnd = np.random.default_rng(seed=42)
+    X = rnd.integers(low=0, high=4, size=(N, T))  # Initial observation matrix
+    V = rnd.random((T, r))  # Initial basic profiles
     s_budget = np.arange(-10, 11)
 
     # Allocate space for the logs
@@ -118,7 +118,10 @@ def test_scmf():
         observed = logs[attribute]
         # Use allclose instead of array_equal, to allow for refactoring
         # that cuases different round off (for example avoiding sqrt).
-        assert np.allclose(correct, observed)
+        # atol of 1e-6 chosen by an educated guess to allow for
+        # floating point variations (which differs across machines)
+        # while still being small enough to catch errors.
+        assert np.allclose(correct, observed, atol=1e-06)
         if not np.array_equal(correct, observed):
             warnings.warn(
                 "Test successful, but note that arrays are only similar, "

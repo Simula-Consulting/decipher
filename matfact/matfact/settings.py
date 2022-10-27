@@ -8,6 +8,8 @@ DATASET_PATH = BASE_PATH / "datasets"
 RESULT_PATH = BASE_PATH / "results"
 FIGURE_PATH = RESULT_PATH / "figures"
 
+create_path_default = True  # Create artifact directories if non-existent
+
 default_number_of_states = 4
 
 

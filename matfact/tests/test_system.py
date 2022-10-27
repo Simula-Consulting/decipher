@@ -3,8 +3,8 @@
 Should not be included in coverage reporting, as they simply run a bunch of code."""
 from itertools import product
 
-from examples.example import experiment as experiment1
-from examples.example_train_and_log import experiment as experiment2
+from examples.example import experiment as experiment1  # type: ignore
+from examples.example_train_and_log import experiment as experiment2  # type: ignore
 from matfact.data_generation import Dataset
 from matfact.settings import BASE_PATH
 

@@ -251,6 +251,6 @@ def plot_certainty(
     distribution_plot = sns.displot(deltas, kind="ecdf").set(xlim=(-1, 1))
 
     if path_to_figure is None:
-        distribution_plot.show()
+        distribution_plot.fig.show()
     else:
         distribution_plot.savefig(path_to_figure / "certainty_plot.pdf")

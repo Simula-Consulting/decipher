@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 
+from matfact import settings
 from matfact.data_generation import Dataset
 from matfact.experiments import (
     data_weights,
@@ -113,7 +114,10 @@ def experiment(
     # We set the backend to have the figure show on Mac.
     # See https://matplotlib.org/stable/users/explain/backends.html for a reference
     # on the matplotlib backends.
-    matplotlib.use("MacOSX")
+    try:
+        matplotlib.use("MacOSX")
+    except ImportError:  # We are not on a Mac
+        pass
     plot_certainty(p_pred, x_true)
 
     # Log some metrics
@@ -133,6 +137,8 @@ def experiment(
     mlflow.log_metric("norm_difference", np.linalg.norm(results["M"] - M_train))
 
     # Plotting #
+    if settings.create_path_default:
+        FIGURE_PATH.mkdir(parents=True, exist_ok=True)
     plot_coefs(results["U"], FIGURE_PATH)
     plot_basis(results["V"], FIGURE_PATH)
     plot_confusion(x_true, x_pred, FIGURE_PATH)
