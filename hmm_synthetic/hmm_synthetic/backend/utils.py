@@ -66,13 +66,21 @@ def age_group_idx(
         raise ValueError("Age is smaller than the first age partition!")
     if age > age_partitions_pts[-1]:
         raise ValueError("Age is higher than the last age partition!")
+    if len(age_partitions_pts) <= 1:
+        raise ValueError(
+            "age_partition_pts must have at least two elements to define a partition!"
+        )
 
-    # Iterate through the partitions, from younger to older, and break at the first
-    # partition older than age.
-    for age_partition_index, partition_limit_upper in enumerate(age_partitions_pts[1:]):
-        if age < partition_limit_upper:
+    # Break at the first partition where the age is smaller than the upper limit
+    # The last partition is different from the rest, as it has an inclusive upper limit,
+    # as opposed to the rest which have exclusive lower limit.
+    # Due to this, we do not return inside the loop but break.
+    # For the last partition, the if statement will thus never be True, but it will
+    # nevertheless reach the return statement.
+    for i, partition_upper_limit in enumerate(age_partitions_pts[1:]):
+        if age < partition_upper_limit:
             break
-    return age_partition_index
+    return i  # pylint: disable=undefined-loop-variable  # Guard at beginning assures iterator is not empty
 
 
 def _start_end_times(N, time_grid, params, rnd=None):
