@@ -20,6 +20,7 @@ from matfact.experiments.logging import (
     MLFlowLoggerDiagnostic,
     MLFlowRunHierarchyException,
     _aggregate_fields,
+    _mean_and_std,
     dummy_logger_context,
 )
 from matfact.plotting.diagnostic import _calculate_delta
@@ -54,8 +55,6 @@ def test_aggregate_fields():
         "field1": foo_string,
         "field2_0": foo_string,
         "field2_1": bar_string,
-        "field2_mean": float("nan"),
-        "field2_std": float("nan"),
     }
     out = _aggregate_fields(data)
     assert set(correct_out) == set(out)
@@ -341,3 +340,54 @@ def test_data_weights():
 def test_delta_score(probabilities, correct_index, expected_delta):
     """Test delta score calculated as expected."""
     assert np.all(_calculate_delta(probabilities, correct_index) == expected_delta)
+
+
+FOO = 1.0
+BAR = 2.0
+
+
+@pytest.mark.parametrize(
+    "data, correct_out",
+    [
+        (
+            {
+                "field_name": "myfield",
+                "values": [[BAR, FOO], [BAR, BAR]],
+            },
+            {
+                "myfield_mean": np.mean((FOO, BAR)),
+                "myfield_std": np.std((FOO, BAR)),
+            },
+        ),
+        (
+            {
+                "field_name": "myfield",
+                "values": [FOO, BAR],
+            },
+            {
+                "myfield_mean": np.mean((FOO, BAR)),
+                "myfield_std": np.std((FOO, BAR)),
+            },
+        ),
+        (
+            {
+                "field_name": "myfield",
+                "values": [[FOO], [BAR]],
+            },
+            {
+                "myfield_mean": np.mean((FOO, BAR)),
+                "myfield_std": np.std((FOO, BAR)),
+            },
+        ),
+        (
+            {
+                "field_name": "myfield",
+                "values": ["foo", "bar"],
+            },
+            {},
+        ),
+    ],
+)
+def test__mean_and_std(data, correct_out):
+    out = _mean_and_std(**data)
+    assert out == correct_out
