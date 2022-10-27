@@ -49,7 +49,7 @@ def kappa(
     i: int,
     time_grid: Sequence[int] | npt.NDArray[np.int_],
     l_partition_index: int | None = None,
-) -> float:  # noqa: E741
+) -> float:
 
     assert (
         t is not None or l_partition_index is not None
