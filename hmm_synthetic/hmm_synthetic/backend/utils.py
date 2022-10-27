@@ -69,6 +69,10 @@ def age_group_idx(
     a: int, age_partitions_pts: Sequence[tuple[int, int]] | npt.NDArray[np.int_]
 ) -> int:
     """Returns index i: tau_i <= a < tau_{i+1}."""
+    if a < age_partitions_pts[0][0]:
+        raise ValueError("Age is smaller than the first age partition!")
+    if a > age_partitions_pts[-1][-1]:
+        raise ValueError("Age is higher than the last age partition!")
 
     for i, (tau_p, tau_pp) in enumerate(age_partitions_pts):
 
