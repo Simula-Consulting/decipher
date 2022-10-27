@@ -22,6 +22,9 @@ from matfact.experiments.logging import (
     _aggregate_fields,
     _mean_and_std,
     dummy_logger_context,
+    only_floats,
+    only_last_in_list,
+    only_on_fields,
 )
 from matfact.plotting.diagnostic import _calculate_delta
 
@@ -346,7 +349,6 @@ FOO = 1.0
 BAR = 2.0
 
 
-# Better to test by mocking and inspecting what is called/accessed?
 @pytest.mark.parametrize(
     "data, correct_out",
     [
@@ -402,3 +404,62 @@ def test__mean_and_std(data, correct_out):
         "values": list[str] | list[float] | list[list[float]],
         "return": dict,
     }
+
+
+FOO = 1.0
+BAR = 2.0
+
+
+@pytest.mark.parametrize(
+    "test_data",
+    [
+        # Test that only last value is chosen for nested lists
+        {
+            "field_name": "",
+            "values": [[FOO, BAR], [BAR, BAR]],
+            "wrapper_func": only_last_in_list,
+            "filtered_values": [BAR, BAR],
+        },
+        # Test that strings are filtered out
+        {
+            "field_name": "",
+            "values": ["foo", "bar"],
+            "should_be_called": False,
+            "wrapper_func": only_floats,
+            "filtered_values": None,
+            "expected_output": {},
+        },
+        # Test that fields are filtered correctly
+        {
+            "field_name": "myfield",
+            "values": [],
+            "wrapper_func": only_on_fields,
+            "should_be_called": True,
+            "wrapper_kwargs": {"fields": ["myfield"]},
+            "filtered_values": [],
+        },
+        {
+            "field_name": "myfield",
+            "values": [],
+            "wrapper_func": only_on_fields,
+            "should_be_called": False,
+            "wrapper_kwargs": {"fields": ["not_myfield"]},
+            "filtered_values": [],
+        },
+    ],
+)
+def test_filter_decorator(test_data):
+    def inner(field_name, values):
+        assert field_name == test_data["field_name"]
+        assert test_data.get("should_be_called", True)
+        assert values == test_data["filtered_values"]
+
+    wrapped = test_data["wrapper_func"](inner, **test_data.get("wrapper_kwargs", {}))
+    assert wrapped.__annotations__ == {
+        "field_name": str,
+        "values": list[str] | list[float] | list[list[float]],
+        "return": dict,
+    }
+    output = wrapped(test_data["field_name"], test_data["values"])
+    if "expected_output" in test_data:
+        assert output == test_data["expected_output"]
