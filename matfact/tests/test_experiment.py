@@ -19,9 +19,9 @@ from matfact.experiments.logging import (
     MLFlowLoggerArtifact,
     MLFlowLoggerDiagnostic,
     MLFlowRunHierarchyException,
-    _aggregate_fields,
-    _mean_and_std,
+    aggregate_fields,
     dummy_logger_context,
+    mean_and_std,
     only_floats,
     only_last_in_list,
     only_on_fields,
@@ -45,7 +45,7 @@ def test_aggregate_fields():
         "field2_mean": np.mean((foo, bar)),
         "field2_std": np.std((foo, bar)),
     }
-    out = _aggregate_fields(data)
+    out = aggregate_fields(data)
     assert out == correct_out
 
     foo_string = "type1"
@@ -59,7 +59,7 @@ def test_aggregate_fields():
         "field2_0": foo_string,
         "field2_1": bar_string,
     }
-    out = _aggregate_fields(data)
+    out = aggregate_fields(data)
     assert set(correct_out) == set(out)
     for field, correct_value in correct_out.items():
         if isinstance(correct_value, float) and np.isnan(correct_value):
@@ -391,16 +391,16 @@ BAR = 2.0
         ),
     ],
 )
-def test__mean_and_std(data, correct_out):
-    """Test that _mean_and_std aggregates correctly and has correct attributes."""
-    out = _mean_and_std(**data)
+def test_mean_and_std(data, correct_out):
+    """Test that mean_and_std aggregates correctly and has correct attributes."""
+    out = mean_and_std(**data)
     assert out == correct_out
 
-    assert _mean_and_std.__name__ == "_mean_and_std"
-    assert _mean_and_std.__doc__.startswith(
+    assert mean_and_std.__name__ == "mean_and_std"
+    assert mean_and_std.__doc__.startswith(
         "Return a dict with mean and standard deviation of the values"
     )
-    assert _mean_and_std.__annotations__ == {
+    assert mean_and_std.__annotations__ == {
         "field_name": str,
         "values": list[str] | list[float] | list[list[float]],
         "return": dict,

@@ -119,7 +119,7 @@ def only_on_fields(func, fields: list[str]):
 
 @only_floats
 @only_last_in_list
-def _mean_and_std(field_name: str, values: list[float]) -> dict:
+def mean_and_std(field_name: str, values: list[float]) -> dict:
     """Return a dict with mean and standard deviation of the values."""
     mean = np.mean(values)
     std = np.std(values)
@@ -130,14 +130,14 @@ def _mean_and_std(field_name: str, values: list[float]) -> dict:
     }
 
 
-def _store_subruns(
+def store_subruns(
     field_name: str, values: list[str] | list[float] | list[list[float]]
 ) -> dict:
     """Store each subrun's value as an enumerated field in parent."""
     return {f"{field_name}_{i}": value for i, value in enumerate(values)}
 
 
-def _aggregate_fields(
+def aggregate_fields(
     data: list[dict],
     aggregate_funcs: list[AggregationFunction] | None = None,
 ) -> dict:
@@ -167,7 +167,7 @@ def _aggregate_fields(
         return {}
 
     if aggregate_funcs is None:
-        aggregate_funcs = [_store_subruns, _mean_and_std]
+        aggregate_funcs = [store_subruns, mean_and_std]
 
     # All entries should have the same fields
     fields = set(data[0])
@@ -213,10 +213,10 @@ def batch_mlflow_logger(
         "tags": {},
     }
 
-    new_log["params"] = _aggregate_fields(
+    new_log["params"] = aggregate_fields(
         [data["params"] for data in log_data], aggregate_funcs=aggregate_funcs
     )
-    new_log["metrics"] = _aggregate_fields(
+    new_log["metrics"] = aggregate_fields(
         [data["metrics"] for data in log_data], aggregate_funcs=aggregate_funcs
     )
 
