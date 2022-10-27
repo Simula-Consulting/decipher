@@ -61,6 +61,10 @@ def age_group_idx(
 
     TODO: What is the correct behavior in the case that age == max(age_partitions)?
     Then, no index fulfills the criterion age < tau_{i+1}.
+    As of now, we have chosen to take the last partition to be inclusive, i.e.
+    age <= tau_{max}, as this was the case in the original code, and we have reason
+    to believe that our dataset will contain ages including the endpoint of the
+    oldest partition.
     """
     if age < age_partitions_pts[0]:
         raise ValueError("Age is smaller than the first age partition!")
