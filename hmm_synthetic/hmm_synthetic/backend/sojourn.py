@@ -121,11 +121,9 @@ def exit_time(
     """Random exit time from current state.
 
     Notation used
-    - u: random uniform variable
-    - a: age
-    - s: state
-    - k: the partition index of the age
-    - l: the partition index of the exit age (ish)
+    - age_partition_index: corresponds to k in the paper
+    - l_partition_index: corresponds to l in the paper.
+        It is the partition index of the exit age (ish)
     """
 
     sum_kappa = sum(
