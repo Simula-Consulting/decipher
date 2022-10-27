@@ -87,6 +87,18 @@ def only_floats(func):
     return wrapper
 
 
+def only_on_fields(func, fields: list[str]):
+    @wrap_without_annotations(func)
+    def wrapper(
+        field_name: str, values: list[str] | list[float] | list[list[float]]
+    ) -> dict:
+        if field_name not in fields:
+            return {}
+        return func(field_name, values)
+
+    return wrapper
+
+
 @only_floats
 @only_last_in_list
 def _mean_and_std(field_name: str, values: list[float]) -> dict:
