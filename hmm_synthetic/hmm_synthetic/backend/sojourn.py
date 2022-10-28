@@ -53,7 +53,7 @@ def kappa(
 
     assert (
         t is not None or l_partition_index is not None
-    ), "either t or l must be specified"
+    ), "either t or l_partition_index must be specified"
     if i == 0:
         return kappa_0(age, current_state, t, time_grid)
 
