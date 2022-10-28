@@ -42,50 +42,100 @@ def kappa_m(age, current_state, m, time_grid) -> float:
     return -1.0 * s_km
 
 
-def kappa(age, current_state, t, i, time_grid, l=None) -> float:  # noqa: E741
+def kappa(
+    age: int,
+    current_state: int,
+    i: int,
+    time_grid: Sequence[int] | npt.NDArray[np.int_],
+    t: int | None = None,
+    l_partition_index: int | None = None,
+) -> float:
 
+    assert (
+        t is not None or l_partition_index is not None
+    ), "either t or l_partition_index must be specified"
     if i == 0:
         return kappa_0(age, current_state, t, time_grid)
 
     if i == 1:
-        return kappa_1(age, current_state, t, time_grid, l=l)
+        return kappa_1(age, current_state, t, time_grid, l=l_partition_index)
 
     return kappa_m(age, current_state, i, time_grid)
 
 
-def search_l(u, k, current_age_pts, state, time_grid, n_age_partitions=8):
+def search_l(
+    u_random_variable: float,
+    age_partition_index: int,
+    current_age_pts: int,
+    state: int,
+    time_grid: Sequence[int] | npt.NDArray[np.int_],
+    n_age_partitions: int = 8,
+) -> int:
+    """Find the partition satisfying the probability requirement.
 
-    if np.isclose(k, n_age_partitions - 1):
-        return k
+    Find l such that
+    P[T_s(a) < tau_l - age] < u < P[T_s(a) < tau_{l+1} - q],
+    where
+    P[T_s(a) > t] = exp( kappa_0^s + kappa_1^s + sum_{i=2}^n kappa_i^s )
+                  = exp( sum_i kappa_i^s)
 
-    for l in range(k, n_age_partitions):  # noqa: E741
+    In other words, find the largest l such that
+    P[T_s(a) < tau_l - a] < u.
+    """
 
-        tau_lp = time_grid[l + 1]
+    if age_partition_index == n_age_partitions - 1:
+        return age_partition_index
 
-        t = tau_lp - current_age_pts
+    for l_partition_index_candidate in range(age_partition_index, n_age_partitions):
+
+        partition_upper_limit = time_grid[l_partition_index_candidate + 1]
+
+        t = partition_upper_limit - current_age_pts
 
         # Evaluate the sojourn time CDF at this time step.
         cdf = 1.0 - np.exp(
             sum(
                 [
-                    kappa(current_age_pts, state, t, i, time_grid)
-                    for i in range(l - k + 1)
+                    kappa(current_age_pts, state, i, time_grid, t=t)
+                    for i in range(
+                        l_partition_index_candidate - age_partition_index + 1
+                    )
                 ]
             )
         )
 
-        if cdf > u:
-            return l - 1
+        if cdf > u_random_variable:
+            return l_partition_index_candidate - 1
 
-    return l - 1
+    return l_partition_index_candidate - 1
 
 
-def exit_time(u, a, s, k, l, time_grid):  # noqa: E741
-    """Random exit time from current state."""
+def exit_time(
+    u_random_variable: float,
+    age: int,
+    state: int,
+    age_partition_index: int,
+    l_partition_index: int,
+    time_grid: Sequence[int] | npt.NDArray[np.int_],
+) -> float:
+    """Random exit time from current state.
 
-    sum_kappa = sum([kappa(a, s, None, i, time_grid, l=l) for i in range(1, l - k + 1)])
+    Notation used
+    - age_partition_index: corresponds to k in the paper
+    - l_partition_index: corresponds to l in the paper.
+        It is the partition index of the exit age (ish)
+    """
 
-    return (sum_kappa - np.log(1 - u)) / sum(legal_transition_lambdas(s, l))
+    sum_kappa = sum(
+        [
+            kappa(age, state, i, time_grid, l_partition_index=l_partition_index)
+            for i in range(1, l_partition_index - age_partition_index + 1)
+        ]
+    )
+
+    return (sum_kappa - np.log(1 - u_random_variable)) / sum(
+        legal_transition_lambdas(state, l_partition_index)
+    )
 
 
 def time_exit_state(

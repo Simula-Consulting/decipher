@@ -227,3 +227,86 @@ def test_time_exit_state(current_age_pts: int, seed: int, age_partitions) -> Non
     )
     assert exit_time + current_age_pts <= age_max_pts
     assert exit_time > 0
+
+
+##################
+## Test sojourn ##
+##################
+
+
+@pytest.mark.parametrize(
+    "random_uniform_variable, age_partition_index, age, current_state, expected_l",
+    [
+        [0.5, 0, 0, 2, -1],
+        [0.5, 0, 10, 2, -1],
+        [0.5, 1, 20, 2, 0],
+        [0.5, 1, 30, 2, 0],
+        [0.5, 6, 200, 2, 5],
+        [0.5, 7, 220, 2, 7],
+        [0.5, 7, 420, 2, 7],
+        #
+        [0.2, 0, 0, 2, -1],
+        [0.2, 0, 0, 3, -1],
+        [0.5, 0, 0, 2, -1],
+        [0.5, 0, 0, 3, -1],
+        [0.8, 0, 0, 2, -1],
+        [0.8, 0, 0, 3, -1],
+        [0.2, 1, 20, 2, 0],
+        [0.2, 1, 20, 3, 0],
+        [0.5, 1, 20, 2, 0],
+        [0.5, 1, 20, 3, 0],
+        [0.8, 1, 20, 2, 0],
+        [0.8, 1, 20, 3, 0],
+        [0.2, 6, 200, 2, 5],
+        [0.2, 6, 200, 3, 5],
+        [0.5, 6, 200, 2, 5],
+        [0.5, 6, 200, 3, 5],
+        [0.8, 6, 200, 2, 5],
+        [0.8, 6, 200, 3, 5],
+    ],
+)
+def test_search_l(
+    random_uniform_variable,
+    age_partition_index,
+    age,
+    current_state,
+    expected_l,
+    age_partitions,
+):
+    assert expected_l == sojourn.search_l(
+        random_uniform_variable, age_partition_index, age, current_state, age_partitions
+    )
+
+
+@pytest.mark.parametrize(
+    "random_uniform_variable, age, current_state, age_partition_index, l_partition_index, expected_time",
+    [
+        [0.8, 10, 3, 0, 0, 6.569402475342262],
+        [0.2, 20, 2, 1, 6, 22.543897012688554],
+        [0.2, 220, 3, 7, 0, 0.9108271819837941],
+        [0.8, 10, 2, 0, 0, 8.28326254469429],
+        [0.5, 220, 2, 7, 5, 3.4401071048684564],
+        [0.5, 220, 3, 7, 6, 6.292185734930512],
+        [0.8, 20, 3, 1, 1, 13.951438214581314],
+        [0.5, 10, 3, 0, 1, -5.228439835645411],
+        [0.8, 220, 2, 7, 1, 8.88014738707846],
+        [0.5, 10, 3, 0, 6, 24.619618559912382],
+    ],
+)
+def test_exit_time(
+    random_uniform_variable,
+    age_partition_index,
+    age,
+    current_state,
+    l_partition_index,
+    expected_time,
+    age_partitions,
+):
+    assert expected_time == sojourn.exit_time(
+        random_uniform_variable,
+        age,
+        current_state,
+        age_partition_index,
+        l_partition_index,
+        age_partitions,
+    )
