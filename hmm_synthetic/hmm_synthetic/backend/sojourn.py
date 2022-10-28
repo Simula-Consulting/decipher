@@ -45,9 +45,9 @@ def kappa_m(age, current_state, m, time_grid) -> float:
 def kappa(
     age: int,
     current_state: int,
-    t: int | None,
     i: int,
     time_grid: Sequence[int] | npt.NDArray[np.int_],
+    t: int | None = None,
     l_partition_index: int | None = None,
 ) -> float:
 
@@ -96,7 +96,7 @@ def search_l(
         cdf = 1.0 - np.exp(
             sum(
                 [
-                    kappa(current_age_pts, state, t, i, time_grid)
+                    kappa(current_age_pts, state, i, time_grid, t=t)
                     for i in range(
                         l_partition_index_candidate - age_partition_index + 1
                     )
@@ -128,7 +128,7 @@ def exit_time(
 
     sum_kappa = sum(
         [
-            kappa(age, state, None, i, time_grid, l_partition_index=l_partition_index)
+            kappa(age, state, i, time_grid, l_partition_index=l_partition_index)
             for i in range(1, l_partition_index - age_partition_index + 1)
         ]
     )
