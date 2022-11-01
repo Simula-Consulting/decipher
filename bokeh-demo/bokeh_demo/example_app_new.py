@@ -23,10 +23,12 @@ dataset = Dataset.from_file(dataset_path)
 # Fake deltas
 deltas = [random() * 2 - 1 for _ in range(dataset.X.shape[0])]
 permutations = get_permutation_list(deltas)
+x = list(range(dataset.X.shape[0]))
+sorted_x = [permutations.index(i) for i in x]
 
 xs = list(itertools.repeat(list(range(dataset.X.shape[1])), dataset.X.shape[0]))
 ys = dataset.X.tolist()
-source = ColumnDataSource({"xs": xs, "ys": ys, "x": list(range(dataset.X.shape[0])), "y": [deltas[i] for i in permutations]})
+source = ColumnDataSource({"xs": xs, "ys": ys, "x": x, "y": deltas, "perm": sorted_x})
 line_view = CDSView(source=source, filters=[])
 
 
@@ -35,16 +37,11 @@ def print_attr(attr, old, new):
     print(f"{attr} changed from {old} to {new}")
     if attr == "indices":
         source.selected.indices = new
-        source.selected.indices = new
         line_view.filters = [IndexFilter(new)] if new else []
-
-# add a button widget and configure with the call back
-button = Button(label="Press Me")
-# button.on_click(callback)
 
 # create a plot and style its properties
 delta_figure = figure(tools="tap,box_select")
-delta_scatter = delta_figure.circle(source=source)
+delta_scatter = delta_figure.circle(x="perm", source=source)
 
 log_figure = figure(tools="tap,lasso_select")
 lines=log_figure.multi_line(xs="xs", ys="ys", source=source, view=line_view)
@@ -57,7 +54,7 @@ source.selected.on_change("indices", print_attr)
 # put the button and plot in a layout and add to the document
 curdoc().add_root(
     row(
-        column(button, delta_figure),
+        delta_figure,
         log_figure,
     )
 )
