@@ -31,8 +31,9 @@ X_train, X_test, _, _ = dataset.get_split_X_M()
 output = train_and_log(X_train, X_test)  # , logger_context=dummy_logger_context)
 p_pred = output["meta"]["results"]["p_pred"]
 x_true = output["meta"]["results"]["x_true"].astype(int)
-print(p_pred, x_true)
+valid_rows = output["meta"]["results"]["valid_rows"]
 deltas = _calculate_delta(p_pred, x_true)
+X_test = X_test[valid_rows]
 
 
 # Fake deltas
@@ -41,8 +42,8 @@ permutations = get_permutation_list(deltas)
 x = list(range(len(x_true)))
 sorted_x = [permutations.index(i) for i in x]
 
-xs = list(itertools.repeat(list(range(X_test.shape[1])), X_test.shape[0]))[: len(x)]
-ys = X_test.tolist()[: len(x)]  # TODO: super dirty nonsense hack to make it work
+xs = list(itertools.repeat(list(range(X_test.shape[1])), X_test.shape[0]))
+ys = X_test.tolist()
 source = ColumnDataSource({"xs": xs, "ys": ys, "x": x, "y": deltas, "perm": sorted_x})
 line_view = CDSView(source=source, filters=[])
 
