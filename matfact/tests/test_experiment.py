@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from matfact import settings
+from matfact.config import ModelConfig
 from matfact.experiments import (
     CMF,
     SCMF,
@@ -179,8 +180,8 @@ def test_train_and_log_params():
     sample_size, time_span = 100, 40
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
 
+    model_config = ModelConfig(shift_range=np.arange(-2, 2))
     hyperparams = {
-        "shift_range": np.arange(-2, 3),
         "rank": 5,
         "lambda1": 1,
         "lambda2": 2,
@@ -214,6 +215,7 @@ def test_train_and_log_params():
     train_and_log(
         X_test=X,
         X_train=X,
+        model_config=model_config,
         optimization_params=optimization_params,
         logger_context=logger_context(),
         extra_metrics=extra_metrics,

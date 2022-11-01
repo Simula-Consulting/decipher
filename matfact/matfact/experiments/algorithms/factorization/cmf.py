@@ -1,6 +1,7 @@
 import numpy as np
 
 from matfact import settings
+from matfact.config import ModelConfig
 
 from .mfbase import BaseMF
 
@@ -23,9 +24,7 @@ class CMF(BaseMF):
         self,
         X,
         V,
-        D=None,
-        J=None,
-        K=None,
+        config: ModelConfig,
         lambda1=1.0,
         lambda2=1.0,
         lambda3=1.0,
@@ -44,7 +43,11 @@ class CMF(BaseMF):
         self.nz_rows, self.nz_cols = np.nonzero(self.X)
 
         self.n_iter_ = 0
-        self._init_matrices(D, J, K)
+        self._init_matrices(
+            config.differential_matrix,
+            config.minimum_values,
+            config.convolutional_matrix,
+        )
         self.number_of_states = number_of_states
 
     @property

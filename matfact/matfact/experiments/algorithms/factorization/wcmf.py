@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from matfact import settings
+from matfact.config import ModelConfig
 
 from ...simulation import data_weights
 from .mfbase import BaseMF
@@ -29,10 +30,7 @@ class WCMF(BaseMF):
         self,
         X,
         V,
-        W=None,
-        D=None,
-        J=None,
-        K=None,
+        config: ModelConfig,
         lambda1=1.0,
         lambda2=1.0,
         lambda3=1.0,
@@ -43,7 +41,7 @@ class WCMF(BaseMF):
     ):
         self.X = X
         self.V = V
-        self.W = data_weights(X) if W is None else W
+        self.W = data_weights(X) if config.weights is None else config.weights
 
         self.number_of_states = number_of_states
 
@@ -60,7 +58,11 @@ class WCMF(BaseMF):
         self.nz_rows, self.nz_cols = np.nonzero(self.X)
 
         self.n_iter_ = 0
-        self._init_matrices(D, J, K)
+        self._init_matrices(
+            config.differential_matrix,
+            config.minimum_values,
+            config.convolutional_matrix,
+        )
 
     @property
     def M(self):

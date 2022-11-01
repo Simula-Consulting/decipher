@@ -3,6 +3,7 @@ import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
 
 from matfact import settings
+from matfact.config import ModelConfig
 
 from ...simulation import data_weights
 from .mfbase import BaseMF
@@ -100,11 +101,7 @@ class SCMF(BaseMF):
         self,
         X,
         V,
-        s_budget,
-        W=None,
-        D=None,
-        J=None,
-        K=None,
+        config: ModelConfig,
         lambda1=1.0,
         lambda2=1.0,
         lambda3=1.0,
@@ -114,9 +111,9 @@ class SCMF(BaseMF):
         number_of_states: int = settings.default_number_of_states,
     ):
 
-        self.W = data_weights(X) if W is None else W
+        self.W = data_weights(X) if config.weights is None else config.weights
 
-        self.s_budget = s_budget
+        self.s_budget = config.shift_range
 
         self.lambda1 = lambda1
         self.lambda2 = lambda2
@@ -139,8 +136,16 @@ class SCMF(BaseMF):
         self.Ns = int(self.s_budget.size)
 
         # Add time points to cover extended left and right boundaries when shifting.
-        self.K = np.eye(self.T + 2 * self.Ns) if K is None else K
-        self.D = np.eye(self.T + 2 * self.Ns) if D is None else D
+        self.K = (
+            np.eye(self.T + 2 * self.Ns)
+            if config.convolutional_matrix is None
+            else config.convolutional_matrix
+        )
+        self.D = (
+            np.eye(self.T + 2 * self.Ns)
+            if config.differential_matrix is None
+            else config.differential_matrix
+        )
         self.KD = tf.cast(self.K @ self.D, dtype=tf.float32)
 
         self.I1 = self.lambda1 * np.identity(self.r)
@@ -156,7 +161,11 @@ class SCMF(BaseMF):
         self.V_bc = np.vstack(
             [np.zeros((self.Ns, self.r)), V, np.zeros((self.Ns, self.r))]
         )
-        self.J = J if J else tf.ones_like(self.V_bc, dtype=tf.float32)
+        self.J = (
+            config.minimum_values
+            if config.minimum_values
+            else tf.ones_like(self.V_bc, dtype=tf.float32)
+        )
 
         # Implementation shifts W and Y (not UV.T)
         self.X_shifted = self.X_bc.copy()

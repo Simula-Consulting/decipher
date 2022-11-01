@@ -7,6 +7,7 @@ from typing import Any, Callable, Optional, Type
 import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
+from matfact.config import ModelConfig
 from matfact.experiments import CMF, SCMF, WCMF, BaseMF
 from matfact.experiments.algorithms.utils import (
     finite_difference_matrix,
@@ -20,23 +21,16 @@ from matfact.experiments.simulation.dataset import prediction_data
 
 def model_factory(
     X: np.ndarray,
-    shift_range: Optional[np.ndarray] = None,
-    convolution: bool = False,
-    weights: Optional[np.ndarray] = None,
-    rank: int = 5,
-    seed: int = 42,
+    model_config: ModelConfig,
     **kwargs,
 ):
     """Initialize and return appropriate model based on arguments.
 
     kwargs are passed directly to the models.
     """
-    if shift_range is None:
-        shift_range = np.array([])
+    padding = 2 * model_config.shift_range.size
 
-    padding = 2 * shift_range.size
-
-    if convolution:
+    if model_config.convolution:
         D = finite_difference_matrix(X.shape[1] + padding)
         K = laplacian_kernel_matrix(X.shape[1] + padding)
     else:
@@ -44,34 +38,39 @@ def model_factory(
         D = K = None
     kwargs.update({"D": D, "K": K})
 
-    V = initialize_basis(X.shape[1], rank, seed)
+    V = initialize_basis(X.shape[1], model_config.rank, model_config.seed)
 
     short_model_name = (
         "".join(
             a if cond else b
             for cond, a, b in [
-                (shift_range.size, "s", ""),
-                (convolution, "c", "l2"),
-                (weights is not None, "w", ""),
+                (model_config.shift_range.size, "s", ""),
+                (model_config.convolution, "c", "l2"),
+                (model_config.weights is not None, "w", ""),
             ]
         )
         + "mf"
     )
 
-    if shift_range.size:
-        weights = (X != 0).astype(np.float32) if weights is None else weights
-        return short_model_name, SCMF(X, V, shift_range, W=weights, **kwargs)
+    if model_config.shift_range.size:
+        weights = (
+            (X != 0).astype(np.float32)
+            if model_config.weights is None
+            else model_config.weights
+        )
+        return short_model_name, SCMF(X, V, model_config, **kwargs)
     else:
         if weights is not None:
-            return short_model_name, WCMF(X, V, weights, **kwargs)
+            return short_model_name, WCMF(X, V, model_config, **kwargs)
         else:
-            return short_model_name, CMF(X, V, **kwargs)
+            return short_model_name, CMF(X, V, model_config, **kwargs)
 
 
 def train_and_log(
     X_train: np.ndarray,
     X_test: np.ndarray,
     *,
+    model_config: ModelConfig | None = None,
     dict_to_log: Optional[dict] = None,
     extra_metrics: Optional[dict[str, Callable[[Type[BaseMF]], float]]] = None,
     log_loss: bool = True,
@@ -118,6 +117,8 @@ def train_and_log(
     """
     if logger_context is None:
         logger_context = MLFlowLogger()
+    if model_config is None:
+        model_config = ModelConfig()
 
     metrics = list(extra_metrics.keys()) if extra_metrics else []
     if log_loss:
@@ -133,7 +134,7 @@ def train_and_log(
     with logger_context as logger:
 
         # Create model
-        model_name, factoriser = model_factory(X_train, **hyperparams)
+        model_name, factoriser = model_factory(X_train, model_config, **hyperparams)
 
         # Fit model
         results = factoriser.matrix_completion(
