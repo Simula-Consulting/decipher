@@ -37,15 +37,20 @@ def get_permutation_list(array):
     return [i for i, v in sorted(enumerate(array), key=lambda iv: iv[1])]
 
 
+# Import data
 dataset_path = pathlib.Path(__file__).parent.parent / "data/dataset1"
 dataset = Dataset.from_file(dataset_path)
 X_train, X_test, _, _ = dataset.get_split_X_M()
+
+# Fit the model, predict on test set
 output = train_and_log(
     X_train,
     X_test,
     use_threshold_optimization=False,
     logger_context=dummy_logger_context,
 )
+
+# Extract the quantities of interest from output dict
 p_pred = output["meta"]["results"]["p_pred"]
 x_pred = output["meta"]["results"]["x_pred"]
 t_pred = output["meta"]["results"]["t_pred"]
@@ -54,9 +59,6 @@ valid_rows = output["meta"]["results"]["valid_rows"]
 deltas = _calculate_delta(p_pred, x_true - 1)
 X_test = X_test[valid_rows]
 
-
-# Fake deltas
-# deltas = [random() * 2 - 1 for _ in range(dataset.X.shape[0])]
 permutations = get_permutation_list(deltas)
 x = list(range(len(x_true)))
 sorted_x = [permutations.index(i) for i in x]
@@ -66,6 +68,9 @@ ys = X_test.tolist()
 ys_pred = X_test.copy()
 ys_pred[range(len(ys_pred)), t_pred] = x_pred
 ys_pred = ys_pred.tolist()
+
+# Set up the Bokeh data source
+# Each row corresponds to one individual
 source = ColumnDataSource(
     {
         "xs": xs,
@@ -80,18 +85,12 @@ source = ColumnDataSource(
         "probabilities": [[f"{ps:0.2f}" for ps in lst] for lst in p_pred],
     }
 )
-line_view = CDSView(source=source, filters=[])
 
 
-def print_attr(attr, old, new):
-    print(f"{attr} changed from {old} to {new}")
-    if attr == "indices":
-        source.selected.indices = new
-        line_view.filters = [IndexFilter(new)] if new else []
-
-
+## Set up Bokeh plots
 default_tools = "pan,wheel_zoom,box_zoom,save,reset,help"
-# create a plot and style its properties
+
+# Add the Delta score figure
 delta_figure = figure(
     title="Delta score distribution",
     x_axis_label="Individual",
@@ -102,6 +101,7 @@ delta_scatter = delta_figure.circle(
     x="perm", radius=0.3, fill_color=linear_cmap("y", "Spectral6", -1, 1), source=source
 )
 
+# Add the time trajectory figure
 log_figure = figure(
     title="Individual state trajectories",
     x_axis_label="Time",
@@ -120,17 +120,22 @@ log_figure.add_tools(
     )
 )
 lines = log_figure.multi_line(
-    xs="xs", ys="ys", source=source, view=line_view, legend_label="Actual observation"
+    xs="xs",
+    ys="ys",
+    source=source,
+    legend_label="Actual observation",
+    nonselection_line_alpha=0.0,
 )
 lines_pred = log_figure.multi_line(
     xs="xs",
     ys="ys_pred",
     source=source,
-    view=line_view,
     color="red",
     legend_label="Predicted",
+    nonselection_line_alpha=0.0,
 )
 
+# Add the table over individuals
 person_table = DataTable(
     source=source,
     columns=[
@@ -142,12 +147,10 @@ person_table = DataTable(
     ],
 )
 
-
-source.selected.on_change("indices", print_attr)
-# source.selected.on_change("multiline_indices", print_attr)
+# Set up our event handler
 
 
-# put the button and plot in a layout and add to the document
+# Put everything in the document
 curdoc().add_root(
     # column(
     row(
