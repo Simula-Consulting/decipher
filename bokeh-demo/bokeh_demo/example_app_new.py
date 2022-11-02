@@ -15,6 +15,7 @@ from bokeh.models import Button, CDSView, Circle, ColumnDataSource, IndexFilter
 from bokeh.models.callbacks import CustomJS
 from bokeh.palettes import RdYlBu3
 from bokeh.plotting import curdoc, figure
+from bokeh.transform import linear_cmap
 from matfact.data_generation import Dataset
 from matfact.experiments import train_and_log
 from matfact.experiments.logging import dummy_logger_context
@@ -63,7 +64,9 @@ delta_figure = figure(
     y_axis_label="Delta score (lower better)",
     tools="tap,lasso_select," + default_tools,
 )
-delta_scatter = delta_figure.circle(x="perm", source=source)
+delta_scatter = delta_figure.circle(
+    x="perm", radius=0.3, fill_color=linear_cmap("y", "Spectral6", -1, 1), source=source
+)
 
 log_figure = figure(
     title="Individual state trajectories",
