@@ -9,11 +9,7 @@ from sklearn.metrics import matthews_corrcoef
 
 from matfact.config import ModelConfig
 from matfact.experiments import CMF, SCMF, WCMF, BaseMF
-from matfact.experiments.algorithms.utils import (
-    finite_difference_matrix,
-    initialize_basis,
-    laplacian_kernel_matrix,
-)
+from matfact.experiments.algorithms.utils import initialize_basis
 from matfact.experiments.logging import MLFlowLogger
 from matfact.experiments.predict.clf_tree import estimate_probability_thresholds
 from matfact.experiments.simulation.dataset import prediction_data
@@ -28,39 +24,25 @@ def model_factory(
 
     kwargs are passed directly to the models.
     """
-    padding = 2 * model_config.shift_range.size
-
-    if model_config.convolution:
-        D = finite_difference_matrix(X.shape[1] + padding)
-        K = laplacian_kernel_matrix(X.shape[1] + padding)
-    else:
-        # None will make the objects generate appropriate identity matrices later.
-        D = K = None
-    kwargs.update({"D": D, "K": K})
-
     V = initialize_basis(X.shape[1], model_config.rank, model_config.seed)
 
-    short_model_name = (
-        "".join(
-            a if cond else b
-            for cond, a, b in [
-                (model_config.shift_range.size, "s", ""),
-                (model_config.convolution, "c", "l2"),
-                (model_config.weights is not None, "w", ""),
-            ]
-        )
-        + "mf"
-    )
+    # short_model_name = (
+    #     "".join(
+    #         a if cond else b
+    #         for cond, a, b in [
+    #             (model_config.shift_range.size, "s", ""),
+    #             (model_config.convolution, "c", "l2"),
+    #             (model_config.weights is not None, "w", ""),
+    #         ]
+    #     )
+    #     + "mf"
+    # )
+    short_model_name = "TODO"
 
     if model_config.shift_range.size:
-        weights = (
-            (X != 0).astype(np.float32)
-            if model_config.weights is None
-            else model_config.weights
-        )
         return short_model_name, SCMF(X, V, model_config, **kwargs)
     else:
-        if weights is not None:
+        if model_config.weights_getter is not None:
             return short_model_name, WCMF(X, V, model_config, **kwargs)
         else:
             return short_model_name, CMF(X, V, model_config, **kwargs)

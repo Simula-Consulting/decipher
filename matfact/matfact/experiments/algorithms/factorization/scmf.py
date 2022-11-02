@@ -110,8 +110,8 @@ class SCMF(BaseMF):
         learning_rate=0.001,
         number_of_states: int = settings.default_number_of_states,
     ):
-
-        self.W = data_weights(X) if config.weights is None else config.weights
+        _weights_getter = config.weights_getter or data_weights
+        self.W = _weights_getter(X)
 
         self.s_budget = config.shift_range
 
@@ -136,11 +136,7 @@ class SCMF(BaseMF):
         self.Ns = int(self.s_budget.size)
 
         # Add time points to cover extended left and right boundaries when shifting.
-        self.KD = (
-            np.identity(self.T + 2 * self.Ns)
-            if config.differential_matrix is None
-            else config.differential_matrix
-        )
+        self.KD = config.differential_matrix_getter(self.T + 2 * self.Ns)
         self.KD = tf.cast(self.KD, dtype=tf.float32)
 
         self.I1 = self.lambda1 * np.identity(self.r)

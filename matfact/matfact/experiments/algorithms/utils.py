@@ -24,23 +24,6 @@ def initialize_basis(T, r, seed):
     return np.random.normal(size=(T, r))
 
 
-def finite_difference_matrix(T):
-    "Construct a (T x T) forward difference matrix"
-
-    return np.diag(np.pad(-np.ones(T - 1), (0, 1), "constant")) + np.diag(
-        np.ones(T - 1), 1
-    )
-
-
-def laplacian_kernel_matrix(T, gamma=1.0):
-    "Construct a (T x T) matrix for convolutional regularization"
-
-    def kernel(x):
-        return np.exp(-1.0 * gamma * np.abs(x))
-
-    return [kernel(np.arange(T) - i) for i in np.arange(T)]
-
-
 def reconstruction_mse(true_matrix, observed_matrix, reconstructed_matrix):
     """Compute the reconstruction means-squared error
 

@@ -44,7 +44,7 @@ class CMF(BaseMF):
 
         self.n_iter_ = 0
         self._init_matrices(
-            config.differential_matrix,
+            config.differential_matrix_getter,
             config.minimum_values,
         )
         self.number_of_states = number_of_states
@@ -53,14 +53,14 @@ class CMF(BaseMF):
     def M(self):
         return np.array(self.U @ self.V.T, dtype=np.float32)
 
-    def _init_matrices(self, KD, J):
+    def _init_matrices(self, KD_getter, J):
 
         self.S = self.X.copy()
         self.mask = (self.X != 0).astype(np.float32)
 
         self.J = np.ones((self.T, self.r)) if J is None else J
 
-        self.KD = np.identity(self.T) if KD is None else KD
+        self.KD = KD_getter(self.T)
 
         self.I_l1 = self.lambda1 * np.identity(self.r)
         self.I_l2 = self.lambda2 * np.identity(self.r)

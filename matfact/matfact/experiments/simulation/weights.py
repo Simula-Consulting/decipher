@@ -8,7 +8,7 @@ from matfact import settings
 
 def data_weights(
     observed_data_matrix: npt.NDArray[np.int_], weights: Sequence[float] | None = None
-):
+) -> npt.NDArray:
     """Construct a weight matrix for observed data.
 
     weights contains the weights that should be given to the various states. I.e. the

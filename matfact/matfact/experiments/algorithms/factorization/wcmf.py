@@ -39,9 +39,11 @@ class WCMF(BaseMF):
         learning_rate=0.001,
         number_of_states: int = settings.default_number_of_states,
     ):
+        _weights_getter = config.weights_getter or data_weights
+
         self.X = X
         self.V = V
-        self.W = data_weights(X) if config.weights is None else config.weights
+        self.W = _weights_getter(X)
 
         self.number_of_states = number_of_states
 
@@ -59,7 +61,7 @@ class WCMF(BaseMF):
 
         self.n_iter_ = 0
         self._init_matrices(
-            config.differential_matrix,
+            config.differential_matrix_getter,
             config.minimum_values,
         )
 
@@ -67,10 +69,10 @@ class WCMF(BaseMF):
     def M(self):
         return np.array(self.U @ self.V.T, dtype=np.float32)
 
-    def _init_matrices(self, KD, J):
+    def _init_matrices(self, KD_getter, J):
         self.J = np.ones((self.T, self.r)) if J is None else J
 
-        self.KD = np.identity(self.T) if KD is None else KD
+        self.KD = KD_getter(self.T)
         self.DTKTKD = (self.KD).T @ (self.KD)
 
         self.I_l1 = self.lambda1 * np.eye(self.r)
