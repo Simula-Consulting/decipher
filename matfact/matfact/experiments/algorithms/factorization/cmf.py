@@ -46,7 +46,6 @@ class CMF(BaseMF):
         self._init_matrices(
             config.differential_matrix,
             config.minimum_values,
-            config.convolutional_matrix,
         )
         self.number_of_states = number_of_states
 
@@ -54,20 +53,19 @@ class CMF(BaseMF):
     def M(self):
         return np.array(self.U @ self.V.T, dtype=np.float32)
 
-    def _init_matrices(self, D, J, K):
+    def _init_matrices(self, KD, J):
 
         self.S = self.X.copy()
         self.mask = (self.X != 0).astype(np.float32)
 
         self.J = np.ones((self.T, self.r)) if J is None else J
 
-        self.K = np.identity(self.T) if K is None else K
-        self.D = np.identity(self.T) if D is None else D
+        self.KD = np.identity(self.T) if KD is None else KD
 
         self.I_l1 = self.lambda1 * np.identity(self.r)
         self.I_l2 = self.lambda2 * np.identity(self.r)
 
-        self.DTKTKD = (self.K @ self.D).T @ (self.K @ self.D)
+        self.DTKTKD = (self.KD).T @ (self.KD)
         self.L2, self.Q2 = np.linalg.eigh(self.lambda3 * self.DTKTKD)
 
     def _update_V(self):
@@ -98,7 +96,7 @@ class CMF(BaseMF):
         loss = np.square(np.linalg.norm(self.mask * (self.X - self.U @ self.V.T)))
         loss += self.lambda1 * np.square(np.linalg.norm(self.U))
         loss += self.lambda2 * np.square(np.linalg.norm(self.V - self.J))
-        loss += self.lambda3 * np.square(np.linalg.norm(self.K @ self.D @ self.V))
+        loss += self.lambda3 * np.square(np.linalg.norm(self.KD @ self.V))
 
         return loss
 
