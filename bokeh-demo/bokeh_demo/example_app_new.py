@@ -9,6 +9,7 @@ import itertools
 import pathlib
 from random import random
 
+import numpy as np
 import pandas as pd
 from bokeh.layouts import column, row
 from bokeh.models import (
@@ -16,8 +17,10 @@ from bokeh.models import (
     CDSView,
     Circle,
     ColumnDataSource,
-    IndexFilter,
+    DataTable,
     HoverTool,
+    IndexFilter,
+    TableColumn,
 )
 from bokeh.models.callbacks import CustomJS
 from bokeh.palettes import RdYlBu3
@@ -36,7 +39,12 @@ def get_permutation_list(array):
 dataset_path = pathlib.Path(__file__).parent.parent / "data/dataset1"
 dataset = Dataset.from_file(dataset_path)
 X_train, X_test, _, _ = dataset.get_split_X_M()
-output = train_and_log(X_train, X_test, use_threshold_optimization=False, logger_context=dummy_logger_context)
+output = train_and_log(
+    X_train,
+    X_test,
+    use_threshold_optimization=False,
+    logger_context=dummy_logger_context,
+)
 p_pred = output["meta"]["results"]["p_pred"]
 x_pred = output["meta"]["results"]["x_pred"]
 t_pred = output["meta"]["results"]["t_pred"]
@@ -66,6 +74,8 @@ source = ColumnDataSource(
         "y": deltas,
         "perm": sorted_x,
         "predicted": x_pred,
+        "true": x_true,
+        "prediction_discrepancy": np.abs(x_pred - x_true),
         "probabilities": [[f"{ps:0.2f}" for ps in lst] for lst in p_pred],
     }
 )
@@ -106,8 +116,28 @@ log_figure.add_tools(
         ]
     )
 )
-lines = log_figure.multi_line(xs="xs", ys="ys", source=source, view=line_view, legend_label="Actual observation")
-lines_pred = log_figure.multi_line(xs="xs", ys="ys_pred", source=source, view=line_view, color="red", legend_label="Predicted")
+lines = log_figure.multi_line(
+    xs="xs", ys="ys", source=source, view=line_view, legend_label="Actual observation"
+)
+lines_pred = log_figure.multi_line(
+    xs="xs",
+    ys="ys_pred",
+    source=source,
+    view=line_view,
+    color="red",
+    legend_label="Predicted",
+)
+
+person_table = DataTable(
+    source=source,
+    columns=[
+        TableColumn(title="Delta score", field="y"),
+        TableColumn(title="Delta score ordering", field="perm"),
+        TableColumn(title="Predicted state", field="predicted"),
+        TableColumn(title="Correct state", field="true"),
+        TableColumn(title="Prediction discrepancy", field="prediction_discrepancy"),
+    ],
+)
 
 
 source.selected.on_change("indices", print_attr)
@@ -116,8 +146,11 @@ source.selected.on_change("indices", print_attr)
 
 # put the button and plot in a layout and add to the document
 curdoc().add_root(
-    row(
-        delta_figure,
-        log_figure,
+    column(
+        row(
+            delta_figure,
+            log_figure,
+        ),
+        person_table,
     )
 )
