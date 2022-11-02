@@ -149,11 +149,11 @@ source.selected.on_change("indices", print_attr)
 
 # put the button and plot in a layout and add to the document
 curdoc().add_root(
-    column(
-        row(
-            delta_figure,
-            log_figure,
-        ),
+    # column(
+    row(
+        delta_figure,
+        log_figure,
         person_table,
-    )
+    ),
+    # )
 )
