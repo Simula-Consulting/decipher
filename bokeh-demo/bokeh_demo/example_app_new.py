@@ -23,6 +23,7 @@ from bokeh.models import (
     TableColumn,
 )
 from bokeh.models.callbacks import CustomJS
+from bokeh.models.tickers import FixedTicker
 from bokeh.palettes import RdYlBu3
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import linear_cmap
@@ -106,7 +107,9 @@ log_figure = figure(
     x_axis_label="Time",
     y_axis_label="State",
     tools="tap,lasso_select," + default_tools,
+    y_range=(0, 4),
 )
+log_figure.yaxis.ticker = FixedTicker(ticks=[0, 1, 2, 3, 4])
 log_figure.add_tools(
     HoverTool(
         tooltips=[
