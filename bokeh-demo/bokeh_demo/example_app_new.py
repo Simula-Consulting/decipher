@@ -32,7 +32,7 @@ output = train_and_log(X_train, X_test)  # , logger_context=dummy_logger_context
 p_pred = output["meta"]["results"]["p_pred"]
 x_true = output["meta"]["results"]["x_true"].astype(int)
 valid_rows = output["meta"]["results"]["valid_rows"]
-deltas = _calculate_delta(p_pred, x_true)
+deltas = _calculate_delta(p_pred, x_true - 1)
 X_test = X_test[valid_rows]
 
 
@@ -55,11 +55,22 @@ def print_attr(attr, old, new):
         line_view.filters = [IndexFilter(new)] if new else []
 
 
+default_tools = "pan,wheel_zoom,box_zoom,save,reset,help"
 # create a plot and style its properties
-delta_figure = figure(tools="tap,box_select")
+delta_figure = figure(
+    title="Delta score distribution",
+    x_axis_label="Individual",
+    y_axis_label="Delta score (lower better)",
+    tools="tap,lasso_select," + default_tools,
+)
 delta_scatter = delta_figure.circle(x="perm", source=source)
 
-log_figure = figure(tools="tap,lasso_select")
+log_figure = figure(
+    title="Individual state trajectories",
+    x_axis_label="Time",
+    y_axis_label="State",
+    tools="tap,lasso_select," + default_tools,
+)
 lines = log_figure.multi_line(xs="xs", ys="ys", source=source, view=line_view)
 
 
