@@ -15,6 +15,7 @@ matfact = {path = "../matfact", develop = true}
 [tool.poetry.group.dev.dependencies]
 mypy = "^0.982"
 flake8 = "^5.0.4"
+black = {version = "^22.10.0", allow-prereleases = true}
 
 [build-system]
 requires = ["poetry-core"]
