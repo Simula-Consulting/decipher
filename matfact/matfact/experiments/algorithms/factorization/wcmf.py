@@ -61,20 +61,17 @@ class WCMF(BaseMF):
         self._init_matrices(
             config.differential_matrix,
             config.minimum_values,
-            config.convolutional_matrix,
         )
 
     @property
     def M(self):
         return np.array(self.U @ self.V.T, dtype=np.float32)
 
-    def _init_matrices(self, D, J, K):
+    def _init_matrices(self, KD, J):
         self.J = np.ones((self.T, self.r)) if J is None else J
-        self.K = np.identity(self.T) if K is None else K
-        self.D = np.identity(self.T) if D is None else D
 
-        self.KD = tf.cast(self.K @ self.D, dtype=tf.float32)
-        self.DTKTKD = (self.K @ self.D).T @ (self.K @ self.D)
+        self.KD = np.identity(self.T) if KD is None else KD
+        self.DTKTKD = (self.KD).T @ (self.KD)
 
         self.I_l1 = self.lambda1 * np.eye(self.r)
 
@@ -148,7 +145,7 @@ class WCMF(BaseMF):
         loss = np.square(np.linalg.norm(self.W * (self.X - self.U @ self.V.T)))
         loss += self.lambda1 * np.square(np.linalg.norm(self.U))
         loss += self.lambda2 * np.square(np.linalg.norm(self.V - 1))
-        loss += self.lambda3 * np.square(np.linalg.norm(self.K @ self.D @ self.V))
+        loss += self.lambda3 * np.square(np.linalg.norm(self.KD @ self.V))
 
         return loss
 
