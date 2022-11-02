@@ -136,17 +136,12 @@ class SCMF(BaseMF):
         self.Ns = int(self.s_budget.size)
 
         # Add time points to cover extended left and right boundaries when shifting.
-        self.K = (
-            np.eye(self.T + 2 * self.Ns)
-            if config.convolutional_matrix is None
-            else config.convolutional_matrix
-        )
-        self.D = (
-            np.eye(self.T + 2 * self.Ns)
+        self.KD = (
+            np.identity(self.T + 2 * self.Ns)
             if config.differential_matrix is None
             else config.differential_matrix
         )
-        self.KD = tf.cast(self.K @ self.D, dtype=tf.float32)
+        self.KD = tf.cast(self.KD, dtype=tf.float32)
 
         self.I1 = self.lambda1 * np.identity(self.r)
         self.I2 = self.lambda2 * np.identity(self.r)
