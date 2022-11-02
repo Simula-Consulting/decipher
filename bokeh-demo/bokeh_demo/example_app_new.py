@@ -11,7 +11,14 @@ from random import random
 
 import pandas as pd
 from bokeh.layouts import column, row
-from bokeh.models import Button, CDSView, Circle, ColumnDataSource, IndexFilter
+from bokeh.models import (
+    Button,
+    CDSView,
+    Circle,
+    ColumnDataSource,
+    IndexFilter,
+    HoverTool,
+)
 from bokeh.models.callbacks import CustomJS
 from bokeh.palettes import RdYlBu3
 from bokeh.plotting import curdoc, figure
@@ -29,8 +36,10 @@ def get_permutation_list(array):
 dataset_path = pathlib.Path(__file__).parent.parent / "data/dataset1"
 dataset = Dataset.from_file(dataset_path)
 X_train, X_test, _, _ = dataset.get_split_X_M()
-output = train_and_log(X_train, X_test)  # , logger_context=dummy_logger_context)
+output = train_and_log(X_train, X_test, use_threshold_optimization=False, logger_context=dummy_logger_context)
 p_pred = output["meta"]["results"]["p_pred"]
+x_pred = output["meta"]["results"]["x_pred"]
+t_pred = output["meta"]["results"]["t_pred"]
 x_true = output["meta"]["results"]["x_true"].astype(int)
 valid_rows = output["meta"]["results"]["valid_rows"]
 deltas = _calculate_delta(p_pred, x_true - 1)
@@ -45,7 +54,21 @@ sorted_x = [permutations.index(i) for i in x]
 
 xs = list(itertools.repeat(list(range(X_test.shape[1])), X_test.shape[0]))
 ys = X_test.tolist()
-source = ColumnDataSource({"xs": xs, "ys": ys, "x": x, "y": deltas, "perm": sorted_x})
+ys_pred = X_test.copy()
+ys_pred[range(len(ys_pred)), t_pred] = x_pred
+ys_pred = ys_pred.tolist()
+source = ColumnDataSource(
+    {
+        "xs": xs,
+        "ys": ys,
+        "ys_pred": ys_pred,
+        "x": x,
+        "y": deltas,
+        "perm": sorted_x,
+        "predicted": x_pred,
+        "probabilities": [[f"{ps:0.2f}" for ps in lst] for lst in p_pred],
+    }
+)
 line_view = CDSView(source=source, filters=[])
 
 
@@ -74,7 +97,17 @@ log_figure = figure(
     y_axis_label="State",
     tools="tap,lasso_select," + default_tools,
 )
-lines = log_figure.multi_line(xs="xs", ys="ys", source=source, view=line_view)
+log_figure.add_tools(
+    HoverTool(
+        tooltips=[
+            ("Id", "$index"),
+            ("Predict", "@predicted"),
+            ("Probabilities", "@probabilities"),
+        ]
+    )
+)
+lines = log_figure.multi_line(xs="xs", ys="ys", source=source, view=line_view, legend_label="Actual observation")
+lines_pred = log_figure.multi_line(xs="xs", ys="ys_pred", source=source, view=line_view, color="red", legend_label="Predicted")
 
 
 source.selected.on_change("indices", print_attr)
