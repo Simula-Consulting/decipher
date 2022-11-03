@@ -241,21 +241,24 @@ def test_model_input_not_changed():
     W = data_weights(X)
     s_budget = np.arange(-5, 5)
 
+    config = ModelConfig(shift_range=s_budget)
+    parameters = ParameterConfig()
+
     X_initial, W_initial = X.copy(), W.copy()
 
-    cmf = CMF(X, V)
+    cmf = CMF(X, V, config, parameters)
     assert np.array_equal(cmf.X, X_initial)
     cmf.run_step()
     assert np.array_equal(cmf.X, X_initial)
 
-    scmf = WCMF(X, V, W)
+    scmf = WCMF(X, V, config, parameters)
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
     scmf.run_step()
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
 
-    scmf = SCMF(X, V, s_budget=s_budget, W=W)
+    scmf = SCMF(X, V, config, parameters)
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
     scmf.run_step()

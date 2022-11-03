@@ -65,8 +65,8 @@ class WCMF(BaseMF):
     def _init_matrices(self, KD_getter, J):
         self.J = np.ones((self.T, self.r)) if J is None else J
 
-        self.KD = KD_getter(self.T)
-        self.DTKTKD = (self.KD).T @ (self.KD)
+        self.KD = tf.cast(KD_getter(self.T), dtype=tf.float32)
+        self.DTKTKD = (self.KD.numpy()).T @ (self.KD.numpy())
 
         self.I_l1 = self.lambda1 * np.eye(self.r)
 
