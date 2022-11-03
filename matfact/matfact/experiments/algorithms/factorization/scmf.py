@@ -3,7 +3,7 @@ import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
 
 from matfact import settings
-from matfact.config import ModelConfig
+from matfact.config import ModelConfig, ParameterConfig
 
 from ...simulation import data_weights
 from .mfbase import BaseMF
@@ -102,33 +102,27 @@ class SCMF(BaseMF):
         X,
         V,
         config: ModelConfig,
-        lambda1=1.0,
-        lambda2=1.0,
-        lambda3=1.0,
-        iter_U=2,
-        iter_V=2,
-        learning_rate=0.001,
-        number_of_states: int = settings.default_number_of_states,
+        parameters: ParameterConfig,
     ):
         _weights_getter = config.weights_getter or data_weights
         self.W = _weights_getter(X)
 
         self.s_budget = config.shift_range
 
-        self.lambda1 = lambda1
-        self.lambda2 = lambda2
-        self.lambda3 = lambda3
+        self.lambda1 = parameters.lambda1
+        self.lambda2 = parameters.lambda2
+        self.lambda3 = parameters.lambda3
 
-        self.iter_U = iter_U
-        self.iter_V = iter_V
-        self.learning_rate = learning_rate
+        self.iter_U = parameters.iter_U
+        self.iter_V = parameters.iter_V
+        self.learning_rate = parameters.learning_rate
 
         self.r = V.shape[1]
         self.N, self.T = np.shape(X)
         self.nz_rows, self.nz_cols = np.nonzero(X)
 
         self.n_iter_ = 0
-        self.number_of_states = number_of_states
+        self.number_of_states = parameters.number_of_states
 
         # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)

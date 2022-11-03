@@ -1,7 +1,6 @@
 import numpy as np
 
-from matfact import settings
-from matfact.config import ModelConfig
+from matfact.config import ModelConfig, ParameterConfig
 
 from .mfbase import BaseMF
 
@@ -25,18 +24,15 @@ class CMF(BaseMF):
         X,
         V,
         config: ModelConfig,
-        lambda1=1.0,
-        lambda2=1.0,
-        lambda3=1.0,
-        number_of_states: int = settings.default_number_of_states,
+        parameters: ParameterConfig,
     ):
 
         self.X = X
         self.V = V
 
-        self.lambda1 = lambda1
-        self.lambda2 = lambda2
-        self.lambda3 = lambda3
+        self.lambda1 = parameters.lambda1
+        self.lambda2 = parameters.lambda2
+        self.lambda3 = parameters.lambda3
 
         self.r = V.shape[1]
         self.N, self.T = np.shape(self.X)
@@ -47,7 +43,7 @@ class CMF(BaseMF):
             config.differential_matrix_getter,
             config.minimum_values,
         )
-        self.number_of_states = number_of_states
+        self.number_of_states = parameters.number_of_states
 
     @property
     def M(self):

@@ -7,7 +7,7 @@ from typing import Any, Callable, Optional, Type
 import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
-from matfact.config import ModelConfig
+from matfact.config import ModelConfig, ParameterConfig
 from matfact.experiments import CMF, SCMF, WCMF, BaseMF
 from matfact.experiments.algorithms.utils import initialize_basis
 from matfact.experiments.logging import MLFlowLogger
@@ -18,13 +18,13 @@ from matfact.experiments.simulation.dataset import prediction_data
 def model_factory(
     X: np.ndarray,
     model_config: ModelConfig,
-    **kwargs,
+    parameter_config: ParameterConfig,
 ):
     """Initialize and return appropriate model based on arguments.
 
     kwargs are passed directly to the models.
     """
-    V = initialize_basis(X.shape[1], model_config.rank, model_config.seed)
+    V = initialize_basis(X.shape[1], parameter_config.rank, model_config.seed)
 
     # short_model_name = (
     #     "".join(
@@ -40,12 +40,12 @@ def model_factory(
     short_model_name = "TODO"
 
     if model_config.shift_range.size:
-        return short_model_name, SCMF(X, V, model_config, **kwargs)
+        return short_model_name, SCMF(X, V, model_config, parameter_config)
     else:
         if model_config.weights_getter is not None:
-            return short_model_name, WCMF(X, V, model_config, **kwargs)
+            return short_model_name, WCMF(X, V, model_config, parameter_config)
         else:
-            return short_model_name, CMF(X, V, model_config, **kwargs)
+            return short_model_name, CMF(X, V, model_config, parameter_config)
 
 
 def train_and_log(
@@ -53,13 +53,13 @@ def train_and_log(
     X_test: np.ndarray,
     *,
     model_config: ModelConfig | None = None,
+    parameters: ParameterConfig | None = None,
     dict_to_log: Optional[dict] = None,
     extra_metrics: Optional[dict[str, Callable[[Type[BaseMF]], float]]] = None,
     log_loss: bool = True,
     logger_context=None,
     use_threshold_optimization: bool = True,
     optimization_params: Optional[dict[str, Any]] = None,
-    **hyperparams,
 ):
     """Train model and log in MLFlow.
 
@@ -101,6 +101,8 @@ def train_and_log(
         logger_context = MLFlowLogger()
     if model_config is None:
         model_config = ModelConfig()
+    if parameters is None:
+        parameters = ParameterConfig()
 
     metrics = list(extra_metrics.keys()) if extra_metrics else []
     if log_loss:
@@ -116,7 +118,7 @@ def train_and_log(
     with logger_context as logger:
 
         # Create model
-        model_name, factoriser = model_factory(X_train, model_config, **hyperparams)
+        model_name, factoriser = model_factory(X_train, model_config, parameters)
 
         # Fit model
         results = factoriser.matrix_completion(
@@ -168,7 +170,7 @@ def train_and_log(
         mlflow_output["meta"]["results"] = results
 
         # Logging
-        mlflow_output["params"].update(hyperparams)
+        mlflow_output["params"].update(parameters.dict())
         mlflow_output["params"]["model_name"] = model_name
         if dict_to_log:
             mlflow_output["params"].update(dict_to_log)

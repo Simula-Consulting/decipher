@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from matfact import settings
-from matfact.config import ModelConfig
+from matfact.config import ModelConfig, ParameterConfig
 from matfact.experiments import (
     CMF,
     SCMF,
@@ -216,11 +216,11 @@ def test_train_and_log_params():
         X_test=X,
         X_train=X,
         model_config=model_config,
+        parameters=ParameterConfig(**hyperparams),
         optimization_params=optimization_params,
         logger_context=logger_context(),
         extra_metrics=extra_metrics,
         log_loss=True,
-        **hyperparams
     )
 
 

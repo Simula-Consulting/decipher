@@ -4,6 +4,18 @@ import numpy as np
 import numpy.typing as npt
 from pydantic import BaseModel, Field
 
+from matfact import settings
+
+class ParameterConfig(BaseModel):
+    lambda1: float = 1.0
+    lambda2: float = 1.0
+    lambda3: float = 1.0
+    learning_rate: float = 0.001
+    iter_U: int = 2
+    iter_V: int = 2
+    rank: int = 5
+    number_of_states: int = settings.default_number_of_states
+
 
 class ModelConfig(BaseModel):
     # Alternatively may set shift_range to np.array([]) directly, as pydantic
@@ -17,7 +29,6 @@ class ModelConfig(BaseModel):
     shift_range: np.ndarray = Field(default_factory=lambda: np.array([]))
     # convolution: bool = False
     # weights: np.ndarray | None = None  # AKA. W
-    rank: int = 5
     seed: int = 42
     # differential_matrix: np.ndarray | None = None  # AKA. D
     minimum_values: np.ndarray | None = None  # AKA. J
@@ -53,7 +64,7 @@ def kernel_mul_finite_difference(size):
     return finite_difference_matrix(size) @ laplacian_kernel_matrix(size)
 
 
-class ConvolutionalModelConfig(ModelConfig):
-    differential_matrix_getter: Callable[
-        [int], np.ndarray
-    ] = kernel_mul_finite_difference
+# class ConvolutionalModelConfig(ModelConfig):
+#     differential_matrix_getter: Callable[
+#         [int], np.ndarray
+#     ] = kernel_mul_finite_difference

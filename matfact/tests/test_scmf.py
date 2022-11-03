@@ -5,7 +5,7 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays
 
-from matfact.config import ModelConfig
+from matfact.config import ModelConfig, ParameterConfig
 from matfact.experiments import SCMF
 from matfact.experiments.algorithms.factorization.scmf import (
     _custom_roll,
@@ -89,7 +89,7 @@ def _generate_SCMF_logs() -> dict[str, np.ndarray]:
         "s": np.empty((iterations, N)),
     }
 
-    scmf = SCMF(X, V, model_config)
+    scmf = SCMF(X, V, model_config, ParameterConfig())
 
     for i in range(iterations):
         scmf.run_step()
