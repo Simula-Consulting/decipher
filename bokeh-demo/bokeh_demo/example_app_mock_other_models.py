@@ -61,7 +61,7 @@ class Model:
         return cls(
             name=name,
             ys=ys,
-            delta=deltas,
+            deltas=deltas,
             predicted=predicted,
             probabilities=probabilities,
             x_true=real_model.x_true,
@@ -79,7 +79,7 @@ class Model:
     def update_ys(ys, predicted, t_pred):
         new_ys = ys.copy()
         for i, _ in enumerate(new_ys):
-            new_ys[i, t_pred[i]] = predicted[i]
+            new_ys[i][t_pred[i]] = predicted[i]
         return new_ys
 
     @staticmethod
@@ -131,12 +131,18 @@ model = Model(
     t_pred=t_pred,
 )
 
+fake_models = ["hmm", "super"]
+models = [model] + [Model.mock_from_real(fake_name, model) for fake_name in fake_models]
+
 permutations = get_permutation_list(model.deltas)
 x = list(range(len(x_true)))
 sorted_x = [permutations.index(i) for i in x]
 
 # Set up the Bokeh data source
 # Each row corresponds to one individual
+models_dict = {}
+for model in models:
+    models_dict |= model.to_dict()
 source = ColumnDataSource(
     {
         "xs": xs,
@@ -145,7 +151,7 @@ source = ColumnDataSource(
         "perm": sorted_x,
         "true": x_true,
     }
-    | model.to_dict()
+    | models_dict
 )
 
 
