@@ -8,6 +8,7 @@ import pathlib
 from dataclasses import dataclass, fields
 from random import random
 from typing import Any, Type
+import copy
 
 import numpy as np
 import pandas as pd
@@ -83,13 +84,13 @@ class Model:
 
     @staticmethod
     def update_ys(ys, predicted, t_pred):
-        new_ys = ys.copy()
+        new_ys = copy.deepcopy(ys)
         for i, _ in enumerate(new_ys):
             new_ys[i][t_pred[i]] = predicted[i]
         return new_ys
 
     @staticmethod
-    def perturb_probabilities(probabilities, fac=0.1):
+    def perturb_probabilities(probabilities, fac=0.3):
         new_probabilities = np.empty_like(probabilities)
         for i, probs in enumerate(probabilities):
             new = probs + (2 * np.random.random(4) - 1) * fac
@@ -141,6 +142,7 @@ fake_models = ["hmm", "super"]
 fake_colors = ["blue", "green"]
 models = [model] + [Model.mock_from_real(fake_name, color, model) for fake_name, color in zip(fake_models, fake_colors)]
 
+
 permutations = get_permutation_list(model.deltas)
 x = list(range(len(x_true)))
 sorted_x = [permutations.index(i) for i in x]
@@ -157,6 +159,7 @@ source = ColumnDataSource(
         "x": x,
         "perm": sorted_x,
         "true": x_true,
+        "t_pred": t_pred,
     }
     | models_dict
 )
@@ -195,8 +198,9 @@ log_figure.add_tools(
     HoverTool(
         tooltips=[
             ("Id", "$index"),
-            ("Predict", "@predicted"),
-            ("Probabilities", "@probabilities"),
+            ("T", "@t_pred"),
+            # ("Predict", "@predicted"),
+            # ("Probabilities", "@probabilities"),
         ],
     )
 )
@@ -231,7 +235,6 @@ person_table = DataTable(
 )
 
 # Set up our event handler
-
 
 # Put everything in the document
 curdoc().add_root(
