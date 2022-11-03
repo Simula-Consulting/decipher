@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from matfact import settings
 
+
 class ParameterConfig(BaseModel):
     lambda1: float = 1.0
     lambda2: float = 1.0
@@ -26,7 +27,7 @@ class ModelConfig(BaseModel):
     # https://pydantic-docs.helpmanual.io/usage/models/#field-with-dynamic-default-value
 
     # TODO: We may consider simply having the shift range as a list of ints.
-    shift_range: np.ndarray = Field(default_factory=lambda: np.array([]))
+    shift_range: np.ndarray = Field(default_factory=lambda: np.array([0]))
     # convolution: bool = False
     # weights: np.ndarray | None = None  # AKA. W
     seed: int = 42
