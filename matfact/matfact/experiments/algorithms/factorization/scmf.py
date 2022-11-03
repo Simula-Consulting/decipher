@@ -1,8 +1,9 @@
+from typing import cast
+
 import numpy as np
 import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
 
-from matfact import settings
 from matfact.config import ModelConfig, ParameterConfig
 
 from ...simulation import data_weights
@@ -146,11 +147,9 @@ class SCMF(BaseMF):
         self.V_bc = np.vstack(
             [np.zeros((self.Ns, self.r)), V, np.zeros((self.Ns, self.r))]
         )
-        self.J = (
-            config.minimum_values
-            if config.minimum_values
-            else tf.ones_like(self.V_bc, dtype=tf.float32)
-        )
+        # Shape returns in general tuple[int, ...], however we konw V_bc to be
+        # two dimensional, thus cast.
+        self.J = config.minimum_values_getter(cast(tuple[int, int], self.V_bc.shape))
 
         # Implementation shifts W and Y (not UV.T)
         self.X_shifted = self.X_bc.copy()

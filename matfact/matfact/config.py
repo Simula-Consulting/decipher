@@ -28,17 +28,13 @@ class ModelConfig(BaseModel):
 
     # TODO: We may consider simply having the shift range as a list of ints.
     shift_range: np.ndarray = Field(default_factory=lambda: np.array([0]))
-    # convolution: bool = False
-    # weights: np.ndarray | None = None  # AKA. W
     seed: int = 42
-    # differential_matrix: np.ndarray | None = None  # AKA. D
-    minimum_values: np.ndarray | None = None  # AKA. J
+    minimum_values_getter: Callable[[tuple[int, int]], npt.NDArray] = np.ones
 
     weights_getter: Callable[
         [npt.NDArray[np.int_]], npt.NDArray
     ] | None = None  # Take in X
     differential_matrix_getter: Callable[[int], np.ndarray] = np.identity  # Take in N
-    # minimum_values_getter: Callable[[int, int], np.ndarray]  # Take in N, T
 
     class Config:
         arbitrary_types_allowed = True  # Allow numpy array types. NB. no validation.

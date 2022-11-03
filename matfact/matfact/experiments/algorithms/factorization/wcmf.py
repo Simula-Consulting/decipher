@@ -55,15 +55,15 @@ class WCMF(BaseMF):
         self.n_iter_ = 0
         self._init_matrices(
             config.differential_matrix_getter,
-            config.minimum_values,
+            config.minimum_values_getter,
         )
 
     @property
     def M(self):
         return np.array(self.U @ self.V.T, dtype=np.float32)
 
-    def _init_matrices(self, KD_getter, J):
-        self.J = np.ones((self.T, self.r)) if J is None else J
+    def _init_matrices(self, KD_getter, J_getter):
+        self.J = J_getter((self.T, self.r))
 
         self.KD = tf.cast(KD_getter(self.T), dtype=tf.float32)
         self.DTKTKD = (self.KD.numpy()).T @ (self.KD.numpy())
