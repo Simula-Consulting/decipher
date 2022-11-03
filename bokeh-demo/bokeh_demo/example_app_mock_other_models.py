@@ -55,7 +55,7 @@ class Model:
     def mock_from_real(cls, name: str, real_model: "Model"):
         probabilities = cls.perturb_probabilities(real_model.probabilities)
         predicted = np.argmax(probabilities, axis=1) + 1
-        deltas = _calculate_delta(probabilities, real_model.x_true)
+        deltas = _calculate_delta(probabilities, real_model.x_true - 1)  # -1 compensate 0 vs 1 indexed
         ys = cls.update_ys(real_model.ys, predicted, real_model.t_pred)
 
         return cls(
@@ -69,11 +69,15 @@ class Model:
         )
 
     def to_dict(self):
-        return {
+        out_dict = {
             f"{self.name}_{field.name}": getattr(self, field.name)
             for field in fields(self)
-            if field.name != "name"
+            if field.name not in ["name", "probabilities"]
         }
+        out_dict[self.name + "_probabilities"] = [
+            ",".join([f"{p:0.2f}" for p in probs])
+             for probs in self.probabilities]
+        return out_dict
 
     @staticmethod
     def update_ys(ys, predicted, t_pred):
@@ -83,11 +87,11 @@ class Model:
         return new_ys
 
     @staticmethod
-    def perturb_probabilities(probabilities, fac=0.3):
+    def perturb_probabilities(probabilities, fac=0.1):
         new_probabilities = np.empty_like(probabilities)
         for i, probs in enumerate(probabilities):
             new = probs + (2 * np.random.random(4) - 1) * fac
-            new += np.min(new)
+            new -= np.min(new)
             new = new / np.linalg.norm(new)
             new_probabilities[i] = new
         return new_probabilities
@@ -132,6 +136,7 @@ model = Model(
 )
 
 fake_models = ["hmm", "super"]
+model_colors = ["red", "blue"]
 models = [model] + [Model.mock_from_real(fake_name, model) for fake_name in fake_models]
 
 permutations = get_permutation_list(model.deltas)
@@ -165,13 +170,14 @@ delta_figure = figure(
     y_axis_label="Delta score (lower better)",
     tools="tap,lasso_select," + default_tools,
 )
-delta_scatter = delta_figure.circle(
-    x="perm",
-    y="real_deltas",
-    radius=0.3,
-    fill_color=linear_cmap("real_deltas", "Spectral6", -1, 1),
-    source=source,
-)
+for model in models:
+    delta_scatter = delta_figure.circle(
+        x="perm",
+        y=f"{model.name}_deltas",
+        radius=0.3,
+        fill_color=linear_cmap(f"{model.name}_deltas", "Spectral6", -1, 1),
+        source=source,
+    )
 
 # Add the time trajectory figure
 log_figure = figure(
@@ -188,7 +194,7 @@ log_figure.add_tools(
             ("Id", "$index"),
             ("Predict", "@predicted"),
             ("Probabilities", "@probabilities"),
-        ]
+        ],
     )
 )
 lines = log_figure.multi_line(
@@ -198,22 +204,24 @@ lines = log_figure.multi_line(
     legend_label="Actual observation",
     nonselection_line_alpha=0.0,
 )
-lines_pred = log_figure.multi_line(
-    xs="xs",
-    ys="real_ys",
-    source=source,
-    color="red",
-    legend_label="Predicted",
-    nonselection_line_alpha=0.0,
-)
+for model in models:
+    log_figure.multi_line(
+        xs="xs",
+        ys=f"{model.name}_ys",
+        source=source,
+        color="red",
+        legend_label=f"Predicted {model.name}",
+        nonselection_line_alpha=0.0,
+    )
 
 # Add the table over individuals
 person_table = DataTable(
     source=source,
     columns=[
         TableColumn(title="Delta score", field="real_deltas"),
-        TableColumn(title="Delta score ordering", field="perm"),
-        TableColumn(title="Predicted state", field="real_predicted"),
+        # TableColumn(title="Delta score ordering", field="perm"),
+        *[TableColumn(title=f"Predicted state {model.name}", field=f"{model.name}_predicted") for model in models],
+        *[TableColumn(title=f"Probabilities {model.name}", field=f"{model.name}_probabilities") for model in models],
         TableColumn(title="Correct state", field="true"),
         # TableColumn(title="Prediction discrepancy", field="prediction_discrepancy"),
     ],
