@@ -50,9 +50,10 @@ class Model:
     probabilities: Any
     x_true: list[int]
     t_pred: list[int]
+    color: str = "red"
 
     @classmethod
-    def mock_from_real(cls, name: str, real_model: "Model"):
+    def mock_from_real(cls, name: str, color: str, real_model: "Model"):
         probabilities = cls.perturb_probabilities(real_model.probabilities)
         predicted = np.argmax(probabilities, axis=1) + 1
         deltas = _calculate_delta(probabilities, real_model.x_true - 1)  # -1 compensate 0 vs 1 indexed
@@ -60,6 +61,7 @@ class Model:
 
         return cls(
             name=name,
+            color=color,
             ys=ys,
             deltas=deltas,
             predicted=predicted,
@@ -72,7 +74,7 @@ class Model:
         out_dict = {
             f"{self.name}_{field.name}": getattr(self, field.name)
             for field in fields(self)
-            if field.name not in ["name", "probabilities"]
+            if field.name not in ["name", "color", "probabilities"]
         }
         out_dict[self.name + "_probabilities"] = [
             ",".join([f"{p:0.2f}" for p in probs])
@@ -136,8 +138,8 @@ model = Model(
 )
 
 fake_models = ["hmm", "super"]
-model_colors = ["red", "blue"]
-models = [model] + [Model.mock_from_real(fake_name, model) for fake_name in fake_models]
+fake_colors = ["blue", "green"]
+models = [model] + [Model.mock_from_real(fake_name, color, model) for fake_name, color in zip(fake_models, fake_colors)]
 
 permutations = get_permutation_list(model.deltas)
 x = list(range(len(x_true)))
@@ -175,7 +177,8 @@ for model in models:
         x="perm",
         y=f"{model.name}_deltas",
         radius=0.3,
-        fill_color=linear_cmap(f"{model.name}_deltas", "Spectral6", -1, 1),
+        # fill_color=linear_cmap(f"{model.name}_deltas", "Spectral6", -1, 1),
+        fill_color=model.color,
         source=source,
     )
 
@@ -209,7 +212,7 @@ for model in models:
         xs="xs",
         ys=f"{model.name}_ys",
         source=source,
-        color="red",
+        color=model.color,
         legend_label=f"Predicted {model.name}",
         nonselection_line_alpha=0.0,
     )
