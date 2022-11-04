@@ -34,7 +34,7 @@ class ModelConfig(BaseModel):
     weights_getter: Callable[
         [npt.NDArray[np.int_]], npt.NDArray
     ] | None = None  # Take in X
-    differential_matrix_getter: Callable[[int], np.ndarray] = np.identity  # Take in N
+    differential_matrix_getter: Callable[[int], npt.NDArray] = np.identity  # Take in N
 
     class Config:
         arbitrary_types_allowed = True  # Allow numpy array types. NB. no validation.
@@ -61,7 +61,7 @@ def kernel_mul_finite_difference(size):
     return finite_difference_matrix(size) @ laplacian_kernel_matrix(size)
 
 
-# class ConvolutionalModelConfig(ModelConfig):
-#     differential_matrix_getter: Callable[
-#         [int], np.ndarray
-#     ] = kernel_mul_finite_difference
+class ConvolutionalModelConfig(ModelConfig):
+    differential_matrix_getter: Callable[
+        [int], npt.NDArray
+    ] = kernel_mul_finite_difference
