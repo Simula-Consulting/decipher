@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 
 
 def convergence_monitor(M, error_tol=1e-4):
@@ -6,6 +7,33 @@ def convergence_monitor(M, error_tol=1e-4):
     difference between consecutive estimates.
     """
     return MonitorFactorUpdate(M=M, tol=error_tol)
+
+
+class ConvergenceMonitor:
+    def __init__(self, number_of_epochs, epochs_per_val, patience, tolerance=1e-4):
+        self.number_of_epochs = number_of_epochs
+        self.tolerance = tolerance
+        self.epochs_per_val = epochs_per_val
+        self.patience = patience
+        self._old_M = None
+        self._model = None
+
+    def _update(self):
+        new_M = self._model.M
+        difference = float(
+            np.linalg.norm(new_M - self._old_M) ** 2 / np.linalg.norm(self._old_M) ** 2
+        )
+        self._old_M = new_M
+        return difference
+
+    def get_iterator(self, model):
+        self._old_M = model.X  # Dirty hack.
+        self._model = model
+        for i in tqdm(range(self.number_of_epochs)):
+            yield i
+            should_update = i > self.patience and i % self.epochs_per_val == 0
+            if should_update and self._update() < self.tolerance:
+                break
 
 
 class MonitorFactorUpdate:

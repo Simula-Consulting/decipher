@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 
-from tqdm import tqdm
-
-from matfact.model.factorization.convergence import convergence_monitor
+from matfact.model.factorization.convergence import ConvergenceMonitor
 from matfact.model.factorization.utils import theta_mle
 from matfact.model.predict.risk_prediction import predict_proba
 
@@ -66,7 +64,11 @@ class BaseMF(ABC):
         for metric in extra_metrics:
             output[metric] = []
 
-        for epoch in tqdm(range(num_epochs), disable=not progress, desc="Epoch: "):
+        for epoch in ConvergenceMonitor(
+            number_of_epochs=num_epochs,
+            epochs_per_val=epochs_per_val,
+            patience=patience,
+        ).get_iterator(self):
 
             self.run_step()
 
@@ -74,14 +76,6 @@ class BaseMF(ABC):
             output["loss"].append(float(self.loss()))
             for metric, callable in extra_metrics.items():
                 output[metric].append(callable(self))
-
-            if epoch == patience:
-                monitor = convergence_monitor(self.M)
-
-            if epoch % epochs_per_val == 0 and epoch > patience:
-
-                if monitor.converged(self.M):
-                    break
 
         output["U"] = self.U
         output["V"] = self.V
