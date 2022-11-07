@@ -1,7 +1,3 @@
-"""This module demonstrates how to instantiate matrix factorization models
-for matrix completion and risk prediction. The example is based on synthetic data
-produced in the `datasets` directory.
-"""
 from typing import Any, Callable, Optional, Type
 
 import numpy as np
