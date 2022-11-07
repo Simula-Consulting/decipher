@@ -4,11 +4,9 @@ from matfact import settings
 
 
 class ModelConfig(BaseModel):
+    """Configuration class for the MatFact model."""
+
     shift_budget: list[int] = []
-    # W: npt.NDArray
-    # D: npt.NDArray
-    # J: npt.NDArray
-    # K: npt.NDArray
 
     lambda1: float = 1.0
     lambda2: float = 1.0
