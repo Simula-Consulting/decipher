@@ -6,7 +6,7 @@ from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays
 
 from matfact.model import SCMF
-from matfact.model.factorization.factorization.scmf import (
+from matfact.model.factorization.factorizers.scmf import (
     _custom_roll,
     _take_per_row_strided,
 )

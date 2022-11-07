@@ -1,7 +1,7 @@
-from .factorization.cmf import CMF
-from .factorization.mfbase import BaseMF
-from .factorization.scmf import SCMF
-from .factorization.wcmf import WCMF
+from .factorizers.cmf import CMF
+from .factorizers.mfbase import BaseMF
+from .factorizers.scmf import SCMF
+from .factorizers.wcmf import WCMF
 
 __all__ = [
     "CMF",
