@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from matfact import settings
+from matfact.model.config import ModelConfig
 from matfact.model.factorization.weights import data_weights
 
 from .mfbase import BaseMF
@@ -29,31 +29,17 @@ class WCMF(BaseMF):
         self,
         X,
         V,
+        config: ModelConfig,
         W=None,
         D=None,
         J=None,
         K=None,
-        lambda1=1.0,
-        lambda2=1.0,
-        lambda3=1.0,
-        iter_U=2,
-        iter_V=2,
-        learning_rate=0.001,
-        number_of_states: int = settings.default_number_of_states,
     ):
         self.X = X
         self.V = V
         self.W = data_weights(X) if W is None else W
 
-        self.number_of_states = number_of_states
-
-        self.lambda1 = lambda1
-        self.lambda2 = lambda2
-        self.lambda3 = lambda3
-
-        self.iter_U = iter_U
-        self.iter_V = iter_V
-        self.learning_rate = learning_rate
+        self.config = config
 
         self.r = V.shape[1]
         self.N, self.T = np.shape(self.X)
@@ -74,7 +60,7 @@ class WCMF(BaseMF):
         self.KD = tf.cast(self.K @ self.D, dtype=tf.float32)
         self.DTKTKD = (self.K @ self.D).T @ (self.K @ self.D)
 
-        self.I_l1 = self.lambda1 * np.eye(self.r)
+        self.I_l1 = self.config.lambda1 * np.eye(self.r)
 
     def _update_V(self):
         # @tf.function
@@ -82,9 +68,9 @@ class WCMF(BaseMF):
             frob_tensor = tf.multiply(W, X - (U @ tf.transpose(V)))
             frob_loss = tf.square(tf.norm(frob_tensor))
 
-            l2_loss = self.lambda2 * tf.square(tf.norm(V - J))
+            l2_loss = self.config.lambda2 * tf.square(tf.norm(V - J))
 
-            conv_loss = self.lambda3 * tf.square(tf.norm(tf.matmul(self.KD, V)))
+            conv_loss = self.config.lambda3 * tf.square(tf.norm(tf.matmul(self.KD, V)))
 
             return frob_loss + l2_loss + conv_loss
 
@@ -95,8 +81,8 @@ class WCMF(BaseMF):
         X = tf.cast(self.X, dtype=tf.float32)
         U = tf.cast(self.U, dtype=tf.float32)
 
-        optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        for _ in tf.range(self.iter_V):
+        optimiser = tf.keras.optimizers.Adam(learning_rate=self.config.learning_rate)
+        for _ in tf.range(self.config.iter_V):
             optimiser.minimize(_loss_V, [V])
 
         self.V = V.numpy()
@@ -107,7 +93,7 @@ class WCMF(BaseMF):
             frob_tensor = tf.multiply(W, X - tf.matmul(U, V, transpose_b=True))
             frob_loss = tf.square(tf.norm(frob_tensor))
 
-            return frob_loss + self.lambda1 * tf.square(tf.norm(U))
+            return frob_loss + self.config.lambda1 * tf.square(tf.norm(U))
 
         U = tf.Variable(self.U, dtype=tf.float32)
 
@@ -115,9 +101,9 @@ class WCMF(BaseMF):
         X = tf.cast(self.X, dtype=tf.float32)
         V = tf.cast(self.V, dtype=tf.float32)
 
-        optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
+        optimiser = tf.keras.optimizers.Adam(learning_rate=self.config.learning_rate)
 
-        for _ in tf.range(self.iter_U):
+        for _ in tf.range(self.config.iter_U):
             optimiser.minimize(_loss_U, [U])
 
         return U.numpy()
@@ -144,9 +130,11 @@ class WCMF(BaseMF):
         "Compute the loss from the optimization objective"
 
         loss = np.square(np.linalg.norm(self.W * (self.X - self.U @ self.V.T)))
-        loss += self.lambda1 * np.square(np.linalg.norm(self.U))
-        loss += self.lambda2 * np.square(np.linalg.norm(self.V - 1))
-        loss += self.lambda3 * np.square(np.linalg.norm(self.K @ self.D @ self.V))
+        loss += self.config.lambda1 * np.square(np.linalg.norm(self.U))
+        loss += self.config.lambda2 * np.square(np.linalg.norm(self.V - 1))
+        loss += self.config.lambda3 * np.square(
+            np.linalg.norm(self.K @ self.D @ self.V)
+        )
 
         return loss
 

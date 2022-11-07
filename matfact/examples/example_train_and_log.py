@@ -56,7 +56,7 @@ def experiment(
     dataset = Dataset.from_file(dataset_path)
     X_train, X_test, M_train, _ = dataset.get_split_X_M()
 
-    shift_range = range(-12, 13) if enable_shift else []
+    shift_range = list(range(-12, 13)) if enable_shift else []
     weights = data_weights(X_train) if enable_weighting else None
 
     extra_metrics = {

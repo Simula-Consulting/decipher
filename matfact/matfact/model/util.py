@@ -1,9 +1,10 @@
-from typing import Any, Callable, Optional, Sequence, Type
+from typing import Any, Callable, Optional, Type
 
 import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
 from matfact.model import CMF, SCMF, WCMF, BaseMF
+from matfact.model.config import ModelConfig
 from matfact.model.factorization.utils import (
     finite_difference_matrix,
     initialize_basis,
@@ -16,7 +17,7 @@ from matfact.model.predict.dataset_utils import prediction_data
 
 def model_factory(
     X: np.ndarray,
-    shift_range: Optional[Sequence[int]] = None,
+    shift_range: Optional[list[int]] = None,
     convolution: bool = False,
     weights: Optional[np.ndarray] = None,
     rank: int = 5,
@@ -53,15 +54,16 @@ def model_factory(
         )
         + "mf"
     )
+    config = ModelConfig(shift_budget=shift_range, **kwargs)
 
     if len(shift_range):
         weights = (X != 0).astype(np.float32) if weights is None else weights
-        return short_model_name, SCMF(X, V, shift_range, W=weights, **kwargs)
+        return short_model_name, SCMF(X, V, config, W=weights)
     else:
         if weights is not None:
-            return short_model_name, WCMF(X, V, weights, **kwargs)
+            return short_model_name, WCMF(X, V, config, W=weights)
         else:
-            return short_model_name, CMF(X, V, **kwargs)
+            return short_model_name, CMF(X, V, config)
 
 
 def train_and_log(
