@@ -15,7 +15,7 @@ from matfact.model.factorization.utils import (
 )
 from matfact.model.logging import MLFlowLogger
 from matfact.model.predict.clf_tree import estimate_probability_thresholds
-from matfact.model.simulation.dataset import prediction_data
+from matfact.model.predict.dataset import prediction_data
 
 
 def model_factory(

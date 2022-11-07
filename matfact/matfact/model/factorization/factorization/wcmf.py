@@ -2,8 +2,8 @@ import numpy as np
 import tensorflow as tf
 
 from matfact import settings
+from matfact.model.factorization.weights import data_weights
 
-from ...simulation import data_weights
 from .mfbase import BaseMF
 
 

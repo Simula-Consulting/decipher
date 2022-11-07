@@ -3,8 +3,8 @@ import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
 
 from matfact import settings
+from matfact.model.factorization.weights import data_weights
 
-from ...simulation import data_weights
 from .mfbase import BaseMF
 
 

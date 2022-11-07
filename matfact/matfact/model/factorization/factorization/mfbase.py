@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 
 from tqdm import tqdm
 
+from ...predict.risk_prediction import predict_proba
 from ..convergence import convergence_monitor
-from ..risk_prediction import predict_proba
 from ..utils import theta_mle
 
 
