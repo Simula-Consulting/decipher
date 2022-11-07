@@ -14,7 +14,7 @@ from matfact.model.factorization.utils import (
     laplacian_kernel_matrix,
 )
 from matfact.model.logging import MLFlowLogger
-from matfact.model.predict.clf_tree import estimate_probability_thresholds
+from matfact.model.predict.classification_tree import estimate_probability_thresholds
 from matfact.model.predict.dataset import prediction_data
 
 
