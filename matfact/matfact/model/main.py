@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
 from matfact.model import CMF, SCMF, WCMF, BaseMF
-from matfact.model.algorithms.utils import (
+from matfact.model.factorization.utils import (
     finite_difference_matrix,
     initialize_basis,
     laplacian_kernel_matrix,

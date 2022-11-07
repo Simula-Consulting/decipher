@@ -1,5 +1,5 @@
-from .algorithms import CMF, SCMF, WCMF, BaseMF
-from .algorithms.utils import reconstruction_mse
+from .factorization import CMF, SCMF, WCMF, BaseMF
+from .factorization.utils import reconstruction_mse
 from .main import model_factory, train_and_log
 from .simulation import data_weights, prediction_data
 
