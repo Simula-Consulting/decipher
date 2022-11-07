@@ -5,8 +5,8 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays
 
-from matfact.experiments import SCMF
-from matfact.experiments.algorithms.factorization.scmf import (
+from matfact.model import SCMF
+from matfact.model.algorithms.factorization.scmf import (
     _custom_roll,
     _take_per_row_strided,
 )

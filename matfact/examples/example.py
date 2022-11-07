@@ -9,7 +9,7 @@ from sklearn.metrics import accuracy_score, matthews_corrcoef
 
 from matfact import settings
 from matfact.data_generation import Dataset
-from matfact.experiments import (
+from matfact.model import (
     data_weights,
     model_factory,
     prediction_data,

@@ -10,12 +10,8 @@ from skopt.space import Real
 from skopt.utils import use_named_args
 
 from matfact.data_generation import Dataset
-from matfact.experiments import train_and_log
-from matfact.experiments.logging import (
-    MLFlowBatchLogger,
-    MLFlowLogger,
-    dummy_logger_context,
-)
+from matfact.model import train_and_log
+from matfact.model.logging import MLFlowBatchLogger, MLFlowLogger, dummy_logger_context
 from matfact.settings import BASE_PATH, DATASET_PATH
 
 

@@ -6,15 +6,8 @@ import numpy as np
 import pytest
 
 from matfact import settings
-from matfact.experiments import (
-    CMF,
-    SCMF,
-    WCMF,
-    data_weights,
-    prediction_data,
-    train_and_log,
-)
-from matfact.experiments.logging import (
+from matfact.model import CMF, SCMF, WCMF, data_weights, prediction_data, train_and_log
+from matfact.model.logging import (
     MLFlowLogger,
     MLFlowLoggerArtifact,
     MLFlowLoggerDiagnostic,
