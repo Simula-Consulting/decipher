@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, Optional, Sequence, Type
 
 import numpy as np
 from sklearn.metrics import matthews_corrcoef
@@ -16,7 +16,7 @@ from matfact.model.predict.dataset_utils import prediction_data
 
 def model_factory(
     X: np.ndarray,
-    shift_range: Optional[np.ndarray] = None,
+    shift_range: Optional[Sequence[int]] = None,
     convolution: bool = False,
     weights: Optional[np.ndarray] = None,
     rank: int = 5,
@@ -28,9 +28,9 @@ def model_factory(
     kwargs are passed directly to the models.
     """
     if shift_range is None:
-        shift_range = np.array([])
+        shift_range = []
 
-    padding = 2 * shift_range.size
+    padding = 2 * len(shift_range)
 
     if convolution:
         D = finite_difference_matrix(X.shape[1] + padding)
@@ -46,7 +46,7 @@ def model_factory(
         "".join(
             a if cond else b
             for cond, a, b in [
-                (shift_range.size, "s", ""),
+                (len(shift_range), "s", ""),
                 (convolution, "c", "l2"),
                 (weights is not None, "w", ""),
             ]
@@ -54,7 +54,7 @@ def model_factory(
         + "mf"
     )
 
-    if shift_range.size:
+    if len(shift_range):
         weights = (X != 0).astype(np.float32) if weights is None else weights
         return short_model_name, SCMF(X, V, shift_range, W=weights, **kwargs)
     else:

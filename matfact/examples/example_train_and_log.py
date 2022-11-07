@@ -1,7 +1,6 @@
 import pathlib
 from itertools import product
 
-import numpy as np
 import tensorflow as tf
 
 from matfact.data_generation import Dataset
@@ -57,7 +56,7 @@ def experiment(
     dataset = Dataset.from_file(dataset_path)
     X_train, X_test, M_train, _ = dataset.get_split_X_M()
 
-    shift_range = np.arange(-12, 13) if enable_shift else np.array([])
+    shift_range = range(-12, 13) if enable_shift else []
     weights = data_weights(X_train) if enable_weighting else None
 
     extra_metrics = {

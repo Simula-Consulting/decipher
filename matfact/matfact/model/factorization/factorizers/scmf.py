@@ -1,3 +1,5 @@
+from typing import Sequence
+
 import numpy as np
 import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
@@ -100,7 +102,7 @@ class SCMF(BaseMF):
         self,
         X,
         V,
-        s_budget,
+        s_budget: Sequence[int],
         W=None,
         D=None,
         J=None,
@@ -136,7 +138,7 @@ class SCMF(BaseMF):
         # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)
         # The number of possible shifts. Used for padding of arrays.
-        self.Ns = int(self.s_budget.size)
+        self.Ns = len(self.s_budget)
 
         # Add time points to cover extended left and right boundaries when shifting.
         self.K = np.eye(self.T + 2 * self.Ns) if K is None else K
@@ -289,12 +291,12 @@ class SCMF(BaseMF):
         )
 
         # Selected shifts maximize the correlation between X and M
-        s_new = self.s_budget[np.argmin(D, axis=0)]
+        s_new = [self.s_budget[i] for i in np.argmin(D, axis=0)]
 
         # Update attributes only if changes to the optimal shift
         if not np.array_equal(self.s, s_new):
 
-            self.s = s_new
+            self.s = np.array(s_new)
             self._shift_X_W()
 
     def run_step(self):

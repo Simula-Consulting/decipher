@@ -89,7 +89,7 @@ def experiment(
     # Generate the model
     model_name, model = model_factory(
         X_train,
-        shift_range=np.arange(-12, 13) if enable_shift else np.array([]),
+        shift_range=range(-12, 13) if enable_shift else [],
         convolution=enable_convolution,
         weights=data_weights(X_train) if enable_weighting else None,
         **hyperparams,

@@ -173,7 +173,7 @@ def test_train_and_log_params():
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
 
     hyperparams = {
-        "shift_range": np.arange(-2, 3),
+        "shift_range": range(-2, 3),
         "rank": 5,
         "lambda1": 1,
         "lambda2": 2,
@@ -230,7 +230,7 @@ def test_model_input_not_changed():
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
     V = np.random.choice(np.arange(5), size=(time_span, rank))
     W = data_weights(X)
-    s_budget = np.arange(-5, 5)
+    s_budget = range(-5, 5)
 
     X_initial, W_initial = X.copy(), W.copy()
 
@@ -260,7 +260,7 @@ def test_model_optional_args():
     sample_size, time_span, rank = 100, 40, 5
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
     V = np.random.choice(np.arange(5), size=(time_span, rank))
-    s_budget = np.arange(-5, 5)
+    s_budget = range(-5, 5)
 
     cmf = CMF(X, V)
     cmf.run_step()

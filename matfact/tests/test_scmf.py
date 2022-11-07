@@ -70,7 +70,7 @@ def _generate_SCMF_logs() -> dict[str, np.ndarray]:
     rnd = np.random.default_rng(seed=42)
     X = rnd.integers(low=0, high=4, size=(N, T))  # Initial observation matrix
     V = rnd.random((T, r))  # Initial basic profiles
-    s_budget = np.arange(-10, 11)
+    s_budget = range(-10, 11)
 
     # Allocate space for the logs
     logs = {
