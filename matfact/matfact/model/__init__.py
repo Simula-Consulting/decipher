@@ -1,7 +1,7 @@
 from .factorization import CMF, SCMF, WCMF, BaseMF
 from .factorization.utils import reconstruction_mse
-from .main import model_factory, train_and_log
 from .simulation import data_weights, prediction_data
+from .util import model_factory, train_and_log
 
 __all__ = [
     "CMF",
