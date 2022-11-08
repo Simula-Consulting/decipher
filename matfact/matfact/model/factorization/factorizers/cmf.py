@@ -13,6 +13,8 @@ class CMF(BaseMF):
     Args:
             X: Sparse data matrix used to estimate factor matrices
             V: Initial estimate for basic vectors
+            config: Configuration model.
+              shift and weights are ignored in the CMF factorizer.
     """
 
     def __init__(

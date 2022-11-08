@@ -14,6 +14,8 @@ class WCMF(BaseMF):
     Args:
         X: Sparse data matrix used to estimate factor matrices
         V: Initial estimate for basic vectors
+        config: Configuration model.
+          shift are ignored in the WCMF factorizer.
     """
 
     def __init__(

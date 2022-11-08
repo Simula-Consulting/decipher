@@ -73,6 +73,7 @@ class SCMF(BaseMF):
     Args:
         X: Sparse data matrix used to estimate factor matrices
         V: Initial estimate for basic vectors
+        config: Configuration model.
 
     Discussion:
     There are four X matrices (correspondingly for W):
