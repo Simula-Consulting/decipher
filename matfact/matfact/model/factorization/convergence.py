@@ -1,7 +1,11 @@
 import numpy as np
 from tqdm import trange
 
-from matfact import settings
+from matfact.settings import (
+    DEFAULT_EPOCHS_PER_VAL,
+    DEFAULT_NUMBER_OF_EPOCHS,
+    DEFAULT_PATIENCE,
+)
 
 
 def convergence_monitor(M, error_tol=1e-4):
@@ -14,9 +18,9 @@ def convergence_monitor(M, error_tol=1e-4):
 class ConvergenceMonitor:
     def __init__(
         self,
-        number_of_epochs=settings.default_number_of_epochs,
-        epochs_per_val=settings.default_epochs_per_val,
-        patience=settings.default_patience,
+        number_of_epochs=DEFAULT_NUMBER_OF_EPOCHS,
+        epochs_per_val=DEFAULT_EPOCHS_PER_VAL,
+        patience=DEFAULT_PATIENCE,
         show_progress=True,
         tolerance=1e-4,
     ):

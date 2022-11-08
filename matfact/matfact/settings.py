@@ -26,6 +26,6 @@ minimum_number_of_observations = 3
 
 
 ### Convergence monitor ###
-default_number_of_epochs = 2000
-default_epochs_per_val = 5
-default_patience = 200
+DEFAULT_NUMBER_OF_EPOCHS = 2000
+DEFAULT_EPOCHS_PER_VAL = 5
+DEFAULT_PATIENCE = 200
