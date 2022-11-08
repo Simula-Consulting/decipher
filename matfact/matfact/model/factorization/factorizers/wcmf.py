@@ -46,19 +46,18 @@ class WCMF(BaseMF):
         self.nz_rows, self.nz_cols = np.nonzero(self.X)
 
         self.n_iter_ = 0
-        self._init_matrices(D, J, K)
+        KD = self.config.difference_matrix_getter(self.T)
+        self._init_matrices(KD, J)
 
     @property
     def M(self):
         return np.array(self.U @ self.V.T, dtype=np.float32)
 
-    def _init_matrices(self, D, J, K):
+    def _init_matrices(self, KD, J):
         self.J = np.ones((self.T, self.r)) if J is None else J
-        self.K = np.identity(self.T) if K is None else K
-        self.D = np.identity(self.T) if D is None else D
 
-        self.KD = tf.cast(self.K @ self.D, dtype=tf.float32)
-        self.DTKTKD = (self.K @ self.D).T @ (self.K @ self.D)
+        self.KD = tf.cast(KD, dtype=tf.float32)
+        self.DTKTKD = KD.T @ KD
 
         self.I_l1 = self.config.lambda1 * np.eye(self.r)
 
@@ -132,9 +131,7 @@ class WCMF(BaseMF):
         loss = np.square(np.linalg.norm(self.W * (self.X - self.U @ self.V.T)))
         loss += self.config.lambda1 * np.square(np.linalg.norm(self.U))
         loss += self.config.lambda2 * np.square(np.linalg.norm(self.V - 1))
-        loss += self.config.lambda3 * np.square(
-            np.linalg.norm(self.K @ self.D @ self.V)
-        )
+        loss += self.config.lambda3 * np.square(np.linalg.norm(self.KD @ self.V))
 
         return loss
 

@@ -38,26 +38,25 @@ class CMF(BaseMF):
         self.nz_rows, self.nz_cols = np.nonzero(self.X)
 
         self.n_iter_ = 0
-        self._init_matrices(D, J, K)
+        KD = self.config.difference_matrix_getter(self.T)
+        self._init_matrices(KD, J)
 
     @property
     def M(self):
         return np.array(self.U @ self.V.T, dtype=np.float32)
 
-    def _init_matrices(self, D, J, K):
+    def _init_matrices(self, KD, J):
 
         self.S = self.X.copy()
         self.mask = (self.X != 0).astype(np.float32)
 
         self.J = np.ones((self.T, self.r)) if J is None else J
 
-        self.K = np.identity(self.T) if K is None else K
-        self.D = np.identity(self.T) if D is None else D
-
         self.I_l1 = self.config.lambda1 * np.identity(self.r)
         self.I_l2 = self.config.lambda2 * np.identity(self.r)
 
-        self.DTKTKD = (self.K @ self.D).T @ (self.K @ self.D)
+        self.KD = KD
+        self.DTKTKD = KD.T @ KD
         self.L2, self.Q2 = np.linalg.eigh(self.config.lambda3 * self.DTKTKD)
 
     def _update_V(self):
@@ -88,9 +87,7 @@ class CMF(BaseMF):
         loss = np.square(np.linalg.norm(self.mask * (self.X - self.U @ self.V.T)))
         loss += self.config.lambda1 * np.square(np.linalg.norm(self.U))
         loss += self.config.lambda2 * np.square(np.linalg.norm(self.V - self.J))
-        loss += self.config.lambda3 * np.square(
-            np.linalg.norm(self.K @ self.D @ self.V)
-        )
+        loss += self.config.lambda3 * np.square(np.linalg.norm(self.KD @ self.V))
 
         return loss
 
