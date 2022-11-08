@@ -46,7 +46,6 @@ class BaseMF(ABC):
 
         # Results collected from the process
         output = {
-            "convergence_rate": [],
             "loss": [],
             "epochs": [],
             "U": None,
