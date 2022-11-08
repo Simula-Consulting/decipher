@@ -34,17 +34,15 @@ class BaseMF(ABC):
     def matrix_completion(
         self,
         extra_metrics=None,
-        fname="",
-        epochs_per_val=5,
-        num_epochs=2000,
-        patience=200,
-        progress=True,
+        epoch_generator=None,
     ):
         """Run matrix completion on input matrix X using a factorization model.
 
         extra_metrics: Dict of name, callable pairs for extra metric logging.
             Callable must have the signature (model: Type[BaseMF]) -> Float.
         """
+        if epoch_generator is None:
+            epoch_generator = ConvergenceMonitor()
 
         # Results collected from the process
         output = {
@@ -64,11 +62,7 @@ class BaseMF(ABC):
         for metric in extra_metrics:
             output[metric] = []
 
-        for epoch in ConvergenceMonitor(
-            number_of_epochs=num_epochs,
-            epochs_per_val=epochs_per_val,
-            patience=patience,
-        ).get_iterator(self):
+        for epoch in epoch_generator(self):
 
             self.run_step()
 
