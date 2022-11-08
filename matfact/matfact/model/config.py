@@ -14,6 +14,12 @@ class WeightGetter(ABC):
     def __call__(self, X: npt.NDArray) -> npt.NDArray:
         ...
 
+    def __str__(self):
+        return f"{self.__class__.__name__}"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}()"
+
     is_identity: bool = False
 
 
