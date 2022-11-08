@@ -1,3 +1,4 @@
+"""Utility functions for masking prediction data used in training."""
 import random as rnd
 
 import numpy as np

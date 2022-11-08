@@ -5,8 +5,8 @@ import numpy as np
 import tensorflow as tf
 
 from matfact.data_generation import Dataset
-from matfact.experiments import data_weights, reconstruction_mse, train_and_log
-from matfact.experiments.logging import MLFlowLoggerDiagnostic
+from matfact.model import data_weights, reconstruction_mse, train_and_log
+from matfact.model.logging import MLFlowLoggerDiagnostic
 from matfact.settings import DATASET_PATH, FIGURE_PATH
 
 

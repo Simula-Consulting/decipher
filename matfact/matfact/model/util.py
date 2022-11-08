@@ -1,21 +1,17 @@
-"""This module demonstrates how to instantiate matrix factorization models
-for matrix completion and risk prediction. The example is based on synthetic data
-produced in the `datasets` directory.
-"""
 from typing import Any, Callable, Optional, Type
 
 import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
-from matfact.experiments import CMF, SCMF, WCMF, BaseMF
-from matfact.experiments.algorithms.utils import (
+from matfact.model import CMF, SCMF, WCMF, BaseMF
+from matfact.model.factorization.utils import (
     finite_difference_matrix,
     initialize_basis,
     laplacian_kernel_matrix,
 )
-from matfact.experiments.logging import MLFlowLogger
-from matfact.experiments.predict.clf_tree import estimate_probability_thresholds
-from matfact.experiments.simulation.dataset import prediction_data
+from matfact.model.logging import MLFlowLogger
+from matfact.model.predict.classification_tree import estimate_probability_thresholds
+from matfact.model.predict.dataset_utils import prediction_data
 
 
 def model_factory(

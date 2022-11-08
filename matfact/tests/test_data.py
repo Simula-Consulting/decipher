@@ -131,7 +131,7 @@ def test_generate_higher_states(monkeypatch):
     sparsity_level = 1
     # Disable censoring, in order to avoid masking out the states we want to assert.
     monkeypatch.setattr(
-        "matfact.data_generation.main.censoring", lambda X, missing=0: X
+        "matfact.data_generation.dataset.censoring", lambda X, missing=0: X
     )
     for i in [-1, 0, 1]:
         # Set the number of states to something different from default
