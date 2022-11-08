@@ -82,7 +82,7 @@ def experiment(
     mlflow.log_params(dataset.prefixed_metadata())
 
     # Generate the model
-    model_name, model = model_factory(
+    model = model_factory(
         X_train,
         shift_range=list(range(-12, 13)) if enable_shift else [],
         convolution=enable_convolution,
@@ -90,7 +90,7 @@ def experiment(
         **hyperparams,
     )
 
-    mlflow.log_param("model_name", model_name)
+    mlflow.log_param("model_name", model.config.get_short_model_name())
 
     # Training and testing #
     # Train the model (i.e. perform the matrix completion)

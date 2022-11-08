@@ -6,6 +6,7 @@ import numpy as np
 import numpy.typing as npt
 
 from matfact import settings
+from matfact.model.factorization.utils import convoluted_differences_matrix
 from matfact.model.factorization.weights import data_weights
 
 
@@ -54,3 +55,26 @@ class ModelConfig:
     difference_matrix_getter: Callable[[int], npt.NDArray] = np.identity
     weight_matrix_getter: WeightGetter = field(default_factory=DataWeightGetter)
     minimal_value_matrix_getter: Callable[[tuple[int, int]], npt.NDArray] = np.ones
+
+    def get_short_model_name(self) -> str:
+        """Return a short string representing the model.
+
+        The short name consists of three fields, shift, convolution and weights.
+        Sample names are scmf, l2mf."""
+
+        # Map possible difference_matrix_getters to string representations
+        convolution_mapping = {
+            np.identity: "l2",
+            convoluted_differences_matrix: "c",
+        }
+
+        return (
+            "".join(
+                (
+                    "s" if self.shift_budget else "",
+                    convolution_mapping.get(self.difference_matrix_getter, "?"),
+                    "" if self.weight_matrix_getter.is_identity else "w",
+                )
+            )
+            + "mf"
+        )

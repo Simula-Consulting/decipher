@@ -37,17 +37,6 @@ def model_factory(
 
     V = initialize_basis(X.shape[1], rank, seed)
 
-    short_model_name = (
-        "".join(
-            a if cond else b
-            for cond, a, b in [
-                (len(shift_range), "s", ""),
-                (convolution, "c", "l2"),
-                (weights is not None, "w", ""),
-            ]
-        )
-        + "mf"
-    )
     config = ModelConfig(
         shift_budget=shift_range,
         difference_matrix_getter=difference_matrix_getter,
@@ -56,12 +45,11 @@ def model_factory(
     )
 
     if len(shift_range):
-        return short_model_name, SCMF(X, V, config)
+        return SCMF(X, V, config)
+    if config.weight_matrix_getter.is_identity:
+        return CMF(X, V, config)
     else:
-        if config.weight_matrix_getter.is_identity:
-            return short_model_name, CMF(X, V, config)
-        else:
-            return short_model_name, WCMF(X, V, config)
+        return WCMF(X, V, config)
 
 
 def train_and_log(
@@ -129,7 +117,7 @@ def train_and_log(
     with logger_context as logger:
 
         # Create model
-        model_name, factoriser = model_factory(X_train, **hyperparams)
+        factoriser = model_factory(X_train, **hyperparams)
 
         # Fit model
         results = factoriser.matrix_completion(
@@ -182,7 +170,7 @@ def train_and_log(
 
         # Logging
         mlflow_output["params"].update(hyperparams)
-        mlflow_output["params"]["model_name"] = model_name
+        mlflow_output["params"]["model_name"] = factoriser.config.get_short_model_name()
         if dict_to_log:
             mlflow_output["params"].update(dict_to_log)
 
