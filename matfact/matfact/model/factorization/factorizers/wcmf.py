@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow as tf
 
 from matfact.model.config import ModelConfig
-from matfact.model.factorization.weights import data_weights
 
 from .mfbase import BaseMF
 
@@ -35,11 +34,10 @@ class WCMF(BaseMF):
         J=None,
         K=None,
     ):
+        self.config = config
         self.X = X
         self.V = V
-        self.W = data_weights(X) if W is None else W
-
-        self.config = config
+        self.W = self.config.weight_matrix_getter(X)
 
         self.r = V.shape[1]
         self.N, self.T = np.shape(self.X)
