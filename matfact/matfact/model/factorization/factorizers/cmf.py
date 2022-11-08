@@ -13,10 +13,6 @@ class CMF(BaseMF):
     Args:
             X: Sparse data matrix used to estimate factor matrices
             V: Initial estimate for basic vectors
-            D (optional): Forward difference matrix
-            J (optional): A matrix used to impose a minimum value in the basic vectors V
-            K (optional): Convolutional matrix
-            lambda: Regularization coefficients
     """
 
     def __init__(
@@ -24,9 +20,6 @@ class CMF(BaseMF):
         X,
         V,
         config: ModelConfig,
-        D=None,
-        J=None,
-        K=None,
     ):
 
         self.X = X

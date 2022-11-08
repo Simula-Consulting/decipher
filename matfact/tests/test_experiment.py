@@ -242,14 +242,14 @@ def test_model_input_not_changed():
     cmf.run_step()
     assert np.array_equal(cmf.X, X_initial)
 
-    scmf = WCMF(X, V, config, W=W)
+    scmf = WCMF(X, V, config)
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
     scmf.run_step()
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
 
-    scmf = SCMF(X, V, config, W=W)
+    scmf = SCMF(X, V, config)
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
     scmf.run_step()

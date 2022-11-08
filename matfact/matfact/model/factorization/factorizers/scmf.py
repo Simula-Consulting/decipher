@@ -73,17 +73,6 @@ class SCMF(BaseMF):
     Args:
         X: Sparse data matrix used to estimate factor matrices
         V: Initial estimate for basic vectors
-        s_budget: Range of possible shift steps (forward or backward from the original
-            position)
-        W (optional): Weight matrix for the discrepancy term. Default is
-            set to the output of `experiments.simulation.data_weights(X)`.
-        D (optional): Forward difference matrix
-        J (optional): A matrix used to impose a minimum value in the basic vectors V
-        K (optional): Convolutional matrix
-        lambda: Regularization coefficients
-        iter_U, iter_V: The number of steps with gradient descent (GD) per factor update
-        learning_rate: Step size used in the GD
-
 
     Discussion:
     There are four X matrices (correspondingly for W):
@@ -102,10 +91,6 @@ class SCMF(BaseMF):
         X,
         V,
         config: ModelConfig,
-        W=None,
-        D=None,
-        J=None,
-        K=None,
     ):
 
         self.config = config
