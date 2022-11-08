@@ -11,6 +11,11 @@ from matfact.model.factorization.weights import data_weights
 
 
 class WeightGetter(ABC):
+    """Strategy for getting weights for a given observation matrix.
+
+    If is_identity is True, the weights are assumed to be identity weights, and
+    the CMF solver may be used."""
+
     @abstractmethod
     def __call__(self, X: npt.NDArray) -> npt.NDArray:
         ...
