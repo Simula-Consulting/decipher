@@ -34,7 +34,9 @@ class ConvergenceMonitor:
         return difference
 
     def __call__(self, model):
-        self._old_M = model.X  # Dirty hack.
+        # Dirty hack. Model's M is not defined before after first iteration.
+        # Therefore, we set the value to X, which we know has the same dimensions.
+        self._old_M = model.X
         self._model = model
         for i in self._range(self.number_of_epochs):
             yield i
