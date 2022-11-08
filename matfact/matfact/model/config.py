@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Callable
 
+import numpy as np
 import numpy.typing as npt
 
 from matfact import settings
@@ -47,3 +48,4 @@ class ModelConfig:
 
     difference_matrix_getter: Callable[[int], npt.NDArray] = finite_difference_matrix
     weight_matrix_getter: type[WeightGetter] = DataWeightGetter
+    minimal_value_matrix_getter: Callable[[tuple[int, int]], npt.NDArray] = np.ones

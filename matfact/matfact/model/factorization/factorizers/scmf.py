@@ -1,3 +1,5 @@
+from typing import cast
+
 import numpy as np
 import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
@@ -140,7 +142,10 @@ class SCMF(BaseMF):
         self.V_bc = np.vstack(
             [np.zeros((self.Ns, self.r)), V, np.zeros((self.Ns, self.r))]
         )
-        self.J = J if J else tf.ones_like(self.V_bc, dtype=tf.float32)
+        # We know V_bc to be two-dimensional, so cast to please mypy.
+        J_shape = cast(tuple[int, int], self.V_bc.shape)
+        # TODO: do we have to cast this to tf float32?
+        self.J = self.config.minimal_value_matrix_getter(J_shape)
 
         # Implementation shifts W and Y (not UV.T)
         self.X_shifted = self.X_bc.copy()
