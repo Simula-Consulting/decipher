@@ -64,7 +64,7 @@ class ModelConfig:
     def get_short_model_name(self) -> str:
         """Return a short string representing the model.
 
-        The short name consists of three fields, shift, convolution and weights.
+        The short name consists of three fields, shift, convolution, and weights.
         Sample names are scmf, l2mf."""
 
         # Map possible difference_matrix_getters to string representations
