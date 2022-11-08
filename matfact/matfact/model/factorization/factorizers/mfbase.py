@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 
 from tqdm import tqdm
 
-from ...predict.risk_prediction import predict_proba
-from ..convergence import convergence_monitor
-from ..utils import theta_mle
+from matfact.model.factorization.convergence import convergence_monitor
+from matfact.model.factorization.utils import theta_mle
+from matfact.model.predict.risk_prediction import predict_proba
 
 
 class BaseMF(ABC):
