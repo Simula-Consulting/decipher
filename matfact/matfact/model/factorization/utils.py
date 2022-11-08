@@ -41,6 +41,11 @@ def laplacian_kernel_matrix(T, gamma=1.0):
     return [kernel(np.arange(T) - i) for i in np.arange(T)]
 
 
+def convoluted_differences_matrix(T):
+    """Construct a T x T matrix which is the convoluted forward difference matrix."""
+    return laplacian_kernel_matrix(T) @ finite_difference_matrix(T)
+
+
 def reconstruction_mse(true_matrix, observed_matrix, reconstructed_matrix):
     """Compute the reconstruction means-squared error
 

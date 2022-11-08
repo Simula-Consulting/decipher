@@ -6,7 +6,6 @@ import numpy as np
 import numpy.typing as npt
 
 from matfact import settings
-from matfact.model.factorization.utils import finite_difference_matrix
 from matfact.model.factorization.weights import data_weights
 
 
@@ -30,7 +29,7 @@ class DataWeightGetter(WeightGetter):
         return data_weights(X)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ModelConfig:
     """Configuration class for the MatFact model."""
 
@@ -46,6 +45,6 @@ class ModelConfig:
     learning_rate: float = 0.001
     number_of_states: int = settings.default_number_of_states
 
-    difference_matrix_getter: Callable[[int], npt.NDArray] = finite_difference_matrix
-    weight_matrix_getter: type[WeightGetter] = DataWeightGetter
+    difference_matrix_getter: Callable[[int], npt.NDArray] = np.identity
+    weight_matrix_getter: WeightGetter = field(default_factory=DataWeightGetter)
     minimal_value_matrix_getter: Callable[[tuple[int, int]], npt.NDArray] = np.ones

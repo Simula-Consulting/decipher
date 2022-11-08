@@ -9,12 +9,7 @@ from sklearn.metrics import accuracy_score, matthews_corrcoef
 
 from matfact import settings
 from matfact.data_generation import Dataset
-from matfact.model import (
-    data_weights,
-    model_factory,
-    prediction_data,
-    reconstruction_mse,
-)
+from matfact.model import model_factory, prediction_data, reconstruction_mse
 from matfact.plotting import (
     plot_basis,
     plot_certainty,
@@ -91,7 +86,7 @@ def experiment(
         X_train,
         shift_range=list(range(-12, 13)) if enable_shift else [],
         convolution=enable_convolution,
-        weights=data_weights(X_train) if enable_weighting else None,
+        weights=enable_weighting,
         **hyperparams,
     )
 

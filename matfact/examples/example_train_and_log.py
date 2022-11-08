@@ -4,7 +4,7 @@ from itertools import product
 import tensorflow as tf
 
 from matfact.data_generation import Dataset
-from matfact.model import data_weights, reconstruction_mse, train_and_log
+from matfact.model import reconstruction_mse, train_and_log
 from matfact.model.logging import MLFlowLoggerDiagnostic
 from matfact.settings import DATASET_PATH, FIGURE_PATH
 
@@ -57,7 +57,6 @@ def experiment(
     X_train, X_test, M_train, _ = dataset.get_split_X_M()
 
     shift_range = list(range(-12, 13)) if enable_shift else []
-    weights = data_weights(X_train) if enable_weighting else None
 
     extra_metrics = {
         "recMSE": lambda model: reconstruction_mse(M_train, model.X, model.M),
@@ -67,7 +66,7 @@ def experiment(
         X_train,
         X_test,
         shift_range=shift_range,
-        weights=weights,
+        weights=enable_weighting,
         extra_metrics=extra_metrics,
         convolution=enable_convolution,
         logger_context=MLFlowLoggerDiagnostic(FIGURE_PATH, extra_tags=mlflow_tags),

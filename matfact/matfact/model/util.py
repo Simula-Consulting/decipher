@@ -4,11 +4,10 @@ import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
 from matfact.model import CMF, SCMF, WCMF, BaseMF
-from matfact.model.config import ModelConfig
+from matfact.model.config import DataWeightGetter, IdentityWeighGetter, ModelConfig
 from matfact.model.factorization.utils import (
-    finite_difference_matrix,
+    convoluted_differences_matrix,
     initialize_basis,
-    laplacian_kernel_matrix,
 )
 from matfact.model.logging import MLFlowLogger
 from matfact.model.predict.classification_tree import estimate_probability_thresholds
@@ -19,7 +18,7 @@ def model_factory(
     X: np.ndarray,
     shift_range: Optional[list[int]] = None,
     convolution: bool = False,
-    weights: Optional[np.ndarray] = None,
+    weights: bool = True,
     rank: int = 5,
     seed: int = 42,
     **kwargs,
@@ -31,15 +30,10 @@ def model_factory(
     if shift_range is None:
         shift_range = []
 
-    padding = 2 * len(shift_range)
-
     if convolution:
-        D = finite_difference_matrix(X.shape[1] + padding)
-        K = laplacian_kernel_matrix(X.shape[1] + padding)
+        difference_matrix_getter = convoluted_differences_matrix
     else:
-        # None will make the objects generate appropriate identity matrices later.
-        D = K = None
-    kwargs.update({"D": D, "K": K})
+        difference_matrix_getter = np.identity
 
     V = initialize_basis(X.shape[1], rank, seed)
 
@@ -54,16 +48,20 @@ def model_factory(
         )
         + "mf"
     )
-    config = ModelConfig(shift_budget=shift_range, **kwargs)
+    config = ModelConfig(
+        shift_budget=shift_range,
+        difference_matrix_getter=difference_matrix_getter,
+        weight_matrix_getter=DataWeightGetter() if weights else IdentityWeighGetter(),
+        **kwargs,
+    )
 
     if len(shift_range):
-        weights = (X != 0).astype(np.float32) if weights is None else weights
-        return short_model_name, SCMF(X, V, config, W=weights)
+        return short_model_name, SCMF(X, V, config)
     else:
-        if weights is not None:
-            return short_model_name, WCMF(X, V, config, W=weights)
-        else:
+        if config.weight_matrix_getter.is_identity:
             return short_model_name, CMF(X, V, config)
+        else:
+            return short_model_name, WCMF(X, V, config)
 
 
 def train_and_log(
