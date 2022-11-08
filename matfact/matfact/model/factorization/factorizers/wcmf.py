@@ -1,3 +1,5 @@
+from warnings import warn
+
 import numpy as np
 import tensorflow as tf
 
@@ -24,6 +26,12 @@ class WCMF(BaseMF):
         V,
         config: ModelConfig,
     ):
+        if config.shift_budget:
+            warn(
+                "WCMF given a non-empty shift budget. This will be ignored."
+                "Consider using SCMF."
+            )
+
         self.config = config
         self.X = X
         self.V = V
