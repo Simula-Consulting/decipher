@@ -25,7 +25,7 @@ def model_factory(
 ):
     """Initialize and return appropriate model based on arguments.
 
-    kwargs are passed directly to the models.
+    kwargs are passed the ModelConfig.
     """
     if shift_range is None:
         shift_range = []
