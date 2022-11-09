@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Literal, cast
 
 import numpy as np
 import tensorflow as tf
@@ -146,7 +146,7 @@ class SCMF(BaseMF):
             self.X_shifts[j] = np.roll(self.X_bc, -1 * s_n, axis=1)
             self.W_shifts[j] = np.roll(self.W_bc, -1 * s_n, axis=1)
 
-        self.U = self._exactly_solve_U()
+        self._update_U(solver="exact")
 
     @property
     def X(self):
@@ -253,9 +253,15 @@ class SCMF(BaseMF):
 
         return U.numpy()
 
-    def _update_U(self):
+    def _update_U(self, solver: Literal["approximate", "exact"] = "approximate"):
 
-        self.U = self._approx_U()
+        match solver:
+            case "approximate":
+                self.U = self._approx_U()
+            case "exact":
+                self.U = self._exactly_solve_U()
+            case _:
+                raise ValueError()
 
     def _update_s(self):
 

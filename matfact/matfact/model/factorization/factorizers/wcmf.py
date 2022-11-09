@@ -1,3 +1,4 @@
+from typing import Literal
 from warnings import warn
 
 import numpy as np
@@ -46,7 +47,7 @@ class WCMF(BaseMF):
         self.J = self.config.minimal_value_matrix_getter((self.T, self.r))
         self._init_matrices(KD)
 
-        self.U = self._exactly_solve_U()
+        self._update_U(solver="exact")
 
     @property
     def M(self):
@@ -120,8 +121,14 @@ class WCMF(BaseMF):
 
         return U.numpy()
 
-    def _update_U(self):
-        self.U = self._approx_U()
+    def _update_U(self, solver: Literal["approximate", "exact"] = "approximate"):
+        match solver:
+            case "approximate":
+                self.U = self._approx_U()
+            case "exact":
+                self.U = self._exactly_solve_U()
+            case _:
+                raise ValueError()
 
     def loss(self):
         "Compute the loss from the optimization objective"
