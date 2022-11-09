@@ -49,9 +49,7 @@ class ConvergenceMonitor:
 
     def _update(self):
         new_M = self._model.M
-        difference = float(
-            np.linalg.norm(new_M - self._old_M) ** 2 / np.linalg.norm(self._old_M) ** 2
-        )
+        difference = np.sum((new_M - self._old_M) ** 2) / np.sum(self._old_M**2)
         self._old_M = new_M
         return difference
 
