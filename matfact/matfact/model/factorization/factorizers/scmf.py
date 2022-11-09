@@ -146,17 +146,7 @@ class SCMF(BaseMF):
             self.X_shifts[j] = np.roll(self.X_bc, -1 * s_n, axis=1)
             self.W_shifts[j] = np.roll(self.W_bc, -1 * s_n, axis=1)
 
-        # Estimate U in the first iteration of alternating minimization
-        self.U = np.zeros((self.N, self.r))
-
-        for n in range(self.N):
-            self.U[n] = (
-                self.X_shifted[n]
-                @ self.V_bc
-                @ np.linalg.inv(
-                    self.V_bc.T @ (np.diag(self.W_shifted[n]) @ self.V_bc) + self.I1
-                )
-            )
+        self.U = self._exactly_solve_U()
 
     @property
     def X(self):
@@ -225,6 +215,23 @@ class SCMF(BaseMF):
 
         self.V_bc = V.numpy()
 
+    def _exactly_solve_U(self):
+        """Solve for U at a fixed V.
+
+        The internal U member is not modified by this method.
+        V is assumed to be initialized."""
+        U = np.empty((self.N, self.r))
+
+        for n in range(self.N):
+            U[n] = (
+                self.X_shifted[n]
+                @ self.V_bc
+                @ np.linalg.inv(
+                    self.V_bc.T @ (np.diag(self.W_shifted[n]) @ self.V_bc) + self.I1
+                )
+            )
+        return U
+
     def _approx_U(self):
 
         U = tf.Variable(self.U, dtype=tf.float32)
@@ -248,7 +255,6 @@ class SCMF(BaseMF):
 
     def _update_U(self):
 
-        # Faster to approximate U in consecutive iterations
         self.U = self._approx_U()
 
     def _update_s(self):
