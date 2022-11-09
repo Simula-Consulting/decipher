@@ -22,7 +22,6 @@ from matfact.settings import DATASET_PATH, FIGURE_PATH
 
 def experiment(
     hyperparams,
-    optimization_params,
     enable_shift: bool = False,
     enable_weighting: bool = False,
     enable_convolution: bool = False,
@@ -45,12 +44,6 @@ def experiment(
                 rank,
                 lambda1,
                 lambda2,
-            }
-        optimization_params: Dict passed to the model solver
-            {
-                num_epochs,
-                epochs_per_val,
-                patience,
             }
         enable_shift: Use shifted model with shift range (-12,12)
         enable_weighting: Use weighted model with weights as defined in
@@ -78,7 +71,6 @@ def experiment(
     mlflow.start_run()
     mlflow.set_tags(mlflow_tags)
     mlflow.log_params(hyperparams)
-    mlflow.log_params(optimization_params)
     mlflow.log_params(dataset.prefixed_metadata())
 
     # Generate the model
@@ -97,9 +89,7 @@ def experiment(
     extra_metrics = {
         "recMSE": lambda model: reconstruction_mse(M_train, X_train, model.M),
     }
-    results = model.matrix_completion(
-        extra_metrics=extra_metrics, **optimization_params
-    )
+    results = model.matrix_completion(extra_metrics=extra_metrics)
 
     # Predict the risk over the test set
     p_pred = model.predict_probability(X_test_masked, t_pred)
@@ -164,15 +154,10 @@ def main():
         "lambda2": 10,
         "lambda3": 100,
     }
-    optimization_params = {
-        "num_epochs": 1000,
-        "patience": 5,
-    }
 
     for shift, weight, convolve in product([False, True], repeat=3):
         experiment(
             hyperparams,
-            optimization_params,
             shift,
             weight,
             convolve,

@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Type
+from typing import Callable, Optional, Type
 
 import numpy as np
 from sklearn.metrics import matthews_corrcoef
@@ -63,7 +63,6 @@ def train_and_log(
     log_loss: bool = True,
     logger_context=None,
     use_threshold_optimization: bool = True,
-    optimization_params: Optional[dict[str, Any]] = None,
     **hyperparams,
 ):
     """Train model and log in MLFlow.
@@ -79,12 +78,6 @@ def train_and_log(
         example hyperparameter search. Assumes there to exist an active parent run.
     use_threshold_optimization: Use ClassificationTree optimization to find thresholds
         for class selection. Can improve results on data skewed towards normal.
-    optimization_params: kwargs passed to `BaseMF.matrix_completion`. Example
-        {
-        "num_epochs": 2000,  # Number of training epochs.
-        "patience": 200,  # Number of epochs before considering early termination.
-        "epochs_per_val": 5,  # Consider early termination every `epochs_per_val` epoch.
-        }
 
     Returns:
     A dictionary of relevant output statistics.
@@ -113,8 +106,6 @@ def train_and_log(
                 "This is illegal, as it causes name collision!"
             )
         metrics.append("loss")
-    if optimization_params is None:
-        optimization_params = {}
 
     with logger_context as logger:
 
@@ -122,9 +113,7 @@ def train_and_log(
         factoriser = model_factory(X_train, **hyperparams)
 
         # Fit model
-        results = factoriser.matrix_completion(
-            extra_metrics=extra_metrics, **optimization_params
-        )
+        results = factoriser.matrix_completion(extra_metrics=extra_metrics)
 
         # Predict
         X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
