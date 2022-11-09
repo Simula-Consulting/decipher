@@ -46,6 +46,16 @@ class WCMF(BaseMF):
         self.J = self.config.minimal_value_matrix_getter((self.T, self.r))
         self._init_matrices(KD)
 
+        # Estimate U in the first iteration of alternating minimization
+        self.U = np.zeros((self.N, self.r))
+
+        for n in range(self.N):
+            self.U[n] = (
+                self.V.T
+                @ (self.W[n] * self.X[n])
+                @ np.linalg.inv(self.V.T @ (self.W[n][:, None] * self.V) + self.I_l1)
+            )
+
     @property
     def M(self):
         return np.array(self.U @ self.V.T, dtype=np.float32)
@@ -105,21 +115,7 @@ class WCMF(BaseMF):
 
     def _update_U(self):
         # Faster to approximate U in consecutive iterations
-        if self.n_iter_ > 0:
-            self.U = self._approx_U()
-
-        else:
-            # Estimate U in the first iteration of alternating minimization
-            self.U = np.zeros((self.N, self.r))
-
-            for n in range(self.N):
-                self.U[n] = (
-                    self.V.T
-                    @ (self.W[n] * self.X[n])
-                    @ np.linalg.inv(
-                        self.V.T @ (self.W[n][:, None] * self.V) + self.I_l1
-                    )
-                )
+        self.U = self._approx_U()
 
     def loss(self):
         "Compute the loss from the optimization objective"

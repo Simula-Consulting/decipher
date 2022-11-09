@@ -146,6 +146,18 @@ class SCMF(BaseMF):
             self.X_shifts[j] = np.roll(self.X_bc, -1 * s_n, axis=1)
             self.W_shifts[j] = np.roll(self.W_bc, -1 * s_n, axis=1)
 
+        # Estimate U in the first iteration of alternating minimization
+        self.U = np.zeros((self.N, self.r))
+
+        for n in range(self.N):
+            self.U[n] = (
+                self.X_shifted[n]
+                @ self.V_bc
+                @ np.linalg.inv(
+                    self.V_bc.T @ (np.diag(self.W_shifted[n]) @ self.V_bc) + self.I1
+                )
+            )
+
     @property
     def X(self):
         # return self.X_bc[:, self.Ns:-self.Ns]
@@ -237,22 +249,7 @@ class SCMF(BaseMF):
     def _update_U(self):
 
         # Faster to approximate U in consecutive iterations
-        if self.n_iter_ > 0:
-            self.U = self._approx_U()
-
-        else:
-
-            # Estimate U in the first iteration of alternating minimization
-            self.U = np.zeros((self.N, self.r))
-
-            for n in range(self.N):
-                self.U[n] = (
-                    self.X_shifted[n]
-                    @ self.V_bc
-                    @ np.linalg.inv(
-                        self.V_bc.T @ (np.diag(self.W_shifted[n]) @ self.V_bc) + self.I1
-                    )
-                )
+        self.U = self._approx_U()
 
     def _update_s(self):
 

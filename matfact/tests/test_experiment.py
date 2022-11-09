@@ -337,3 +337,14 @@ def test_data_weights():
 def test_delta_score(probabilities, correct_index, expected_delta):
     """Test delta score calculated as expected."""
     assert np.all(_calculate_delta(probabilities, correct_index) == expected_delta)
+
+
+@pytest.mark.parametrize("factorizer", (CMF, WCMF, SCMF))
+def test_factorizers_initialized(factorizer):
+    """Test that the factorizers initialize their internal matrices."""
+    sample_size, time_span, rank = 100, 40, 5
+    X = np.random.choice(np.arange(5), size=(sample_size, time_span))
+    V = np.random.choice(np.arange(5), size=(time_span, rank))
+    model = factorizer(X, V, ModelConfig())
+    for attr in ("X", "U", "V", "M"):
+        assert hasattr(model, attr)
