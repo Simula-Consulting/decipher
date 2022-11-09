@@ -85,8 +85,8 @@ def experiment(
     model = model_factory(
         X_train,
         shift_range=list(range(-12, 13)) if enable_shift else [],
-        convolution=enable_convolution,
-        weights=enable_weighting,
+        use_convolution=enable_convolution,
+        use_weights=enable_weighting,
         **hyperparams,
     )
 

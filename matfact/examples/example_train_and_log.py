@@ -66,9 +66,9 @@ def experiment(
         X_train,
         X_test,
         shift_range=shift_range,
-        weights=enable_weighting,
+        use_weights=enable_weighting,
         extra_metrics=extra_metrics,
-        convolution=enable_convolution,
+        use_convolution=enable_convolution,
         logger_context=MLFlowLoggerDiagnostic(FIGURE_PATH, extra_tags=mlflow_tags),
         optimization_params=optimization_params,
         **hyperparams

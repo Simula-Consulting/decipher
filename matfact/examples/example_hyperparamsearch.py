@@ -94,7 +94,7 @@ def example_hyperparameter_search(objective_getter: Callable = get_objective_CV)
     with mlflow.start_run():
         res_gp = gp_minimize(
             objective_getter(
-                data, search_space=space, convolution=False, shift_range=None
+                data, search_space=space, use_convolution=False, shift_range=None
             ),
             space,
             n_calls=10,

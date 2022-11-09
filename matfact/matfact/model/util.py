@@ -17,8 +17,8 @@ from matfact.model.predict.dataset_utils import prediction_data
 def model_factory(
     X: np.ndarray,
     shift_range: Optional[list[int]] = None,
-    convolution: bool = False,
-    weights: bool = True,
+    use_convolution: bool = False,
+    use_weights: bool = True,
     rank: int = 5,
     seed: int = 42,
     **kwargs,
@@ -30,7 +30,7 @@ def model_factory(
     if shift_range is None:
         shift_range = []
 
-    if convolution:
+    if use_convolution:
         difference_matrix_getter = convoluted_differences_matrix
     else:
         difference_matrix_getter = np.identity
@@ -40,7 +40,9 @@ def model_factory(
     config = ModelConfig(
         shift_budget=shift_range,
         difference_matrix_getter=difference_matrix_getter,
-        weight_matrix_getter=DataWeightGetter() if weights else IdentityWeighGetter(),
+        weight_matrix_getter=(
+            DataWeightGetter() if use_weights else IdentityWeighGetter()
+        ),
         **kwargs,
     )
 
