@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 
-from matfact.model.factorization.convergence import ConvergenceMonitor
+import numpy.typing as npt
+
+from matfact.model.factorization.convergence import ConvergenceMonitor, EpochGenerator
 from matfact.model.factorization.utils import theta_mle
 from matfact.model.predict.risk_prediction import predict_proba
 
@@ -8,10 +10,14 @@ from matfact.model.predict.risk_prediction import predict_proba
 class BaseMF(ABC):
     "Base class for matrix factorization algorithms."
 
+    X: npt.NDArray
+    U: npt.NDArray
+    V: npt.NDArray
+
     @property
     @abstractmethod
     def M(self):
-        return
+        ...
 
     @abstractmethod
     def run_step(self):
@@ -34,7 +40,7 @@ class BaseMF(ABC):
     def matrix_completion(
         self,
         extra_metrics=None,
-        epoch_generator=None,
+        epoch_generator: EpochGenerator | None = None,
     ):
         """Run matrix completion on input matrix X using a factorization model.
 
@@ -47,7 +53,7 @@ class BaseMF(ABC):
             epoch_generator = ConvergenceMonitor()
 
         # Results collected from the process
-        output = {
+        output: dict = {
             "loss": [],
             "epochs": [],
             "U": None,

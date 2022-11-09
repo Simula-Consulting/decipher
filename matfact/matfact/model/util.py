@@ -5,6 +5,7 @@ from sklearn.metrics import matthews_corrcoef
 
 from matfact.model import CMF, SCMF, WCMF, BaseMF
 from matfact.model.config import DataWeightGetter, IdentityWeighGetter, ModelConfig
+from matfact.model.factorization.convergence import EpochGenerator
 from matfact.model.factorization.utils import (
     convoluted_differences_matrix,
     initialize_basis,
@@ -58,6 +59,7 @@ def train_and_log(
     X_train: np.ndarray,
     X_test: np.ndarray,
     *,
+    epoch_generator: EpochGenerator | None = None,
     dict_to_log: Optional[dict] = None,
     extra_metrics: Optional[dict[str, Callable[[Type[BaseMF]], float]]] = None,
     log_loss: bool = True,
@@ -113,7 +115,9 @@ def train_and_log(
         factoriser = model_factory(X_train, **hyperparams)
 
         # Fit model
-        results = factoriser.matrix_completion(extra_metrics=extra_metrics)
+        results = factoriser.matrix_completion(
+            extra_metrics=extra_metrics, epoch_generator=epoch_generator
+        )
 
         # Predict
         X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")

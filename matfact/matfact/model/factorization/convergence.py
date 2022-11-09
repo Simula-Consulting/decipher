@@ -1,11 +1,20 @@
+from collections.abc import Iterator
+from typing import Protocol
+
 import numpy as np
 from tqdm import trange
 
+from matfact.model import BaseMF
 from matfact.settings import (
     DEFAULT_EPOCHS_PER_VAL,
     DEFAULT_NUMBER_OF_EPOCHS,
     DEFAULT_PATIENCE,
 )
+
+
+class EpochGenerator(Protocol):
+    def __call__(self, model: BaseMF) -> Iterator[int]:
+        ...
 
 
 class ConvergenceMonitor:
