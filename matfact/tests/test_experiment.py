@@ -340,36 +340,31 @@ def test_delta_score(probabilities, correct_index, expected_delta):
 
 
 @pytest.fixture
-def x_v_sample():
+def factorizer(request):
     sample_size, time_span, rank = 100, 40, 5
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
     V = np.random.choice(np.arange(5), size=(time_span, rank))
-    return X, V
+    factorizer_class = request.param
+    return factorizer_class(X, V, ModelConfig())
 
 
-@pytest.mark.parametrize("factorizer", (CMF, WCMF, SCMF))
-def test_factorizers_initialized(factorizer, x_v_sample):
+@pytest.mark.parametrize("factorizer", (CMF, WCMF, SCMF), indirect=True)
+def test_factorizers_initialized(factorizer):
     """Test that the factorizers initialize their internal matrices."""
-    X, V = x_v_sample
-    model = factorizer(X, V, ModelConfig())
     for attr in ("X", "U", "V", "M"):
-        assert hasattr(model, attr)
+        assert hasattr(factorizer, attr)
 
 
-@pytest.mark.parametrize("factorizer", (WCMF, SCMF))
-def test_exact_U(factorizer, x_v_sample):
+@pytest.mark.parametrize("factorizer", (WCMF, SCMF), indirect=True)
+def test_exact_U(factorizer):
     """Test that factorizer initializes U to the exact U."""
-    X, V = x_v_sample
-    model = factorizer(X, V, ModelConfig())
-    exact_U = model._exactly_solve_U()
-    assert np.array_equal(exact_U, model.U)
+    exact_U = factorizer._exactly_solve_U()
+    assert np.array_equal(exact_U, factorizer.U)
 
 
-@pytest.mark.parametrize("factorizer", (WCMF, SCMF))
-def test_approx_U(factorizer, x_v_sample):
+@pytest.mark.parametrize("factorizer", (WCMF, SCMF), indirect=True)
+def test_approx_U(factorizer):
     """Test that factorizer's approximation method approximates the exact solver."""
-    X, V = x_v_sample
-    model = factorizer(X, V, ModelConfig())
-    exact_U = model._exactly_solve_U()
-    approx_U = model._approx_U()
+    exact_U = factorizer._exactly_solve_U()
+    approx_U = factorizer._approx_U()
     assert np.allclose(approx_U, exact_U, atol=0.01)  # atol chosen empirically
