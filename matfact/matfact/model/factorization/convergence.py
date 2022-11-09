@@ -9,14 +9,36 @@ from matfact.settings import (
 
 
 class ConvergenceMonitor:
+    """Epoch generator with eager termination when converged.
+
+    The model is said to have converged when the model's latent matrix (M) has
+    a relative norm difference smaller than tolerance.
+
+    Sample usage:
+    >>> monitor = ConvergenceMonitor(tolerance=1e-5)
+    >>> for epoch in monitor(model):
+    >>>     # If model converges, the generator will deplete before the default number
+    >>>     # of epochs has been reached.
+    >>>     ...
+    """
+
     def __init__(
         self,
-        number_of_epochs=DEFAULT_NUMBER_OF_EPOCHS,
-        epochs_per_val=DEFAULT_EPOCHS_PER_VAL,
-        patience=DEFAULT_PATIENCE,
-        show_progress=True,
-        tolerance=1e-4,
+        number_of_epochs: int = DEFAULT_NUMBER_OF_EPOCHS,
+        epochs_per_val: int = DEFAULT_EPOCHS_PER_VAL,
+        patience: int = DEFAULT_PATIENCE,
+        show_progress: bool = True,
+        tolerance: float = 1e-4,
     ):
+        """Initialize ConvergenceMonitor.
+
+        Args:
+          number_of_epochs: the maximum number of epochs to generate.
+          epochs_per_val: convergence checking is done every epochs_per_val epoch.
+          patience: the minimum number of epcohs.
+          show_progress: enable tqdm progress bar.
+          tolerance: the tolerance under which the model is said to have converged."""
+
         self.number_of_epochs = number_of_epochs
         self.tolerance = tolerance
         self.epochs_per_val = epochs_per_val
@@ -34,6 +56,7 @@ class ConvergenceMonitor:
         return difference
 
     def __call__(self, model):
+        """A generator that yields epoch numbers."""
         self._old_M = model.M
         self._model = model
         for i in self._range(self.number_of_epochs):
