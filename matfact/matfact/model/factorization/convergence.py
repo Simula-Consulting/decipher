@@ -1,20 +1,20 @@
 from collections.abc import Iterator
-from typing import Protocol
+from typing import TYPE_CHECKING, Callable
 
 import numpy as np
 from tqdm import trange
 
-from matfact.model import BaseMF
 from matfact.settings import (
     DEFAULT_EPOCHS_PER_VAL,
     DEFAULT_NUMBER_OF_EPOCHS,
     DEFAULT_PATIENCE,
 )
 
+if TYPE_CHECKING:
+    from matfact.model import BaseMF
 
-class EpochGenerator(Protocol):
-    def __call__(self, model: BaseMF) -> Iterator[int]:
-        ...
+
+EpochGenerator = Callable[["BaseMF"], Iterator[int]]
 
 
 class ConvergenceMonitor:
@@ -52,22 +52,21 @@ class ConvergenceMonitor:
         self.tolerance = tolerance
         self.epochs_per_val = epochs_per_val
         self.patience = patience
-        self._old_M = None
-        self._model = None
         self._range = trange if show_progress else range
 
-    def _update(self):
-        new_M = self._model.M
-        difference = np.sum((new_M - self._old_M) ** 2) / np.sum(self._old_M**2)
-        self._old_M = new_M
-        return difference
+    @staticmethod
+    def _difference_func(new_M, old_M):
+        return np.sum((new_M - old_M) ** 2) / np.sum(old_M**2)
 
-    def __call__(self, model):
+    def __call__(self, model: "BaseMF"):
         """A generator that yields epoch numbers."""
-        self._old_M = model.M
-        self._model = model
-        for i in self._range(self.number_of_epochs):
-            yield i
+        _old_M = model.M
+        _model = model
+        # mypy does not recognize the union of trange and range as a callable.
+        for i in self._range(self.number_of_epochs):  # type: ignore
+            yield i  # model is expected to update its M
             should_update = i > self.patience and i % self.epochs_per_val == 0
-            if should_update and self._update() < self.tolerance:
-                break
+            if should_update:
+                if self._difference_func(_model.M, _old_M) < self.tolerance:
+                    break
+                _old_M = model.M
