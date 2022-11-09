@@ -357,11 +357,19 @@ def test_factorizers_initialized(factorizer, x_v_sample):
 
 
 @pytest.mark.parametrize("factorizer", (WCMF, SCMF))
+def test_exact_U(factorizer, x_v_sample):
+    """Test that factorizer initializes U to the exact U."""
+    X, V = x_v_sample
+    model = factorizer(X, V, ModelConfig())
+    exact_U = model._exactly_solve_U()
+    assert np.array_equal(exact_U, model.U)
+
+
+@pytest.mark.parametrize("factorizer", (WCMF, SCMF))
 def test_approx_U(factorizer, x_v_sample):
     """Test that factorizer's approximation method approximates the exact solver."""
     X, V = x_v_sample
     model = factorizer(X, V, ModelConfig())
     exact_U = model._exactly_solve_U()
     approx_U = model._approx_U()
-    assert np.array_equal(exact_U, model.U)
-    assert np.allclose(exact_U, approx_U, atol=0.01)  # atol chosen empirically
+    assert np.allclose(approx_U, exact_U, atol=0.01)  # atol chosen empirically
