@@ -81,9 +81,7 @@ class BaseMF(ABC):
         output["U"] = self.U
         output["V"] = self.V
         output["M"] = self.M
-
-        if hasattr(self, "s"):
-            output["s"] = self.s
+        output["s"] = getattr(self, "s", None)
 
         output["theta_mle"] = theta_mle(self.X, self.M)
 
