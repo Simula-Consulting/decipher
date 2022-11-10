@@ -13,11 +13,7 @@ permissions:
 jobs:
   Lint-and-test:
 
-    strategy:
-      matrix:
-        os: [macos-12, ubuntu-latest]
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
