@@ -48,6 +48,7 @@ class CMF(BaseMF):
         KD = self.config.difference_matrix_getter(self.T)
         self.J = self.config.minimal_value_matrix_getter((self.T, self.r))
         self._init_matrices(KD)
+        self._update_U()
 
     @property
     def M(self):

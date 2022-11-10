@@ -46,6 +46,8 @@ class WCMF(BaseMF):
         self.J = self.config.minimal_value_matrix_getter((self.T, self.r))
         self._init_matrices(KD)
 
+        self.U = self._exactly_solve_U()
+
     @property
     def M(self):
         return np.array(self.U @ self.V.T, dtype=np.float32)
@@ -82,6 +84,21 @@ class WCMF(BaseMF):
 
         self.V = V.numpy()
 
+    def _exactly_solve_U(self):
+        """Solve for U at a fixed V.
+
+        The internal U member is not modified by this method.
+        V is assumed to be initialized."""
+        U = np.empty((self.N, self.r))
+
+        for n in range(self.N):
+            U[n] = (
+                self.V.T
+                @ (self.W[n] * self.X[n])
+                @ np.linalg.inv(self.V.T @ (self.W[n][:, None] * self.V) + self.I_l1)
+            )
+        return U
+
     def _approx_U(self):
         # @tf.function
         def _loss_U():
@@ -103,24 +120,6 @@ class WCMF(BaseMF):
 
         return U.numpy()
 
-    def _update_U(self):
-        # Faster to approximate U in consecutive iterations
-        if self.n_iter_ > 0:
-            self.U = self._approx_U()
-
-        else:
-            # Estimate U in the first iteration of alternating minimization
-            self.U = np.zeros((self.N, self.r))
-
-            for n in range(self.N):
-                self.U[n] = (
-                    self.V.T
-                    @ (self.W[n] * self.X[n])
-                    @ np.linalg.inv(
-                        self.V.T @ (self.W[n][:, None] * self.V) + self.I_l1
-                    )
-                )
-
     def loss(self):
         "Compute the loss from the optimization objective"
 
@@ -134,7 +133,7 @@ class WCMF(BaseMF):
     def run_step(self):
         "Perform one step of alternating minimization"
 
-        self._update_U()
+        self.U = self._approx_U()
         self._update_V()
 
         self.n_iter_ += 1

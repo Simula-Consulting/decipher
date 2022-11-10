@@ -337,3 +337,34 @@ def test_data_weights():
 def test_delta_score(probabilities, correct_index, expected_delta):
     """Test delta score calculated as expected."""
     assert np.all(_calculate_delta(probabilities, correct_index) == expected_delta)
+
+
+@pytest.fixture
+def factorizer(request):
+    sample_size, time_span, rank = 100, 40, 5
+    X = np.random.choice(np.arange(5), size=(sample_size, time_span))
+    V = np.random.choice(np.arange(5), size=(time_span, rank))
+    factorizer_class = request.param
+    return factorizer_class(X, V, ModelConfig())
+
+
+@pytest.mark.parametrize("factorizer", (CMF, WCMF, SCMF), indirect=True)
+def test_factorizers_initialized(factorizer):
+    """Test that the factorizers initialize their internal matrices."""
+    for attr in ("X", "U", "V", "M"):
+        assert hasattr(factorizer, attr)
+
+
+@pytest.mark.parametrize("factorizer", (WCMF, SCMF), indirect=True)
+def test_exact_U(factorizer):
+    """Test that factorizer initializes U to the exact U."""
+    exact_U = factorizer._exactly_solve_U()
+    assert np.array_equal(exact_U, factorizer.U)
+
+
+@pytest.mark.parametrize("factorizer", (WCMF, SCMF), indirect=True)
+def test_approx_U(factorizer):
+    """Test that factorizer's approximation method approximates the exact solver."""
+    exact_U = factorizer._exactly_solve_U()
+    approx_U = factorizer._approx_U()
+    assert np.allclose(approx_U, exact_U, atol=0.01)  # atol chosen empirically
