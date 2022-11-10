@@ -4,10 +4,10 @@ import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
 from matfact.model import CMF, SCMF, WCMF, BaseMF
+from matfact.model.config import DataWeightGetter, IdentityWeighGetter, ModelConfig
 from matfact.model.factorization.utils import (
-    finite_difference_matrix,
+    convoluted_differences_matrix,
     initialize_basis,
-    laplacian_kernel_matrix,
 )
 from matfact.model.logging import MLFlowLogger
 from matfact.model.predict.classification_tree import estimate_probability_thresholds
@@ -16,52 +16,42 @@ from matfact.model.predict.dataset_utils import prediction_data
 
 def model_factory(
     X: np.ndarray,
-    shift_range: Optional[np.ndarray] = None,
-    convolution: bool = False,
-    weights: Optional[np.ndarray] = None,
+    shift_range: Optional[list[int]] = None,
+    use_convolution: bool = False,
+    use_weights: bool = True,
     rank: int = 5,
     seed: int = 42,
     **kwargs,
 ):
     """Initialize and return appropriate model based on arguments.
 
-    kwargs are passed directly to the models.
+    kwargs are passed the ModelConfig.
     """
     if shift_range is None:
-        shift_range = np.array([])
+        shift_range = []
 
-    padding = 2 * shift_range.size
-
-    if convolution:
-        D = finite_difference_matrix(X.shape[1] + padding)
-        K = laplacian_kernel_matrix(X.shape[1] + padding)
+    if use_convolution:
+        difference_matrix_getter = convoluted_differences_matrix
     else:
-        # None will make the objects generate appropriate identity matrices later.
-        D = K = None
-    kwargs.update({"D": D, "K": K})
+        difference_matrix_getter = np.identity
 
     V = initialize_basis(X.shape[1], rank, seed)
 
-    short_model_name = (
-        "".join(
-            a if cond else b
-            for cond, a, b in [
-                (shift_range.size, "s", ""),
-                (convolution, "c", "l2"),
-                (weights is not None, "w", ""),
-            ]
-        )
-        + "mf"
+    config = ModelConfig(
+        shift_budget=shift_range,
+        difference_matrix_getter=difference_matrix_getter,
+        weight_matrix_getter=(
+            DataWeightGetter() if use_weights else IdentityWeighGetter()
+        ),
+        **kwargs,
     )
 
-    if shift_range.size:
-        weights = (X != 0).astype(np.float32) if weights is None else weights
-        return short_model_name, SCMF(X, V, shift_range, W=weights, **kwargs)
+    if len(shift_range):
+        return SCMF(X, V, config)
+    if config.weight_matrix_getter.is_identity:
+        return CMF(X, V, config)
     else:
-        if weights is not None:
-            return short_model_name, WCMF(X, V, weights, **kwargs)
-        else:
-            return short_model_name, CMF(X, V, **kwargs)
+        return WCMF(X, V, config)
 
 
 def train_and_log(
@@ -129,7 +119,7 @@ def train_and_log(
     with logger_context as logger:
 
         # Create model
-        model_name, factoriser = model_factory(X_train, **hyperparams)
+        factoriser = model_factory(X_train, **hyperparams)
 
         # Fit model
         results = factoriser.matrix_completion(
@@ -182,7 +172,7 @@ def train_and_log(
 
         # Logging
         mlflow_output["params"].update(hyperparams)
-        mlflow_output["params"]["model_name"] = model_name
+        mlflow_output["params"]["model_name"] = factoriser.config.get_short_model_name()
         if dict_to_log:
             mlflow_output["params"].update(dict_to_log)
 

@@ -9,12 +9,7 @@ from sklearn.metrics import accuracy_score, matthews_corrcoef
 
 from matfact import settings
 from matfact.data_generation import Dataset
-from matfact.model import (
-    data_weights,
-    model_factory,
-    prediction_data,
-    reconstruction_mse,
-)
+from matfact.model import model_factory, prediction_data, reconstruction_mse
 from matfact.plotting import (
     plot_basis,
     plot_certainty,
@@ -87,15 +82,15 @@ def experiment(
     mlflow.log_params(dataset.prefixed_metadata())
 
     # Generate the model
-    model_name, model = model_factory(
+    model = model_factory(
         X_train,
-        shift_range=np.arange(-12, 13) if enable_shift else np.array([]),
-        convolution=enable_convolution,
-        weights=data_weights(X_train) if enable_weighting else None,
+        shift_range=list(range(-12, 13)) if enable_shift else [],
+        use_convolution=enable_convolution,
+        use_weights=enable_weighting,
         **hyperparams,
     )
 
-    mlflow.log_param("model_name", model_name)
+    mlflow.log_param("model_name", model.config.get_short_model_name())
 
     # Training and testing #
     # Train the model (i.e. perform the matrix completion)

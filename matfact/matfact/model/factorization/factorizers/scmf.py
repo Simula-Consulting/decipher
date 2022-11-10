@@ -1,9 +1,10 @@
+from typing import cast
+
 import numpy as np
 import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
 
-from matfact import settings
-from matfact.model.factorization.weights import data_weights
+from matfact.model.config import ModelConfig
 
 from .mfbase import BaseMF
 
@@ -72,17 +73,7 @@ class SCMF(BaseMF):
     Args:
         X: Sparse data matrix used to estimate factor matrices
         V: Initial estimate for basic vectors
-        s_budget: Range of possible shift steps (forward or backward from the original
-            position)
-        W (optional): Weight matrix for the discrepancy term. Default is
-            set to the output of `experiments.simulation.data_weights(X)`.
-        D (optional): Forward difference matrix
-        J (optional): A matrix used to impose a minimum value in the basic vectors V
-        K (optional): Convolutional matrix
-        lambda: Regularization coefficients
-        iter_U, iter_V: The number of steps with gradient descent (GD) per factor update
-        learning_rate: Step size used in the GD
-
+        config: Configuration model.
 
     Discussion:
     There are four X matrices (correspondingly for W):
@@ -100,51 +91,30 @@ class SCMF(BaseMF):
         self,
         X,
         V,
-        s_budget,
-        W=None,
-        D=None,
-        J=None,
-        K=None,
-        lambda1=1.0,
-        lambda2=1.0,
-        lambda3=1.0,
-        iter_U=2,
-        iter_V=2,
-        learning_rate=0.001,
-        number_of_states: int = settings.default_number_of_states,
+        config: ModelConfig,
     ):
 
-        self.W = data_weights(X) if W is None else W
-
-        self.s_budget = s_budget
-
-        self.lambda1 = lambda1
-        self.lambda2 = lambda2
-        self.lambda3 = lambda3
-
-        self.iter_U = iter_U
-        self.iter_V = iter_V
-        self.learning_rate = learning_rate
+        self.config = config
+        self.W = self.config.weight_matrix_getter(X)
 
         self.r = V.shape[1]
         self.N, self.T = np.shape(X)
         self.nz_rows, self.nz_cols = np.nonzero(X)
 
         self.n_iter_ = 0
-        self.number_of_states = number_of_states
 
         # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)
         # The number of possible shifts. Used for padding of arrays.
-        self.Ns = int(self.s_budget.size)
+        self.Ns = len(self.config.shift_budget)
 
         # Add time points to cover extended left and right boundaries when shifting.
-        self.K = np.eye(self.T + 2 * self.Ns) if K is None else K
-        self.D = np.eye(self.T + 2 * self.Ns) if D is None else D
-        self.KD = tf.cast(self.K @ self.D, dtype=tf.float32)
+        self.KD = tf.cast(
+            self.config.difference_matrix_getter(self.T + 2 * self.Ns), dtype=tf.float32
+        )
 
-        self.I1 = self.lambda1 * np.identity(self.r)
-        self.I2 = self.lambda2 * np.identity(self.r)
+        self.I1 = self.config.lambda1 * np.identity(self.r)
+        self.I2 = self.config.lambda2 * np.identity(self.r)
 
         # Expand matrices with zeros over the extended left and right boundaries.
         self.X_bc = np.hstack(
@@ -156,7 +126,10 @@ class SCMF(BaseMF):
         self.V_bc = np.vstack(
             [np.zeros((self.Ns, self.r)), V, np.zeros((self.Ns, self.r))]
         )
-        self.J = J if J else tf.ones_like(self.V_bc, dtype=tf.float32)
+        # We know V_bc to be two-dimensional, so cast to please mypy.
+        J_shape = cast(tuple[int, int], self.V_bc.shape)
+        # TODO: do we have to cast this to tf float32?
+        self.J = self.config.minimal_value_matrix_getter(J_shape)
 
         # Implementation shifts W and Y (not UV.T)
         self.X_shifted = self.X_bc.copy()
@@ -168,7 +141,7 @@ class SCMF(BaseMF):
         self.W_shifts = np.empty((self.Ns, *self.W_bc.shape))
 
         # Shift Y in opposite direction of V shift.
-        for j, s_n in enumerate(self.s_budget):
+        for j, s_n in enumerate(self.config.shift_budget):
 
             self.X_shifts[j] = np.roll(self.X_bc, -1 * s_n, axis=1)
             self.W_shifts[j] = np.roll(self.W_bc, -1 * s_n, axis=1)
@@ -227,13 +200,15 @@ class SCMF(BaseMF):
             )
             frob_loss = tf.reduce_sum(frob_tensor**2)
 
-            l2_loss = self.lambda2 * tf.reduce_sum((V - self.J) ** 2)
-            conv_loss = self.lambda3 * tf.reduce_sum((tf.matmul(self.KD, V) ** 2))
+            l2_loss = self.config.lambda2 * tf.reduce_sum((V - self.J) ** 2)
+            conv_loss = self.config.lambda3 * tf.reduce_sum(
+                (tf.matmul(self.KD, V) ** 2)
+            )
 
             return frob_loss + l2_loss + conv_loss
 
-        optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        for _ in tf.range(self.iter_V):
+        optimiser = tf.keras.optimizers.Adam(learning_rate=self.config.learning_rate)
+        for _ in tf.range(self.config.iter_V):
             optimiser.minimize(_loss_V, [V])
 
         self.V_bc = V.numpy()
@@ -251,10 +226,10 @@ class SCMF(BaseMF):
             )
             frob_loss = tf.reduce_sum((frob_tensor) ** 2)
 
-            return frob_loss + self.lambda1 * tf.reduce_sum(U**2)
+            return frob_loss + self.config.lambda1 * tf.reduce_sum(U**2)
 
-        optimiser = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        for _ in tf.range(self.iter_U):
+        optimiser = tf.keras.optimizers.Adam(learning_rate=self.config.learning_rate)
+        for _ in tf.range(self.config.iter_U):
             optimiser.minimize(_loss_U, [U])
 
         return U.numpy()
@@ -289,12 +264,12 @@ class SCMF(BaseMF):
         )
 
         # Selected shifts maximize the correlation between X and M
-        s_new = self.s_budget[np.argmin(D, axis=0)]
+        s_new = [self.config.shift_budget[i] for i in np.argmin(D, axis=0)]
 
         # Update attributes only if changes to the optimal shift
         if not np.array_equal(self.s, s_new):
 
-            self.s = s_new
+            self.s = np.array(s_new)
             self._shift_X_W()
 
     def run_step(self):
@@ -315,8 +290,8 @@ class SCMF(BaseMF):
             )
             ** 2
         )
-        loss += self.lambda1 * np.sum(np.linalg.norm(self.U, axis=1) ** 2)
-        loss += self.lambda2 * np.linalg.norm(self.V_bc) ** 2
-        loss += self.lambda3 * np.linalg.norm(self.KD @ self.V_bc) ** 2
+        loss += self.config.lambda1 * np.sum(np.linalg.norm(self.U, axis=1) ** 2)
+        loss += self.config.lambda2 * np.linalg.norm(self.V_bc) ** 2
+        loss += self.config.lambda3 * np.linalg.norm(self.KD @ self.V_bc) ** 2
 
         return loss

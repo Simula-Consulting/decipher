@@ -7,6 +7,7 @@ import pytest
 
 from matfact import settings
 from matfact.model import CMF, SCMF, WCMF, data_weights, prediction_data, train_and_log
+from matfact.model.config import ModelConfig
 from matfact.model.logging import (
     MLFlowLogger,
     MLFlowLoggerArtifact,
@@ -173,7 +174,7 @@ def test_train_and_log_params():
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
 
     hyperparams = {
-        "shift_range": np.arange(-2, 3),
+        "shift_range": list(range(-2, 3)),
         "rank": 5,
         "lambda1": 1,
         "lambda2": 2,
@@ -230,23 +231,25 @@ def test_model_input_not_changed():
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
     V = np.random.choice(np.arange(5), size=(time_span, rank))
     W = data_weights(X)
-    s_budget = np.arange(-5, 5)
+    s_budget = list(range(-5, 5))
 
     X_initial, W_initial = X.copy(), W.copy()
 
-    cmf = CMF(X, V)
+    config = ModelConfig(shift_budget=s_budget)
+
+    cmf = CMF(X, V, config)
     assert np.array_equal(cmf.X, X_initial)
     cmf.run_step()
     assert np.array_equal(cmf.X, X_initial)
 
-    scmf = WCMF(X, V, W)
+    scmf = WCMF(X, V, config)
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
     scmf.run_step()
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
 
-    scmf = SCMF(X, V, s_budget=s_budget, W=W)
+    scmf = SCMF(X, V, config)
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
     scmf.run_step()
@@ -260,15 +263,15 @@ def test_model_optional_args():
     sample_size, time_span, rank = 100, 40, 5
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
     V = np.random.choice(np.arange(5), size=(time_span, rank))
-    s_budget = np.arange(-5, 5)
+    config = ModelConfig(shift_budget=list(range(-5, 5)))
 
-    cmf = CMF(X, V)
+    cmf = CMF(X, V, config)
     cmf.run_step()
 
-    scmf = WCMF(X, V)
+    scmf = WCMF(X, V, config)
     scmf.run_step()
 
-    scmf = SCMF(X, V, s_budget=s_budget)
+    scmf = SCMF(X, V, config)
     scmf.run_step()
 
 

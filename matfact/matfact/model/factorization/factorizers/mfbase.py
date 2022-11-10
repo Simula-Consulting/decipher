@@ -30,7 +30,7 @@ class BaseMF(ABC):
             self.M,
             t_pred,
             theta_mle(self.X, self.M),
-            number_of_states=self.number_of_states,
+            number_of_states=self.config.number_of_states,
         )
 
     def matrix_completion(
