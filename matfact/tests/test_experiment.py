@@ -8,6 +8,7 @@ import pytest
 from matfact import settings
 from matfact.model import CMF, SCMF, WCMF, data_weights, prediction_data, train_and_log
 from matfact.model.config import ModelConfig
+from matfact.model.factorization.convergence import ConvergenceMonitor
 from matfact.model.logging import (
     MLFlowLogger,
     MLFlowLoggerArtifact,
@@ -180,11 +181,6 @@ def test_train_and_log_params():
         "lambda2": 2,
         "lambda3": 3,
     }
-    optimization_params = {
-        "num_epochs": 10,
-        "patience": 2,
-        "epochs_per_val": 2,
-    }
     extra_metrics = {  # Some arbitrary extra metric to log
         "my_metric": lambda model: np.linalg.norm(model.X),
     }
@@ -198,8 +194,6 @@ def test_train_and_log_params():
             for param in hyperparams:
                 # Some params are numpy arrays, so use np.all
                 assert np.all(hyperparams[param] == log_dict["params"][param])
-            for param in optimization_params:
-                assert param not in log_dict["params"]
             for metric in all_metrics:
                 assert metric in log_dict["metrics"]
 
@@ -208,9 +202,13 @@ def test_train_and_log_params():
     train_and_log(
         X_test=X,
         X_train=X,
-        optimization_params=optimization_params,
-        logger_context=logger_context(),
         extra_metrics=extra_metrics,
+        logger_context=logger_context(),
+        epoch_generator=ConvergenceMonitor(  # Set fewer epochs in order to be faster
+            number_of_epochs=10,
+            patience=2,
+            epochs_per_val=2,
+        ),
         log_loss=True,
         **hyperparams
     )
