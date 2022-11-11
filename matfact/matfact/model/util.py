@@ -68,26 +68,26 @@ def train_and_log(
 ):
     """Train model and log in MLFlow.
 
-    Params:
-    X_train, X_test: Train and test data.
-    dict_to_log:  optional dictionary associated with the run, logged with MLFlow.
-    extra_metrics: optional dictionary of metrics logged in each epoch of training.
-        See `BaseMF.matrix_completion` for more details.
-    log_loss: Whether the loss function as function of epoch should be logged
-        in MLFlow. Note that this is slow.
-    nested: If True, the run is logged as a nested run in MLFlow, useful in for
-        example hyperparameter search. Assumes there to exist an active parent run.
-    use_threshold_optimization: Use ClassificationTree optimization to find thresholds
-        for class selection. Can improve results on data skewed towards normal.
-    optimization_params: kwargs passed to `BaseMF.matrix_completion`. Example
-        {
-        "num_epochs": 2000,  # Number of training epochs.
-        "patience": 200,  # Number of epochs before considering early termination.
-        "epochs_per_val": 5,  # Consider early termination every `epochs_per_val` epoch.
-        }
+    Args:
+        X_train, X_test: Train and test data.
+        dict_to_log:  optional dictionary associated with the run, logged with MLFlow.
+        extra_metrics: optional dictionary of metrics logged in each epoch of training.
+            See `BaseMF.matrix_completion` for more details.
+        log_loss: Whether the loss function as function of epoch should be logged
+            in MLFlow. Note that this is slow.
+        nested: If True, the run is logged as a nested run in MLFlow, useful in for
+            example hyperparameter search. Assumes there to exist an active parent run.
+        use_threshold_optimization: Use ClassificationTree optimization to find thresholds
+            for class selection. Can improve results on data skewed towards normal.
+        optimization_params: kwargs passed to `BaseMF.matrix_completion`. Example
+            {
+            "num_epochs": 2000,  # Number of training epochs.
+            "patience": 200,  # Number of epochs before considering early termination.
+            "epochs_per_val": 5,  # Consider early termination every `epochs_per_val` epoch.
+            }
 
     Returns:
-    A dictionary of relevant output statistics.
+        A dictionary of relevant output statistics.
 
 
     Discussion:

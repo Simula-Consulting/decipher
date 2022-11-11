@@ -1,0 +1,7 @@
+site_name: MatFact
+
+theme:
+  name: "material"
+
+plugins:
+  - mkdocstrings
