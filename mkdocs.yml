@@ -1,0 +1,15 @@
+site_name: My Docs
+
+theme:
+  name: material
+
+nav:
+  - Overview: index.md
+  - MatFact: matfact.md
+  - HMM: hmm.md
+
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [matfact, hmm_synthetic]
