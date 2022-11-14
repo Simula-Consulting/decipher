@@ -150,3 +150,21 @@ def test_generate_higher_states(monkeypatch):
         states_observed = set(dataset.X.flatten())
         states_required = set(range(number_of_states + 1))
         assert states_observed == states_required
+
+
+DGD_artifact_path = settings.TEST_PATH / "test_artifacts" / "DGD_test.npy"
+
+
+def _generate_DGD_data() -> Dataset:
+    number_of_individuals = 1000
+    time_steps = 40
+    rank = 5
+    sparsity_level = 10
+    return Dataset.generate(number_of_individuals, time_steps, rank, sparsity_level)
+
+
+def test_DGD_generation_snapshot():
+    """Test that DGD dataset matches snapshot."""
+    dataset = _generate_DGD_data()
+    correct_dataset = np.load(DGD_artifact_path)
+    assert np.allclose(dataset.X, correct_dataset)
