@@ -1,10 +1,11 @@
-from typing import Any, Callable, Optional, Type
+from typing import Callable, Optional, Type
 
 import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
 from matfact.model import CMF, SCMF, WCMF, BaseMF
 from matfact.model.config import DataWeightGetter, IdentityWeighGetter, ModelConfig
+from matfact.model.factorization.convergence import EpochGenerator
 from matfact.model.factorization.utils import (
     convoluted_differences_matrix,
     initialize_basis,
@@ -58,12 +59,12 @@ def train_and_log(
     X_train: np.ndarray,
     X_test: np.ndarray,
     *,
+    epoch_generator: EpochGenerator | None = None,
     dict_to_log: Optional[dict] = None,
     extra_metrics: Optional[dict[str, Callable[[Type[BaseMF]], float]]] = None,
     log_loss: bool = True,
     logger_context=None,
     use_threshold_optimization: bool = True,
-    optimization_params: Optional[dict[str, Any]] = None,
     **hyperparams,
 ):
     """Train model and log in MLFlow.
@@ -79,12 +80,6 @@ def train_and_log(
         example hyperparameter search. Assumes there to exist an active parent run.
     use_threshold_optimization: Use ClassificationTree optimization to find thresholds
         for class selection. Can improve results on data skewed towards normal.
-    optimization_params: kwargs passed to `BaseMF.matrix_completion`. Example
-        {
-        "num_epochs": 2000,  # Number of training epochs.
-        "patience": 200,  # Number of epochs before considering early termination.
-        "epochs_per_val": 5,  # Consider early termination every `epochs_per_val` epoch.
-        }
 
     Returns:
     A dictionary of relevant output statistics.
@@ -113,8 +108,6 @@ def train_and_log(
                 "This is illegal, as it causes name collision!"
             )
         metrics.append("loss")
-    if optimization_params is None:
-        optimization_params = {}
 
     with logger_context as logger:
 
@@ -123,7 +116,7 @@ def train_and_log(
 
         # Fit model
         results = factoriser.matrix_completion(
-            extra_metrics=extra_metrics, **optimization_params
+            extra_metrics=extra_metrics, epoch_generator=epoch_generator
         )
 
         # Predict

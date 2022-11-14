@@ -11,7 +11,6 @@ from matfact.settings import DATASET_PATH, FIGURE_PATH
 
 def experiment(
     hyperparams,
-    optimization_params,
     enable_shift: bool = False,
     enable_weighting: bool = False,
     enable_convolution: bool = False,
@@ -34,12 +33,6 @@ def experiment(
                 rank,
                 lambda1,
                 lambda2,
-            }
-        optimization_params: Dict passed to the model solver
-            {
-                num_epochs,
-                epochs_per_val,
-                patience,
             }
         enable_shift: Use shifted model with shift range (-12,12)
         enable_weighting: Use weighted model with weights as defined in
@@ -70,7 +63,6 @@ def experiment(
         extra_metrics=extra_metrics,
         use_convolution=enable_convolution,
         logger_context=MLFlowLoggerDiagnostic(FIGURE_PATH, extra_tags=mlflow_tags),
-        optimization_params=optimization_params,
         **hyperparams
     )
 
@@ -96,15 +88,10 @@ def main():
         "lambda2": 8,
         "lambda3": 4.535681885641427,
     }
-    optimization_params = {
-        "num_epochs": 1500,
-        "patience": 5,
-    }
 
     for shift, weight, convolve in product([False, True], repeat=3):
         experiment(
             hyperparams,
-            optimization_params,
             shift,
             weight,
             convolve,

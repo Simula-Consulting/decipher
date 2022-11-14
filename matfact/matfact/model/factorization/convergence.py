@@ -1,57 +1,72 @@
+from collections.abc import Iterator
+from typing import TYPE_CHECKING, Callable
+
 import numpy as np
+from tqdm import trange
+
+from matfact.settings import (
+    DEFAULT_EPOCHS_PER_VAL,
+    DEFAULT_NUMBER_OF_EPOCHS,
+    DEFAULT_PATIENCE,
+)
+
+if TYPE_CHECKING:
+    from matfact.model import BaseMF
 
 
-def convergence_monitor(M, error_tol=1e-4):
-    """Track convergence of the matrix completion process by measuring the
-    difference between consecutive estimates.
+EpochGenerator = Callable[["BaseMF"], Iterator[int]]
+
+
+class ConvergenceMonitor:
+    """Epoch generator with eager termination when converged.
+
+    The model is said to have converged when the model's latent matrix (M) has
+    a relative norm difference smaller than tolerance.
+
+    Sample usage:
+    >>> monitor = ConvergenceMonitor(tolerance=1e-5)
+    >>> for epoch in monitor(model):
+    >>>     # If model converges, the generator will deplete before the default number
+    >>>     # of epochs has been reached.
+    >>>     ...
     """
-    return MonitorFactorUpdate(M=M, tol=error_tol)
 
+    def __init__(
+        self,
+        number_of_epochs: int = DEFAULT_NUMBER_OF_EPOCHS,
+        epochs_per_val: int = DEFAULT_EPOCHS_PER_VAL,
+        patience: int = DEFAULT_PATIENCE,
+        show_progress: bool = True,
+        tolerance: float = 1e-4,
+    ):
+        """Initialize ConvergenceMonitor.
 
-class MonitorFactorUpdate:
-    def __init__(self, M, tol=1e-6):
+        Args:
+          number_of_epochs: the maximum number of epochs to generate.
+          epochs_per_val: convergence checking is done every epochs_per_val epoch.
+          patience: the minimum number of epcohs.
+          show_progress: enable tqdm progress bar.
+          tolerance: the tolerance under which the model is said to have converged."""
 
-        self.M = M
-        self.tol = tol
+        self.number_of_epochs = number_of_epochs
+        self.tolerance = tolerance
+        self.epochs_per_val = epochs_per_val
+        self.patience = patience
+        self._range = trange if show_progress else range
 
-        self.n_iter_ = 0
-        self.update_ = []
-        self.convergence_rate_ = []
+    @staticmethod
+    def _difference_func(new_M, old_M):
+        return np.sum((new_M - old_M) ** 2) / np.sum(old_M**2)
 
-    def _should_stop(self, M_new):
-
-        update = float(
-            np.linalg.norm(M_new - self.M) ** 2 / np.linalg.norm(self.M) ** 2
-        )
-
-        if np.isnan(update):
-            raise ValueError("Update value is NaN")
-
-        self.update_.append(update)
-
-        return update < self.tol
-
-    def track_convergence_rate(self, M_new):
-
-        self.Mpp = self.Mp
-        self.Mp = self.M
-        self.M = M_new
-
-        a = np.linalg.norm(self.M - self.Mp)
-        b = np.linalg.norm(self.Mp - self.Mpp) + 1e-12
-        self.convergence_rate_.append(a / b)
-
-    def converged(self, M_new):
-
-        should_stop = self._should_stop(M_new)
-
-        if self.n_iter_ > 0:
-            self.track_convergence_rate(M_new=M_new)
-
-        else:
-            self.Mp = self.M
-            self.M = M_new
-
-        self.n_iter_ += 1
-
-        return should_stop
+    def __call__(self, model: "BaseMF"):
+        """A generator that yields epoch numbers."""
+        _old_M = model.M
+        _model = model
+        # mypy does not recognize the union of trange and range as a callable.
+        for i in self._range(self.number_of_epochs):  # type: ignore
+            yield i  # model is expected to update its M
+            should_update = i > self.patience and i % self.epochs_per_val == 0
+            if should_update:
+                if self._difference_func(_model.M, _old_M) < self.tolerance:
+                    break
+                _old_M = model.M

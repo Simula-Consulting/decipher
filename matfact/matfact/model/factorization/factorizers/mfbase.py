@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
-from tqdm import tqdm
+import numpy.typing as npt
 
-from matfact.model.factorization.convergence import convergence_monitor
+from matfact.model.factorization.convergence import ConvergenceMonitor, EpochGenerator
 from matfact.model.factorization.utils import theta_mle
 from matfact.model.predict.risk_prediction import predict_proba
 
@@ -10,10 +10,14 @@ from matfact.model.predict.risk_prediction import predict_proba
 class BaseMF(ABC):
     "Base class for matrix factorization algorithms."
 
+    X: npt.NDArray
+    U: npt.NDArray
+    V: npt.NDArray
+
     @property
     @abstractmethod
     def M(self):
-        return
+        ...
 
     @abstractmethod
     def run_step(self):
@@ -36,21 +40,20 @@ class BaseMF(ABC):
     def matrix_completion(
         self,
         extra_metrics=None,
-        fname="",
-        epochs_per_val=5,
-        num_epochs=2000,
-        patience=200,
-        progress=True,
+        epoch_generator: EpochGenerator | None = None,
     ):
         """Run matrix completion on input matrix X using a factorization model.
 
         extra_metrics: Dict of name, callable pairs for extra metric logging.
             Callable must have the signature (model: Type[BaseMF]) -> Float.
+        epoch_generator: A generator of epoch numbers. Defaults to ConvergenceMonitor
+            which implements eager termination if detecting convergence.
         """
+        if epoch_generator is None:
+            epoch_generator = ConvergenceMonitor()
 
         # Results collected from the process
-        output = {
-            "convergence_rate": [],
+        output: dict = {
             "loss": [],
             "epochs": [],
             "U": None,
@@ -66,7 +69,7 @@ class BaseMF(ABC):
         for metric in extra_metrics:
             output[metric] = []
 
-        for epoch in tqdm(range(num_epochs), disable=not progress, desc="Epoch: "):
+        for epoch in epoch_generator(self):
 
             self.run_step()
 
@@ -75,20 +78,10 @@ class BaseMF(ABC):
             for metric, callable in extra_metrics.items():
                 output[metric].append(callable(self))
 
-            if epoch == patience:
-                monitor = convergence_monitor(self.M)
-
-            if epoch % epochs_per_val == 0 and epoch > patience:
-
-                if monitor.converged(self.M):
-                    break
-
         output["U"] = self.U
         output["V"] = self.V
         output["M"] = self.M
-
-        if hasattr(self, "s"):
-            output["s"] = self.s
+        output["s"] = getattr(self, "s", None)
 
         output["theta_mle"] = theta_mle(self.X, self.M)
 

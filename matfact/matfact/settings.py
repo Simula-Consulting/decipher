@@ -23,3 +23,9 @@ default_observation_probabilities = np.array([0.01, 0.03, 0.08, 0.12, 0.04])
 # Minimum number of observations to be considered valid
 # Used during data generation
 minimum_number_of_observations = 3
+
+
+### Convergence monitor ###
+DEFAULT_NUMBER_OF_EPOCHS = 2000
+DEFAULT_EPOCHS_PER_VAL = 5
+DEFAULT_PATIENCE = 200
