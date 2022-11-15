@@ -17,9 +17,13 @@ from bokeh.models import (
     CDSView,
     Circle,
     ColumnDataSource,
+    CustomJSExpr,
     DataTable,
     HoverTool,
     IndexFilter,
+    Legend,
+    LegendItem,
+    Slider,
     TableColumn,
 )
 from bokeh.models.callbacks import CustomJS
@@ -73,6 +77,7 @@ ys_pred = ys_pred.tolist()
 # Each row corresponds to one individual
 source = ColumnDataSource(
     {
+        "is": [[i] * len(xs[0]) for i in range(len(xs))],  # List of indices, hack!
         "xs": xs,
         "ys": ys,
         "ys_pred": ys_pred,
@@ -135,6 +140,47 @@ lines_pred = log_figure.multi_line(
     nonselection_line_alpha=0.0,
 )
 
+# Add Lexis-ish plot
+lexis_figure = figure(title="Lexis-ish plot")  # , x_range=(0,100), y_range=(0,40))
+markers = (None, "square", "circle", "diamond")
+colors = [None, "blue", "green", "red"]
+lexis_lines = []
+for i, _ in enumerate(xs):
+    lexis_lines.append(
+        lexis_figure.scatter(
+            x=xs[i],
+            y=[i] * len(xs[i]),
+            marker=[markers[int(state)] for state in ys[i]],
+            color=[colors[int(state)] for state in ys[i]],
+            size=10,
+            muted_alpha=0.1,
+            legend_field="marker",
+        )
+    )
+
+
+def mute_lines_v1(attr, old, new):
+    if new is None or new == []:
+        new = range(len(xs))
+    y_index = iter(range(len(new)))
+    for i, line in enumerate(lexis_lines):
+        # line.muted = i not in new
+        if i in new:
+            line.visible = True
+            line.data_source.data["y"] = [next(y_index)] * len(
+                line.data_source.data["x"]
+            )
+        else:
+            line.visible = False
+
+
+def mute_lines_v2(attr, old, new):
+    for i, line in enumerate(lexis_lines):
+        line.muted = i not in new
+
+
+source.selected.on_change("indices", mute_lines_v2)
+
 # Add the table over individuals
 person_table = DataTable(
     source=source,
@@ -147,16 +193,16 @@ person_table = DataTable(
     ],
 )
 
-# Set up our event handler
-
+slider = Slider(start=1, end=20, step=0.5, value=10)
+for line in lexis_lines:
+    slider.js_link("value", line.glyph, "size")
 
 # Put everything in the document
 curdoc().add_root(
-    # column(
     row(
         delta_figure,
+        column(lexis_figure, slider),
         log_figure,
         person_table,
     ),
-    # )
 )
