@@ -73,6 +73,16 @@ ys_pred = X_test.copy()
 ys_pred[range(len(ys_pred)), t_pred] = x_pred
 ys_pred = ys_pred.tolist()
 
+number_of_individuals = len(xs)
+number_of_time_steps = len(xs[0])
+
+rng = np.random.default_rng()
+max_offset = 40  # Years
+fake_date_of_birth = [
+    1960 + max_offset * factor for factor in rng.random(number_of_individuals)
+]
+
+
 # Set up the Bokeh data source
 # Each row corresponds to one individual
 source = ColumnDataSource(
@@ -91,8 +101,8 @@ source = ColumnDataSource(
     }
 )
 
-number_of_individuals = len(xs)
-number_of_time_steps = len(xs[0])
+years = ((age + fake_date_of_birth[i] for age in ages) for i, ages in enumerate(xs))
+
 scatter_source = ColumnDataSource(
     {
         key: list(value)
@@ -105,6 +115,7 @@ scatter_source = ColumnDataSource(
                     for i in range(number_of_individuals)
                 )
             ),
+            "year": itertools.chain.from_iterable(years),
         }.items()
     }
 )
@@ -159,8 +170,34 @@ lines_pred = log_figure.multi_line(
 )
 
 # Add Lexis-ish plot
+lexis_ish_figure = figure(
+    title="Lexis-ish plot", tools="tap,lasso_select," + default_tools
+)  # , x_range=(0,100), y_range=(0,40))
+markers = (None, "square", "circle", "diamond")
+colors = [None, "blue", "green", "red"]
+
+
+def cycle_mapper(cycle):
+    return {
+        "expr": CustomJSExpr(
+            args={"markers": cycle}, code="return this.data.y.map(i => markers[i]);"
+        )
+    }
+
+
+lexis_scatter = lexis_ish_figure.scatter(
+    "x",
+    "i",
+    marker=cycle_mapper(markers),
+    color=cycle_mapper(colors),
+    source=scatter_source,
+    legend_group="y",
+)
+
+
+# Add Lexis plot
 lexis_figure = figure(
-    title="Lexis-ish plot", tools="tap," + default_tools
+    title="Lexis-ish plot", tools="tap,lasso_select," + default_tools
 )  # , x_range=(0,100), y_range=(0,40))
 markers = (None, "square", "circle", "diamond")
 colors = [None, "blue", "green", "red"]
@@ -176,7 +213,7 @@ def cycle_mapper(cycle):
 
 lexis_scatter = lexis_figure.scatter(
     "x",
-    "i",
+    "year",
     marker=cycle_mapper(markers),
     color=cycle_mapper(colors),
     source=scatter_source,
@@ -224,7 +261,7 @@ slider.js_link("value", lexis_scatter.glyph, "size")
 curdoc().add_root(
     row(
         delta_figure,
-        column(lexis_figure, slider),
+        column(lexis_figure, lexis_ish_figure, slider),
         log_figure,
         person_table,
     ),
