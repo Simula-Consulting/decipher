@@ -91,6 +91,24 @@ source = ColumnDataSource(
     }
 )
 
+number_of_individuals = len(xs)
+number_of_time_steps = len(xs[0])
+scatter_source = ColumnDataSource(
+    {
+        key: list(value)
+        for key, value in {
+            "x": itertools.chain.from_iterable(xs),
+            "y": itertools.chain.from_iterable(ys),
+            "i": itertools.chain.from_iterable(
+                (
+                    itertools.repeat(i, number_of_time_steps)
+                    for i in range(number_of_individuals)
+                )
+            ),
+        }.items()
+    }
+)
+
 
 ## Set up Bokeh plots
 default_tools = "pan,wheel_zoom,box_zoom,save,reset,help"
@@ -141,45 +159,49 @@ lines_pred = log_figure.multi_line(
 )
 
 # Add Lexis-ish plot
-lexis_figure = figure(title="Lexis-ish plot")  # , x_range=(0,100), y_range=(0,40))
+lexis_figure = figure(
+    title="Lexis-ish plot", tools="tap," + default_tools
+)  # , x_range=(0,100), y_range=(0,40))
 markers = (None, "square", "circle", "diamond")
 colors = [None, "blue", "green", "red"]
-lexis_lines = []
-for i, _ in enumerate(xs):
-    lexis_lines.append(
-        lexis_figure.scatter(
-            x=xs[i],
-            y=[i] * len(xs[i]),
-            marker=[markers[int(state)] for state in ys[i]],
-            color=[colors[int(state)] for state in ys[i]],
-            size=10,
-            muted_alpha=0.1,
-            legend_field="marker",
+
+
+def cycle_mapper(cycle):
+    return {
+        "expr": CustomJSExpr(
+            args={"markers": cycle}, code="return this.data.y.map(i => markers[i]);"
         )
-    )
+    }
 
 
-def mute_lines_v1(attr, old, new):
-    if new is None or new == []:
-        new = range(len(xs))
-    y_index = iter(range(len(new)))
-    for i, line in enumerate(lexis_lines):
-        # line.muted = i not in new
-        if i in new:
-            line.visible = True
-            line.data_source.data["y"] = [next(y_index)] * len(
-                line.data_source.data["x"]
-            )
-        else:
-            line.visible = False
+lexis_scatter = lexis_figure.scatter(
+    "x",
+    "i",
+    marker=cycle_mapper(markers),
+    color=cycle_mapper(colors),
+    source=scatter_source,
+    legend_group="y",
+)
 
 
-def mute_lines_v2(attr, old, new):
-    for i, line in enumerate(lexis_lines):
-        line.muted = i not in new
+def select_person(attr, old, selected_people):
+    all_indices = [
+        i
+        for i, person_index in enumerate(scatter_source.data["i"])
+        if person_index in selected_people
+    ]
+
+    scatter_source.selected.indices = all_indices
+    source.selected.indices = selected_people
 
 
-source.selected.on_change("indices", mute_lines_v2)
+def set_group_selected(attr, old, new):
+    selected_people = list({scatter_source.data["i"][i] for i in new})
+    select_person(None, None, selected_people)
+
+
+scatter_source.selected.on_change("indices", set_group_selected)
+source.selected.on_change("indices", select_person)
 
 # Add the table over individuals
 person_table = DataTable(
@@ -194,8 +216,9 @@ person_table = DataTable(
 )
 
 slider = Slider(start=1, end=20, step=0.5, value=10)
-for line in lexis_lines:
-    slider.js_link("value", line.glyph, "size")
+slider.js_link("value", lexis_scatter.glyph, "size")
+# for line in lexis_lines:
+#     slider.js_link("value", line.glyph, "size")
 
 # Put everything in the document
 curdoc().add_root(
