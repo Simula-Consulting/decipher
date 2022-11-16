@@ -1,35 +1,21 @@
 # type: ignore
 # flake8: noqa
-"""Example Bokeh server app, taken from docs.
-
-See https://docs.bokeh.org/en/latest/docs/user_guide/server.html"""
-
-
+"""Example Bokeh server app"""
 import itertools
 import pathlib
-from random import random
 
 import numpy as np
-import pandas as pd
 from bokeh.layouts import column, row
 from bokeh.models import (
-    Button,
-    CDSView,
-    Circle,
     ColumnDataSource,
     CustomJSExpr,
     DataTable,
     Div,
     HoverTool,
-    IndexFilter,
-    Legend,
-    LegendItem,
     Slider,
     TableColumn,
 )
-from bokeh.models.callbacks import CustomJS
 from bokeh.models.tickers import FixedTicker
-from bokeh.palettes import RdYlBu3
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import linear_cmap
 from matfact.data_generation import Dataset
@@ -37,6 +23,7 @@ from matfact.experiments import train_and_log
 from matfact.experiments.logging import dummy_logger_context
 from matfact.plotting.diagnostic import _calculate_delta
 
+# Base64 encoded SC png logo
 SC_logo_base64 = r"""iVBORw0KGgoAAAANSUhEUgAAAO4AAAC4CAYAAADkOdDIAAAABGdBTUEAALGPC/xhBQAAACBjSFJN
 AAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QA/wD/AP+gvaeTAAAA
 CXBIWXMAACE3AAAhNwEzWJ96AAAAB3RJTUUH5gsQCAwgssgKzQAAF5RJREFUeNrt3XmYW3W9x/H3
@@ -152,6 +139,13 @@ LTE2VDA4OjEyOjMyKzAwOjAw5F7l8gAAAABJRU5ErkJggg=="""
 
 
 def get_permutation_list(array):
+    """Given an array, return a list of indices that sorts the array.
+
+    >>> get_permutation_list([3, 2, 1])
+    [2, 1, 0]
+    >>> get_permutation_list([10, 100, 20])
+    [0, 2, 1]
+    """
     return [i for i, v in sorted(enumerate(array), key=lambda iv: iv[1])]
 
 
