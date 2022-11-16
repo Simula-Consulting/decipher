@@ -1,21 +1,32 @@
 """Utility functions for masking prediction data used in training."""
+from collections.abc import Callable
+
 import numpy as np
+import numpy.typing as npt
 
 
-def _last_observed_time(observation_data):
+def _last_observed_time(observation_data: npt.NDArray) -> npt.NDArray:
+    """Return the last observed entry per row."""
     max_time = observation_data.shape[1]
     return max_time - np.argmax(observation_data[:, ::-1] != 0, axis=1) - 1
 
 
-def _mask_row(row, time_point, mask_window_size=3):
+def _mask_row(row: npt.NDArray, time_point: int, mask_window_size: int = 3) -> None:
+    """Mask the `mask_window_size` points up until `time_point` in-place.
+
+    Warning:
+        The row is masked in-place!
+    """
     row[max(0, time_point - mask_window_size) :] = 0
 
 
 def prediction_data(
-    observation_matrix,
-    prediction_time_strategy=_last_observed_time,
-    row_masking_strategy=_mask_row,
-):
+    observation_matrix: npt.NDArray,
+    prediction_time_strategy: Callable[
+        [npt.NDArray], npt.NDArray
+    ] = _last_observed_time,
+    row_masking_strategy: Callable[[npt.NDArray, int], None] = _mask_row,
+) -> tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
     """Mask observed data to produce test data for predictions.
 
     Arguments:
