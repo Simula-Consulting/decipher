@@ -19,6 +19,7 @@ from bokeh.models import (
     ColumnDataSource,
     CustomJSExpr,
     DataTable,
+    Div,
     HoverTool,
     IndexFilter,
     Legend,
@@ -257,12 +258,27 @@ slider.js_link("value", lexis_scatter.glyph, "size")
 # for line in lexis_lines:
 #     slider.js_link("value", line.glyph, "size")
 
+information_box = Div(
+    text="""<h1>Welcome to the Simula Consulting interactive exploration demo!</h1>
+    <br/><br/>
+
+    <div style="border: 1px solid rgba(0,0,0,0.125); padding: 10px; border-radius: 5px; width: 50%;">
+    Hei
+
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed hendrerit nec elit quis consectetur. Cras in viverra quam. Donec vel dictum arcu. Suspendisse at mauris lobortis, efficitur magna sit amet, tristique nulla. Duis molestie mi vel consequat vestibulum. Pellentesque mollis aliquet lorem non varius. Sed placerat enim urna, in accumsan dui pharetra id. Donec ultricies convallis eleifend. Proin et nisl libero. Maecenas ultricies arcu tortor. Phasellus quis ante nisi. Aenean dictum est lorem, eu fermentum nibh mollis non.
+    </div>
+    """,
+)
+
 # Put everything in the document
 curdoc().add_root(
-    row(
-        delta_figure,
-        column(lexis_figure, lexis_ish_figure, slider),
-        log_figure,
-        person_table,
-    ),
+    column(
+        information_box,
+        row(
+            delta_figure,
+            column(lexis_figure, lexis_ish_figure, slider),
+            log_figure,
+            person_table,
+        ),
+    )
 )
