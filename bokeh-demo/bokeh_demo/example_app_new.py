@@ -182,7 +182,7 @@ x = list(range(len(x_true)))
 sorted_x = [permutations.index(i) for i in x]
 
 xs = list(itertools.repeat(list(range(X_test.shape[1])), X_test.shape[0]))
-ys = X_test.tolist()
+ys = X_test.astype(int).tolist()
 ys_pred = X_test.copy()
 ys_pred[range(len(ys_pred)), t_pred] = x_pred
 ys_pred = ys_pred.tolist()
