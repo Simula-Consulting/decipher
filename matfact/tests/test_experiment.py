@@ -274,11 +274,14 @@ def test_model_optional_args():
 
 
 def test_prediction_data():
-    """Test that prediction_data does not alter its input array."""
+    """Test prediction_data."""
     X = np.random.default_rng(42).integers(0, 2, (4, 10))
     X_passed_to_function = X.copy()
-    prediction_data(X_passed_to_function)
+    X_masked, *_ = prediction_data(X_passed_to_function)
+    # prediction_data should not alter input
     assert np.array_equal(X, X_passed_to_function)
+    # prediction_data should not change the shape
+    assert np.array_equal(X.shape, X_masked.shape)
 
 
 def test_value_error_loss_extra_metric():
