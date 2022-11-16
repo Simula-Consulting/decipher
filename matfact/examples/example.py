@@ -66,7 +66,7 @@ def experiment(
 
     # Simulate data for a prediction task by selecting the last data point in each
     # sample vetor as the prediction target
-    X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
+    X_test_masked, t_pred, x_true = prediction_data(X_test)
 
     mlflow.start_run()
     mlflow.set_tags(mlflow_tags)

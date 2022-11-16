@@ -120,7 +120,7 @@ def train_and_log(
         )
 
         # Predict
-        X_test_masked, t_pred, x_true = prediction_data(X_test, "last_observed")
+        X_test_masked, t_pred, x_true = prediction_data(X_test)
         p_pred = factoriser.predict_probability(X_test_masked, t_pred)
 
         mlflow_output: dict = {
@@ -131,9 +131,7 @@ def train_and_log(
         }
         if use_threshold_optimization:
             # Find the optimal threshold values
-            X_train_masked, t_pred_train, x_true_train = prediction_data(
-                X_train, "last_observed"
-            )
+            X_train_masked, t_pred_train, x_true_train = prediction_data(X_train)
             p_pred_train = factoriser.predict_probability(X_train_masked, t_pred_train)
             classification_tree = estimate_probability_thresholds(
                 x_true_train, p_pred_train
