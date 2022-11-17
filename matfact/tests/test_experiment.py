@@ -277,7 +277,11 @@ def test_model_optional_args():
 
 
 @given(
-    arrays(int, array_shapes(min_dims=2, max_dims=2), elements=st.sampled_from([0, 1]))
+    arrays(
+        int,
+        array_shapes(min_dims=2, max_dims=2),
+        elements=st.integers(min_value=0, max_value=settings.default_number_of_states),
+    )
 )
 def test_prediction_data(X):
     """Test prediction_data."""
