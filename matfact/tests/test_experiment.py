@@ -4,6 +4,9 @@ from contextlib import contextmanager
 import mlflow
 import numpy as np
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from hypothesis.extra.numpy import array_shapes, arrays
 
 from matfact import settings
 from matfact.model import CMF, SCMF, WCMF, data_weights, prediction_data, train_and_log
@@ -273,9 +276,11 @@ def test_model_optional_args():
     scmf.run_step()
 
 
-def test_prediction_data():
+@given(
+    arrays(int, array_shapes(min_dims=2, max_dims=2), elements=st.sampled_from([0, 1]))
+)
+def test_prediction_data(X):
     """Test prediction_data."""
-    X = np.random.default_rng(42).integers(0, 2, (4, 10))
     X_passed_to_function = X.copy()
     X_masked, *_ = prediction_data(X_passed_to_function)
     # prediction_data should not alter input
