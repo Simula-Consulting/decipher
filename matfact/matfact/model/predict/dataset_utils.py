@@ -1,54 +1,59 @@
 """Utility functions for masking prediction data used in training."""
-import random as rnd
+from collections.abc import Callable
 
 import numpy as np
+import numpy.typing as npt
 
 
-def prediction_data(Y, method):
-    """Simulate data for a prediction task based on longitudinal
-    vectors in Y. The procedure will select one data point per row in
-    Y and remove this from the output matrix. The original data points
-    and the corresponding column number (aka time points) are stored in
-    separate vectors."""
-
-    return mask_test_samples(Y.copy(), _t_pred(Y, method))
+def _last_observed_time(observation_data: npt.NDArray) -> npt.NDArray:
+    """Return the last observed entry per row."""
+    max_time = observation_data.shape[1]
+    return max_time - np.argmax(observation_data[:, ::-1] != 0, axis=1) - 1
 
 
-def _t_pred(Y, prediction_rule):
+def _mask_row(row: npt.NDArray, time_point: int, mask_window_size: int = 3) -> None:
+    """Mask the `mask_window_size` points up until `time_point` in-place.
 
-    # Find time of last observed entry for all rows
-    if prediction_rule == "last_observed":
-        return Y.shape[1] - np.argmax(Y[:, ::-1] != 0, axis=1) - 1
-
-    if prediction_rule == "random":
-        # NB! We (Simula) should be careful to trust this function,
-        # as when we inherited the code, the function did not work
-        # as random was not imported.
-        # I (Thorvald Ballestad) simply imported it, but
-        # have not tested that the rest of the logic is correct.
-        #  - 12. Sep. 2022
-        rows, cols = np.where(Y != 0)
-
-        times = []
-        for r in np.unique(rows):
-            times.append(rnd.choice(cols[rows == r]))
-
-        return np.array(times, dtype=int)
-
-    raise ValueError(f"Invalid prediction mode {prediction_rule}")
+    Warning:
+        The row is masked in-place!
+    """
+    row[max(0, time_point - mask_window_size) :] = 0
 
 
-def mask_test_samples(Y, t_pred, time_gap=3, min_n_train=3):
+def prediction_data(
+    observation_matrix: npt.NDArray,
+    prediction_time_strategy: Callable[
+        [npt.NDArray], npt.NDArray
+    ] = _last_observed_time,
+    row_masking_strategy: Callable[[npt.NDArray, int], None] = _mask_row,
+) -> tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
+    """Mask observed data to produce test data for predictions.
 
-    # Copy values to be predicted
-    y_true = np.copy(Y[range(Y.shape[0]), t_pred])
+    Arguments:
+        prediction_time_strategy: Callable returning prediction times given the
+            observation_matrix. Defaults to choosing the last observation.
+        row_masking_strategy: Callable masking an observation row,
+            i.e. individual history, given a time point. Note that the masking is done
+            in place, not by return.
+            Defaults to masking the three time slots from prediction time and back.
 
-    # Remove observations over prediction window
-    for i_row in range(Y.shape[0]):
-        Y[i_row, max(0, t_pred[i_row] - time_gap) :] = 0
+    Examples:
+        >>> masked_observation, times, correct_values = prediction_data(my_data)
+        >>> my_data[range(times.size), times] == correct_values
+        True
+        >>> (masked_observation[range(times.size), times] == 0).all()
+        True
+    """
 
-    # Find rows that still contain observations
-    valid_rows = np.count_nonzero(Y, axis=1) >= min_n_train
+    times = prediction_time_strategy(observation_matrix)
+    # Choose the value at times for each row
+    correct_values = np.take_along_axis(
+        observation_matrix, times[:, None], axis=1
+    ).flatten()
 
-    # Remove all rows that dont contain observations
-    return Y[valid_rows], t_pred[valid_rows], y_true[valid_rows]
+    # row_masking_strategy masks in-place, so important to copy!
+    masked_observation_matrix = np.copy(observation_matrix)
+    for i, row in enumerate(masked_observation_matrix):
+        row_masking_strategy(row, times[i])
+
+    return masked_observation_matrix, times, correct_values
