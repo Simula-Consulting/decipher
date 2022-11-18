@@ -57,6 +57,8 @@ class ModelConfig:
     learning_rate: float = 0.001
     number_of_states: int = settings.default_number_of_states
 
+    use_threshold_optimization: bool = True
+
     difference_matrix_getter: Callable[[int], npt.NDArray] = np.identity
     weight_matrix_getter: WeightGetter = field(default_factory=DataWeightGetter)
     minimal_value_matrix_getter: Callable[[tuple[int, int]], npt.NDArray] = np.ones
