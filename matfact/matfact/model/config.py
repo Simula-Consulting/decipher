@@ -45,7 +45,7 @@ class DataWeightGetter(WeightGetter):
 class ModelConfig:
     """Configuration class for the MatFact model."""
 
-    shift_budget: list[int] = field(default_factory=list)
+    shift_budget: list[int] = field(default_factory=lambda: [0])
 
     lambda1: float = 1.0
     lambda2: float = 1.0
