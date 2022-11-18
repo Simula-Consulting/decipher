@@ -51,6 +51,8 @@ class ModelConfig:
     lambda2: float = 1.0
     lambda3: float = 1.0
 
+    rank: int = 5
+
     iter_U: int = 2
     iter_V: int = 2
 

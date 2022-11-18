@@ -3,6 +3,7 @@ from warnings import warn
 import numpy as np
 
 from matfact.model.config import ModelConfig
+from matfact.model.factorization.utils import initialize_basis
 
 from .mfbase import BaseMF
 
@@ -22,7 +23,6 @@ class CMF(BaseMF):
     def __init__(
         self,
         X,
-        V,
         config: ModelConfig,
     ):
         if not config.weight_matrix_getter.is_identity:
@@ -37,10 +37,10 @@ class CMF(BaseMF):
             )
 
         self.X = X
-        self.V = V
+        self.V = initialize_basis(X.shape[1], config.rank, 42)
         self.config = config
 
-        self.r = V.shape[1]
+        self.r = self.V.shape[1]
         self.N, self.T = np.shape(self.X)
         self.nz_rows, self.nz_cols = np.nonzero(self.X)
 

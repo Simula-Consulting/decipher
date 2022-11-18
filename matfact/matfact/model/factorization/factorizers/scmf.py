@@ -5,6 +5,7 @@ import tensorflow as tf
 from numpy.lib.stride_tricks import as_strided
 
 from matfact.model.config import ModelConfig
+from matfact.model.factorization.utils import initialize_basis
 
 from .mfbase import BaseMF
 
@@ -90,13 +91,13 @@ class SCMF(BaseMF):
     def __init__(
         self,
         X,
-        V,
         config: ModelConfig,
     ):
 
         self.config = config
         self.W = self.config.weight_matrix_getter(X)
 
+        V = initialize_basis(X.shape[1], config.rank, 42)
         self.r = V.shape[1]
         self.N, self.T = np.shape(X)
         self.nz_rows, self.nz_cols = np.nonzero(X)

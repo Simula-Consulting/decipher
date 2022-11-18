@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 from matfact.model.config import ModelConfig
+from matfact.model.factorization.utils import initialize_basis
 
 from .mfbase import BaseMF
 
@@ -23,7 +24,6 @@ class WCMF(BaseMF):
     def __init__(
         self,
         X,
-        V,
         config: ModelConfig,
     ):
         if config.shift_budget:
@@ -34,10 +34,10 @@ class WCMF(BaseMF):
 
         self.config = config
         self.X = X
-        self.V = V
+        self.V = initialize_basis(X.shape[1], config.rank, 42)
         self.W = self.config.weight_matrix_getter(X)
 
-        self.r = V.shape[1]
+        self.r = self.V.shape[1]
         self.N, self.T = np.shape(self.X)
         self.nz_rows, self.nz_cols = np.nonzero(self.X)
 

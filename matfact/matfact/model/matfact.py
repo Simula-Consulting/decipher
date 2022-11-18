@@ -2,7 +2,6 @@ import numpy as np
 
 from matfact.model.config import ModelConfig
 from matfact.model.factorization import SCMF, BaseMF
-from matfact.model.factorization.utils import initialize_basis
 from matfact.model.predict.classification_tree import (
     ClassificationTree,
     estimate_probability_thresholds,
@@ -22,8 +21,7 @@ class MatFact:
         self.config = config
 
     def fit(self, observation_matrix):
-        V = initialize_basis(observation_matrix.shape[1], self.config.rank)
-        self._factorizer = SCMF(observation_matrix, V, self.config)
+        self._factorizer = SCMF(observation_matrix, self.config)
         self._factorizer.matrix_completion()
         if self.config.use_threshold_optimization:
             self._classification_tree = self._estimate_classification_tree(
