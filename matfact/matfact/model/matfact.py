@@ -1,4 +1,7 @@
+from typing import Protocol
+
 import numpy as np
+import numpy.typing as npt
 
 from matfact.model.config import ModelConfig
 from matfact.model.factorization import CMF, SCMF, WCMF, BaseMF
@@ -22,12 +25,58 @@ def _model_factory(observation_matrix, config: ModelConfig) -> BaseMF:
         return WCMF(observation_matrix, config)
 
 
-class MatFact:
-    _factorizer: BaseMF
+class Predictor(Protocol):
+    """Predictor takes probabilities and gives a prediction."""
+
+    def fit(self, matfact, observation_matrix) -> None:
+        ...
+
+    def predict(self, probabilities) -> npt.NDArray:
+        ...
+
+
+class ClassificationTreePredictor:
     _classification_tree: ClassificationTree
 
-    def __init__(self, config: ModelConfig, model_factory=_model_factory):
+    def fit(self, matfact, observation_matrix):
+        self.matfact = matfact
+        self._classification_tree = self._estimate_classification_tree(
+            observation_matrix
+        )
+
+    def predict(self, probabilities):
+        return self._classification_tree.predict(probabilities)
+
+    def _estimate_classification_tree(self, observation_matrix):
+        observation_matrix_masked, time_points, true_values = prediction_data(
+            observation_matrix
+        )
+        probabilities = self.matfact.predict_probabilities(
+            observation_matrix_masked, time_points
+        )
+        return estimate_probability_thresholds(true_values, probabilities)
+
+
+class ArgmaxPredictor:
+    def fit(self, matfact, observation_matrix):
+        ...
+
+    def predict(self, probabilities):
+        return np.argmax(probabilities, axis=1) + 1
+
+
+class MatFact:
+    _factorizer: BaseMF
+    _predictor: Predictor
+
+    def __init__(
+        self,
+        config: ModelConfig,
+        predictor: Predictor | None = None,
+        model_factory=_model_factory,
+    ):
         """SKLearn like class for MatFact."""
+        self._predictor = predictor or ClassificationTreePredictor()
         self.config = config
         self._model_factory = model_factory
 
@@ -35,33 +84,16 @@ class MatFact:
         """Fit the model."""
         self._factorizer = self._model_factory(observation_matrix, self.config)
         self._factorizer.matrix_completion()
-        if self.config.use_threshold_optimization:
-            self._classification_tree = self._estimate_classification_tree(
-                observation_matrix
-            )
+        self._predictor.fit(self, observation_matrix)
         return self
 
     def predict(self, observation_matrix, time_points):
         probabilities = self.predict_probabilities(observation_matrix, time_points)
-        predict_func = (
-            self._classification_tree.predict
-            if self.config.use_threshold_optimization
-            else lambda probabilities: np.argmax(probabilities, axis=1) + 1
-        )
-        return predict_func(probabilities)
+        return self._predictor.predict(probabilities)
 
     def predict_probabilities(self, observation_matrix, time_points):
         self._check_is_fitted()
         return self._factorizer.predict_probability(observation_matrix, time_points)
-
-    def _estimate_classification_tree(self, observation_matrix):
-        observation_matrix_masked, time_points, true_values = prediction_data(
-            observation_matrix
-        )
-        probabilities = self.predict_probabilities(
-            observation_matrix_masked, time_points
-        )
-        return estimate_probability_thresholds(true_values, probabilities)
 
     def _check_is_fitted(self) -> None:
         if not hasattr(self, "_factorizer"):
