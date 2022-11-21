@@ -65,18 +65,37 @@ class ArgmaxPredictor:
         return np.argmax(probabilities, axis=1) + 1
 
 
+class ProbabilityEstimator(Protocol):
+    def predict_probability(
+        self, matfact, observation_matrix, time_points
+    ) -> npt.NDArray:
+        ...
+
+
+class DefaultProbabilityEstimator:
+    def predict_probability(
+        self, matfact, observation_matrix, time_points
+    ) -> npt.NDArray:
+        return matfact._factorizer.predict_probability(observation_matrix, time_points)
+
+
 class MatFact:
     _factorizer: BaseMF
     _predictor: Predictor
+    _probability_estimator: ProbabilityEstimator
 
     def __init__(
         self,
         config: ModelConfig,
         predictor: Predictor | None = None,
+        probability_estimator: ProbabilityEstimator | None = None,
         model_factory=_model_factory,
     ):
         """SKLearn like class for MatFact."""
         self._predictor = predictor or ClassificationTreePredictor()
+        self._probability_estimator = (
+            probability_estimator or DefaultProbabilityEstimator()
+        )
         self.config = config
         self._model_factory = model_factory
 
@@ -93,7 +112,9 @@ class MatFact:
 
     def predict_probabilities(self, observation_matrix, time_points):
         self._check_is_fitted()
-        return self._factorizer.predict_probability(observation_matrix, time_points)
+        return self._probability_estimator.predict_probability(
+            self, observation_matrix, time_points
+        )
 
     def _check_is_fitted(self) -> None:
         if not hasattr(self, "_factorizer"):
