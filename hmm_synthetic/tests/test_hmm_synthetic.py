@@ -310,3 +310,26 @@ def test_exit_time(
         l_partition_index,
         age_partitions,
     )
+
+
+@pytest.mark.parametrize(
+    "start_age, end_age, seed, points_pr_year, correct_history",
+    # fmt: off
+    [
+        [
+            10, 100, 2, 2,
+            [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],  # noqa: E231
+        ],
+        [
+            10, 70, 4, 1,
+            [0,0,0,0,0,0,0,0,0,0,2,2,2,2,3,2,2,2,3,3,3,2,2,2,2,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,3,3,3,3,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],  # noqa: E231
+        ],
+    ]
+    # fmt: on
+)
+def test_history_matches(start_age, end_age, seed, points_pr_year, correct_history):
+    """Assert that the generated history matches correct_history."""
+    time_grid = utils.age_partitions_pts(points_pr_year)
+    rng = np.random.default_rng(seed)
+    history = data_generator._simulate_history(start_age, end_age, time_grid, rng)
+    assert np.all(history == np.array(correct_history))
