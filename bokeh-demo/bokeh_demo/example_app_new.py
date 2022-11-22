@@ -7,11 +7,14 @@ import pathlib
 import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import (
+    CDSView,
     ColumnDataSource,
+    CustomJS,
     CustomJSExpr,
     DataTable,
     Div,
     HoverTool,
+    IndexFilter,
     Slider,
     TableColumn,
 )
@@ -252,19 +255,29 @@ log_figure = figure(
     y_range=(0, 4),
 )
 log_figure.yaxis.ticker = FixedTicker(ticks=[0, 1, 2, 3, 4])
-log_figure.add_tools(
-    HoverTool(
-        tooltips=[
-            ("Id", "$index"),
-            ("Predict", "@predicted"),
-            ("Probabilities", "@probabilities"),
-        ]
-    )
+hover_tool = HoverTool(
+    tooltips=[
+        ("Id", "$index"),
+        ("Predict", "@predicted"),
+        ("Probabilities", "@probabilities"),
+    ],
 )
+log_figure.add_tools(hover_tool)
+
+line_view = CDSView(source=source)
+
+
+def update_line_view(attr, old, new):
+    line_view.filters = [IndexFilter(new)] if new else []  # Show all on no selection.
+
+
+source.selected.on_change("indices", update_line_view)
+
 lines = log_figure.multi_line(
     xs="xs",
     ys="ys",
     source=source,
+    view=line_view,
     legend_label="Actual observation",
     nonselection_line_alpha=0.0,
 )
@@ -272,6 +285,7 @@ lines_pred = log_figure.multi_line(
     xs="xs",
     ys="ys_pred",
     source=source,
+    view=line_view,
     color="red",
     legend_label="Predicted",
     nonselection_line_alpha=0.0,
