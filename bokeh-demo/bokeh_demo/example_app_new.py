@@ -262,7 +262,7 @@ log_figure = figure(
     x_axis_label="Time",
     y_axis_label="State",
     tools="tap,lasso_select," + default_tools,
-    y_range=(0, 4),
+    y_range=(-0.1, 4),
 )
 log_figure.yaxis.ticker = FixedTicker(ticks=[0, 1, 2, 3, 4])
 hover_tool = HoverTool(
