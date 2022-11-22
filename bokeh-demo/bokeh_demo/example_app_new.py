@@ -216,6 +216,7 @@ source = ColumnDataSource(
         "true": x_true,
         "prediction_discrepancy": np.abs(x_pred - x_true),
         "probabilities": [[f"{ps:0.2f}" for ps in lst] for lst in p_pred],
+        "is_end": [[i] * 2 for i in range(len(xs))],  # List of indices, hack!
         "xs_end": _get_first_last_index(ys),
         "years_end": [
             [years[i][start], years[i][end]]
@@ -323,6 +324,14 @@ def cycle_mapper(cycle):
     }
 
 
+lexis_ish_lines = lexis_ish_figure.multi_line(
+    "xs_end",
+    "is",
+    source=source,
+    color="lightgray",
+    muted=True,
+)
+
 lexis_ish_scatter = lexis_ish_figure.scatter(
     "x",
     "i",
@@ -377,11 +386,16 @@ def select_person(attr, old, selected_people):
         if person_index in selected_people
     ]
 
+    line_view.filters = (
+        [IndexFilter(selected_people)] if selected_people else []
+    )  # Show all on no selection.
     scatter_source.selected.indices = all_indices
     source.selected.indices = selected_people
 
 
 def set_group_selected(attr, old, new):
+    if new == []:  # Avoid unsetting when hitting a line in scatter plot
+        return
     selected_people = list({scatter_source.data["i"][i] for i in new})
     select_person(None, None, selected_people)
 
