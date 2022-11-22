@@ -224,19 +224,28 @@ source = ColumnDataSource(
     }
 )
 
+
+def _get_cleaned(iterable, ys=ys):
+    return [
+        el
+        for el, y in zip(
+            itertools.chain.from_iterable(iterable), itertools.chain.from_iterable(ys)
+        )
+        if y != 0
+    ]
+
+
 scatter_source = ColumnDataSource(
     {
-        key: list(value)
+        key: _get_cleaned(value)
         for key, value in {
-            "x": itertools.chain.from_iterable(xs),
-            "y": itertools.chain.from_iterable(ys),
-            "i": itertools.chain.from_iterable(
-                (
-                    itertools.repeat(i, number_of_time_steps)
-                    for i in range(number_of_individuals)
-                )
+            "x": xs,
+            "y": ys,
+            "i": (
+                itertools.repeat(i, number_of_time_steps)
+                for i in range(number_of_individuals)
             ),
-            "year": itertools.chain.from_iterable(years),
+            "year": years,
         }.items()
     }
 )
@@ -276,12 +285,6 @@ log_figure.add_tools(hover_tool)
 
 line_view = CDSView(source=source)
 
-
-def update_line_view(attr, old, new):
-    line_view.filters = [IndexFilter(new)] if new else []  # Show all on no selection.
-
-
-source.selected.on_change("indices", update_line_view)
 
 lines = log_figure.multi_line(
     xs="xs",
@@ -353,7 +356,7 @@ lexis_lines = lexis_figure.multi_line(
     "xs_end",
     "years_end",
     source=source,
-    color=(0, 0, 0, 0.25),
+    color="lightgray",
     muted=True,
 )
 
