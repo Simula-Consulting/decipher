@@ -194,6 +194,13 @@ fake_date_of_birth = [
 ]
 
 
+years = [[age + fake_date_of_birth[i] for age in ages] for i, ages in enumerate(xs)]
+
+
+def _get_first_last_index(ys):
+    return [[func(np.nonzero(y)) for func in (np.min, np.max)] for y in ys]
+
+
 # Set up the Bokeh data source
 # Each row corresponds to one individual
 source = ColumnDataSource(
@@ -209,10 +216,13 @@ source = ColumnDataSource(
         "true": x_true,
         "prediction_discrepancy": np.abs(x_pred - x_true),
         "probabilities": [[f"{ps:0.2f}" for ps in lst] for lst in p_pred],
+        "xs_end": _get_first_last_index(ys),
+        "years_end": [
+            [years[i][start], years[i][end]]
+            for i, (start, end) in enumerate(_get_first_last_index(ys))
+        ],
     }
 )
-
-years = ((age + fake_date_of_birth[i] for age in ages) for i, ages in enumerate(xs))
 
 scatter_source = ColumnDataSource(
     {
@@ -339,6 +349,14 @@ def cycle_mapper(cycle):
     }
 
 
+lexis_lines = lexis_figure.multi_line(
+    "xs_end",
+    "years_end",
+    source=source,
+    color=(0, 0, 0, 0.25),
+    muted=True,
+)
+
 lexis_scatter = lexis_figure.scatter(
     "x",
     "year",
@@ -386,6 +404,14 @@ slider.js_link("value", lexis_ish_scatter.glyph, "size")
 # for line in lexis_lines:
 #     slider.js_link("value", line.glyph, "size")
 
+alpha_slider = Slider(
+    start=0, end=1, step=0.1, value=0.5, title="Visibility non-selected"
+)
+alpha_slider.js_link("value", lexis_scatter.nonselection_glyph, "fill_alpha")
+alpha_slider.js_link("value", lexis_ish_scatter.nonselection_glyph, "fill_alpha")
+alpha_slider.js_link("value", lexis_lines.nonselection_glyph, "line_alpha")
+
+
 information_box = Div(
     text=f"""<h1>Welcome to the Simula Consulting interactive exploration demo!</h1>
     <br/><br/>
@@ -397,6 +423,10 @@ information_box = Div(
     <ul>
     <li>When selecting a data point in one plot, the corresponding data points in all other plots will also become selected.</li>
     <li>You may select from several selection tools in the toolbar right of the individual plots.</li>
+    <li>To reset the view, press 
+    <img style="height: 1.5em; margin-bottom: -0.3em;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4gEMEg4gWqH8eQAABLdJREFUWMPtlktsVGUUx3/nfvfOlLQaY2IiRRMQIRpI0PjamJhoVASDvNpCpYw1vJQYSVwZwIVQF6wwRHmkAUof9ElrI6VqDAXcID4TF0IiYQMkSlTokNCZ+b7jove2t+NMH7rQBWd3v+989/zP+Z8X3Jb/WGQySvUNTQBJESkNguAVYIWqzhaRhwBU9WcR+QXoymazn6jqzUQiMQSQzWZRVdal1vwzAI2tHQBPOuc2AbWTdOyQ53n7nHNfRwee51GzqoIQMCLDpr3x/tLQ0oZzrk5Vj0/BOEBt+KYuOlBVGlrahr0Wob27t3gEjnZ2AyQzmUwHsDgP6J/AYRE553neDwDOuUdU9QngNeCumK4TkRMhZUORcYC1qysLA6iuSQHIwkWLD6lqapQsuSmwTVV3h99I7EcAR462A2xR2Ilq6ehTaejvO1774kuLNALR33eclsaGsQDe3fYegHl43vyNwEeqGl1963mm2jl7YZRTQ82qlWP4HM6ZToC5ztkW4LHQoALru7s6Di5dvlIj/e6ujrEAWoZDn8hmMjXATMACGaAVuBjXTVVXFc/AxhaA+4zvn1DV+eHxVWPMAmvtb5GeMWZyZVhI2rt7qVy2pOh9U1snwIPW2vMi4oWJuBPYHkVAVScPoKmtkzVVK6cEMsyJraHhiCqJqJUwj/JRz7TW1iSSyR2rVyylqa0Ta+24Ic8vXaAEmDFc/l5Z2A/80OibuVyuz/f9ElUdHCmvw82t5HK5h6y1PYhsz2YyGw43t2KtBZHIGwB6+j4rCkBVUdV7gXrggnPuu8h4eP+xMeZS2D0rJYZ6AdAMzAt1b4nI26p6IFZOY8pugijcKSIHVLUK0LyST4vnrVfnWr3mjmP4QTATaERkXkypRFX3isjmuHdRJEK6Ckqquopp06bdKCkp2Sgi7XnGLcg7gzeutwNIiPYc8HixqIrIOlU9ONVIhHPEd851icgSVXUiskVV94gIqoonIt0i8gfQCfwae38e6BWRXuBZz5jZ8VbaOE4EIqlZVUEQBLlkMplS1QER2RwkEnsSyaREDUzyeNsvIhvCMqkH1kdIJ2o+k8iJB1LVVRfjZ6nqqlEAIbdVQGto8Lrv+/dbawcjAL7vc+6bs+zetetfLSHxniIFGofGGsU2oC7eOCbDfZ7nQawBOSAX74SF9oEPImOq+r7nmVmxb5raukZa8UReGmNmhbMkAwwBH467EYVZe49z7kdgenj8k7V2oTHm8kgdWcvrNdVFjR8cHkYzjDH9wLjDaEwEzpwa4MypgWvAjtjxfGNMj4jMiT+M+kFsZI/Q6Pv+HGNMT8w4wI7TAyevxXVPD5z8+zD64tRXAMHVK1eaVLUyVvuDqroV2BOnJF4ZIedviUidqt4Re9s+vbx8zZXLl7PR2+nl5Tz/zNOFp2FzxzGAklw22wUsLLaSKXwf8vhosZUM6PeDYEUum70VHfpBwKsVyyfeikOP6oBNwN1TrLbfgX3A1kKLzKeff8nLLzw38T5wZDgxn1LnNk5lLRfP26/OnR2hwfNYW2Atn9RCsrf+EECyrKysDFimqhXhyjY3VLkAXBKRDqA7nU6nS0tLhyIj6XSaN9bVclv+l/IXAmkwvZc+jNUAAAAASUVORK5CYII=" /> 
+    in the toolbar.
+    To only reset the selection, select somewhere that has no points.</li>
     <li>The plots that are shown here are just examples of what may be displayed, extending to other metrics is rather simple.</li>
     </ul>
 
@@ -413,7 +443,7 @@ curdoc().add_root(
         information_box,
         row(
             delta_figure,
-            column(lexis_figure, lexis_ish_figure, slider),
+            column(lexis_figure, lexis_ish_figure, slider, alpha_slider),
             log_figure,
             person_table,
         ),
