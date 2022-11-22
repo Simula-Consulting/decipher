@@ -66,6 +66,8 @@ class ArgmaxPredictor:
 
 
 class ProbabilityEstimator(Protocol):
+    """Return probabilities for the different states."""
+
     def predict_probability(
         self, matfact, observation_matrix, time_points
     ) -> npt.NDArray:
@@ -80,6 +82,8 @@ class DefaultProbabilityEstimator:
 
 
 class MatFact:
+    """SKLearn like class for MatFact."""
+
     _factorizer: BaseMF
     _predictor: Predictor
     _probability_estimator: ProbabilityEstimator
@@ -91,7 +95,6 @@ class MatFact:
         probability_estimator: ProbabilityEstimator | None = None,
         model_factory=_model_factory,
     ):
-        """SKLearn like class for MatFact."""
         self._predictor = predictor or ClassificationTreePredictor()
         self._probability_estimator = (
             probability_estimator or DefaultProbabilityEstimator()
