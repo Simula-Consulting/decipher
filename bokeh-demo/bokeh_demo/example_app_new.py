@@ -249,6 +249,13 @@ scatter_source = ColumnDataSource(
             "year": years,
         }.items()
     }
+    | {
+        "y_label": [
+            ["", "Normal", "Low risk", "High risk", "Cancer"][y]
+            for y in itertools.chain.from_iterable(ys)
+            if y != 0
+        ],
+    }
 )
 
 
@@ -338,7 +345,7 @@ lexis_ish_scatter = lexis_ish_figure.scatter(
     marker=cycle_mapper(markers),
     color=cycle_mapper(colors),
     source=scatter_source,
-    legend_group="y",
+    legend_group="y_label",
 )
 
 
@@ -375,7 +382,7 @@ lexis_scatter = lexis_figure.scatter(
     marker=cycle_mapper(markers),
     color=cycle_mapper(colors),
     source=scatter_source,
-    legend_group="y",
+    legend_group="y_label",
 )
 
 
