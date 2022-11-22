@@ -366,7 +366,7 @@ person_table = DataTable(
     ],
 )
 
-slider = Slider(start=1, end=20, step=0.5, value=10)
+slider = Slider(start=1, end=20, step=0.5, value=10, title="Marker size")
 slider.js_link("value", lexis_scatter.glyph, "size")
 slider.js_link("value", lexis_ish_scatter.glyph, "size")
 # for line in lexis_lines:
