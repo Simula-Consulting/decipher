@@ -6,7 +6,10 @@ import numpy as np
 import numpy.typing as npt
 
 from matfact import settings
-from matfact.model.factorization.utils import convoluted_differences_matrix
+from matfact.model.factorization.utils import (
+    convoluted_differences_matrix,
+    initialize_basis,
+)
 from matfact.model.factorization.weights import data_weights
 
 
@@ -62,6 +65,7 @@ class ModelConfig:
     difference_matrix_getter: Callable[[int], npt.NDArray] = np.identity
     weight_matrix_getter: WeightGetter = field(default_factory=DataWeightGetter)
     minimal_value_matrix_getter: Callable[[tuple[int, int]], npt.NDArray] = np.ones
+    initial_basic_profiles_getter: Callable[[int, int], npt.NDArray] = initialize_basis
 
     def get_short_model_name(self) -> str:
         """Return a short string representing the model.

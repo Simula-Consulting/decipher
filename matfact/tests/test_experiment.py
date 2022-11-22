@@ -228,9 +228,8 @@ def test_model_input_not_changed():
     """
 
     # Some arbitrary data size
-    sample_size, time_span, rank = 100, 40, 5
+    sample_size, time_span = 100, 40
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
-    V = np.random.choice(np.arange(5), size=(time_span, rank))
     W = data_weights(X)
     s_budget = list(range(-5, 5))
 
@@ -238,42 +237,24 @@ def test_model_input_not_changed():
 
     config = ModelConfig(shift_budget=s_budget)
 
-    cmf = CMF(X, V, config)
+    cmf = CMF(X, config)
     assert np.array_equal(cmf.X, X_initial)
     cmf.run_step()
     assert np.array_equal(cmf.X, X_initial)
 
-    scmf = WCMF(X, V, config)
+    scmf = WCMF(X, config)
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
     scmf.run_step()
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
 
-    scmf = SCMF(X, V, config)
+    scmf = SCMF(X, config)
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
     scmf.run_step()
     assert np.array_equal(scmf.X, X_initial)
     assert np.array_equal(scmf.W, W_initial)
-
-
-def test_model_optional_args():
-    """Test that model works when optional arguments are empty."""
-    # Some arbitrary data size
-    sample_size, time_span, rank = 100, 40, 5
-    X = np.random.choice(np.arange(5), size=(sample_size, time_span))
-    V = np.random.choice(np.arange(5), size=(time_span, rank))
-    config = ModelConfig(shift_budget=list(range(-5, 5)))
-
-    cmf = CMF(X, V, config)
-    cmf.run_step()
-
-    scmf = WCMF(X, V, config)
-    scmf.run_step()
-
-    scmf = SCMF(X, V, config)
-    scmf.run_step()
 
 
 @given(
@@ -348,11 +329,10 @@ def test_delta_score(probabilities, correct_index, expected_delta):
 
 @pytest.fixture
 def factorizer(request):
-    sample_size, time_span, rank = 100, 40, 5
+    sample_size, time_span = 100, 40
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
-    V = np.random.choice(np.arange(5), size=(time_span, rank))
     factorizer_class = request.param
-    return factorizer_class(X, V, ModelConfig())
+    return factorizer_class(X, ModelConfig())
 
 
 @pytest.mark.parametrize("factorizer", (CMF, WCMF, SCMF), indirect=True)

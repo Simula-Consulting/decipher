@@ -17,7 +17,7 @@ def theta_mle(X, M):
     return np.sum(mask) / (2 * np.square(np.linalg.norm(mask * (X - M))))
 
 
-def initialize_basis(T, r, seed):
+def initialize_basis(T, r, seed=42):
     "Random initialization of the basic vectors in the V matrix"
 
     np.random.seed(seed)

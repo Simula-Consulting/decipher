@@ -1,6 +1,7 @@
 """Full system tests.
 
 Should not be included in coverage reporting, as they simply run a bunch of code."""
+import importlib
 from itertools import product
 
 import matfact.model.factorization.factorizers.mfbase
@@ -15,7 +16,8 @@ def test_all_examples():
     """Run all example scripts."""
     example_path = BASE_PATH / "examples"
     for example in example_path.glob("*.py"):
-        exec(example.read_text())
+        importlib.import_module(f"examples.{example.stem}", "matfact").main()
+        # exec(example.read_text())
 
 
 def test_train(tmp_path, monkeypatch):
