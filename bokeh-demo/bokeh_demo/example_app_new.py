@@ -390,10 +390,18 @@ information_box = Div(
     text=f"""<h1>Welcome to the Simula Consulting interactive exploration demo!</h1>
     <br/><br/>
 
-    <div style="border: 1px solid rgba(0,0,0,0.125); padding: 10px; border-radius: 5px; width: 50%;">
-    Hei
+    <div style="border: 1px solid rgba(0,0,0,0.125); padding: 10px; border-radius: 5px; width: 750px;">
+    <h3>How to use this tool</h3>
 
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed hendrerit nec elit quis consectetur. Cras in viverra quam. Donec vel dictum arcu. Suspendisse at mauris lobortis, efficitur magna sit amet, tristique nulla. Duis molestie mi vel consequat vestibulum. Pellentesque mollis aliquet lorem non varius. Sed placerat enim urna, in accumsan dui pharetra id. Donec ultricies convallis eleifend. Proin et nisl libero. Maecenas ultricies arcu tortor. Phasellus quis ante nisi. Aenean dictum est lorem, eu fermentum nibh mollis non.
+    <p>
+    <ul>
+    <li>When selecting a data point in one plot, the corresponding data points in all other plots will also become selected.</li>
+    <li>You may select from several selection tools in the toolbar right of the individual plots.</li>
+    <li>The plots that are shown here are just examples of what may be displayed, extending to other metrics is rather simple.</li>
+    </ul>
+
+    NB! Some plots, for example the Lexis plots, have several markers per individual. In these plots, marking one point, will result in all markers for that individual to also be marked.
+    </p>
     </div>
     <img src="data:image/png;base64, {SC_logo_base64}" style="position: absolute; top: -10px; right: 0;"/>
     """,
