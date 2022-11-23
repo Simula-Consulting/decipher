@@ -4,6 +4,8 @@ Should not be included in coverage reporting, as they simply run a bunch of code
 import importlib
 from itertools import product
 
+import pytest
+
 import matfact.model.factorization.factorizers.mfbase
 from examples.example import experiment as experiment1  # type: ignore
 from examples.example_train_and_log import experiment as experiment2  # type: ignore
@@ -12,6 +14,9 @@ from matfact.model.factorization.convergence import ConvergenceMonitor
 from matfact.settings import BASE_PATH
 
 
+@pytest.mark.skip(
+    reason="Consider move to CI. Requires examples to generate dataset, if none exists."
+)
 def test_all_examples():
     """Run all example scripts."""
     example_path = BASE_PATH / "examples"
