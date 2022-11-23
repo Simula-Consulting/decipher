@@ -17,7 +17,7 @@ class NotFittedException(Exception):
 
 
 def _model_factory(observation_matrix, config: ModelConfig) -> BaseMF:
-    if config.shift_budget != [0]:
+    if config.shift_budget:
         return SCMF(observation_matrix, config)
     if config.weight_matrix_getter.is_identity:
         return CMF(observation_matrix, config)
