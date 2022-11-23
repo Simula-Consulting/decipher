@@ -36,6 +36,11 @@ class Predictor(Protocol):
 
 
 class ClassificationTreePredictor:
+    """Threshold based predictor.
+
+    Predict class from probabilities using thresholds biasing towards more rare states.
+    See [matfact.model.predict.classification_tree][] for details."""
+
     _classification_tree: ClassificationTree
 
     def fit(self, matfact, observation_matrix):
@@ -58,6 +63,8 @@ class ClassificationTreePredictor:
 
 
 class ArgmaxPredictor:
+    """Maximum probability predictor."""
+
     def fit(self, matfact, observation_matrix):
         ...
 
