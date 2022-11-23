@@ -7,6 +7,7 @@ import pathlib
 import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import (
+    AllIndices,
     CDSView,
     ColumnDataSource,
     CustomJS,
@@ -291,7 +292,7 @@ hover_tool = HoverTool(
 )
 log_figure.add_tools(hover_tool)
 
-line_view = CDSView(source=source)
+line_view = CDSView()
 
 
 lines = log_figure.multi_line(
@@ -393,8 +394,8 @@ def select_person(attr, old, selected_people):
         if person_index in selected_people
     ]
 
-    line_view.filters = (
-        [IndexFilter(selected_people)] if selected_people else []
+    line_view.filter = (
+        IndexFilter(selected_people) if selected_people else AllIndices()
     )  # Show all on no selection.
     scatter_source.selected.indices = all_indices
     source.selected.indices = selected_people
