@@ -1,9 +1,6 @@
 """Example usage of class based Matfact API.
 
 Simple demo of the [`MatFact`][matfact.model.matfact.MatFact] class.
-
-Note:
-    The current implementation always uses SCMF, as it is the most general solver.
 """
 
 import tensorflow as tf
