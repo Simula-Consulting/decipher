@@ -75,15 +75,16 @@ class SCMF(BaseMF):
         V: Initial estimate for basic vectors
         config: Configuration model.
 
-    Discussion:
-    There are four X matrices (correspondingly for W):
-    - X : The original input matrix
-    - X_bc : The original input matrix with padded zeros on the time axis.
-    - X_shifted : Similar to X_bc, but each row is shifted according to self.s.
-    - X_shifts : A stack of size(s_budged) arrays similar to X_bc, but each shifted
-        horizontally (time axis). Stack layer i is shifted s_budged[i].
+    Discussion on internal matrices:
+        There are four X matrices (correspondingly for W):
 
-    X_shifted is the only matrix altered after initialization.
+        - X : The original input matrix
+        - X_bc : The original input matrix with padded zeros on the time axis.
+        - X_shifted : Similar to X_bc, but each row is shifted according to self.s.
+        - X_shifts : A stack of size(s_budged) arrays similar to X_bc, but each shifted
+            horizontally (time axis). Stack layer i is shifted s_budged[i].
+
+        X_shifted is the only matrix altered after initialization.
 
     """
 

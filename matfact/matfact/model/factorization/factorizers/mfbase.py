@@ -44,10 +44,12 @@ class BaseMF(ABC):
     ):
         """Run matrix completion on input matrix X using a factorization model.
 
-        extra_metrics: Dict of name, callable pairs for extra metric logging.
-            Callable must have the signature (model: Type[BaseMF]) -> Float.
-        epoch_generator: A generator of epoch numbers. Defaults to ConvergenceMonitor
-            which implements eager termination if detecting convergence.
+        Arguments:
+            extra_metrics: Dict of name, callable pairs for extra metric logging.
+                Callable must have the signature `(model: Type[BaseMF]) -> Float`.
+            epoch_generator:  A generator of epoch numbers. Defaults to
+                [`ConvergenceMonitor`][matfact.model.factorization.convergence.ConvergenceMonitor]
+                which implements eager termination if detecting convergence.
         """
         if epoch_generator is None:
             epoch_generator = ConvergenceMonitor()

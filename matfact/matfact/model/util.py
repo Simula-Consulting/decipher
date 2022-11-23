@@ -64,33 +64,36 @@ def train_and_log(
 ):
     """Train model and log in MLFlow.
 
-    Params:
-    X_train, X_test: Train and test data.
-    dict_to_log:  optional dictionary associated with the run, logged with MLFlow.
-    extra_metrics: optional dictionary of metrics logged in each epoch of training.
-        See `BaseMF.matrix_completion` for more details.
-    log_loss: Whether the loss function as function of epoch should be logged
-        in MLFlow. Note that this is slow.
-    nested: If True, the run is logged as a nested run in MLFlow, useful in for
-        example hyperparameter search. Assumes there to exist an active parent run.
-    use_threshold_optimization: Use ClassificationTree optimization to find thresholds
-        for class selection. Can improve results on data skewed towards normal.
+    Arguments:
+        X_train: Training data.
+        X_test: Test data
+        dict_to_log:  optional dictionary associated with the run, logged with MLFlow.
+        extra_metrics: optional dictionary of metrics logged in each epoch of training.
+            See `BaseMF.matrix_completion` for more details.
+        log_loss: Whether the loss function as function of epoch should be logged
+            in MLFlow. Note that this is slow.
+        nested: If True, the run is logged as a nested run in MLFlow, useful in for
+            example hyperparameter search. Assumes there to exist an active parent run.
+        use_threshold_optimization: Use ClassificationTree optimization to find
+            thresholds for class selection.
+            Can improve results on data skewed towards normal.
 
     Returns:
-    A dictionary of relevant output statistics.
+        A dictionary of relevant output statistics.
 
 
-    Discussion:
-    Concerning cross validation: the function accepts a train and test set. In order
-    to do for example cross validation hyperparameter search, simply wrap this
-    function in cross validation logic.
-    In this case, each run will be logged separately.
+    !!! Note "Cross-validation"
 
-    In future versions of this package, it is possible that cross validation will
-    be supported directly from within this function.
-    However, it is not obvious what we should log, as we log for example the
-    loss function of each training run.
-    Two examples are to log each run separately or logging all folds together.
+        Concerning cross validation: the function accepts a train and test set. In order
+        to do for example cross validation hyperparameter search, simply wrap this
+        function in cross validation logic.
+        In this case, each run will be logged separately.
+
+        In future versions of this package, it is possible that cross validation will
+        be supported directly from within this function.
+        However, it is not obvious what we should log, as we log for example the
+        loss function of each training run.
+        Two examples are to log each run separately or logging all folds together.
     """
     if logger_context is None:
         logger_context = MLFlowLogger()
