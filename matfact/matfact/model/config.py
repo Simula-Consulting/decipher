@@ -63,9 +63,22 @@ class ModelConfig:
     number_of_states: int = settings.default_number_of_states
 
     difference_matrix_getter: Callable[[int], npt.NDArray] = np.identity
+    """Return the difference matrix to use for regularization.
+
+    Takes in the time dimension size of the observation matrix."""
     weight_matrix_getter: WeightGetter = field(default_factory=DataWeightGetter)
+    """Return the weight matrix for a given observation matrix."""
     minimal_value_matrix_getter: Callable[[tuple[int, int]], npt.NDArray] = np.ones
+    """Return the minium values for the V matrix.
+
+    Takes in the shape of V.
+
+    Warning:
+        It is a known bug that the minimal value is not respected by all factorizers."""
     initial_basic_profiles_getter: Callable[[int, int], npt.NDArray] = initialize_basis
+    """Return the initial state for the basic profiles matrix V.
+
+    Takes in the dimensions of the observation matrix."""
 
     def get_short_model_name(self) -> str:
         """Return a short string representing the model.
