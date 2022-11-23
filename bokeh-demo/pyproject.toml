@@ -8,7 +8,7 @@ packages = [{include = "bokeh_demo"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-bokeh = "^2.4.3"
+bokeh = "^3.0.2"
 matfact = {path = "../matfact", develop = true}
 
 
