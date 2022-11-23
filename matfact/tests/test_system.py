@@ -22,7 +22,6 @@ def test_all_examples():
     example_path = BASE_PATH / "examples"
     for example in example_path.glob("*.py"):
         importlib.import_module(f"examples.{example.stem}", "matfact").main()
-        # exec(example.read_text())
 
 
 def test_train(tmp_path, monkeypatch):
