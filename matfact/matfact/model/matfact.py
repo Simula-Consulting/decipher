@@ -92,8 +92,6 @@ class MatFact:
     """SKLearn like class for MatFact."""
 
     _factorizer: BaseMF
-    _predictor: Predictor
-    _probability_estimator: ProbabilityEstimator
 
     def __init__(
         self,
