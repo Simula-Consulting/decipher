@@ -23,7 +23,6 @@ class WCMF(BaseMF):
     def __init__(
         self,
         X,
-        V,
         config: ModelConfig,
     ):
         if config.shift_budget:
@@ -34,16 +33,15 @@ class WCMF(BaseMF):
 
         self.config = config
         self.X = X
-        self.V = V
+        self.V = config.initial_basic_profiles_getter(X.shape[1], config.rank)
         self.W = self.config.weight_matrix_getter(X)
 
-        self.r = V.shape[1]
         self.N, self.T = np.shape(self.X)
         self.nz_rows, self.nz_cols = np.nonzero(self.X)
 
         self.n_iter_ = 0
         KD = self.config.difference_matrix_getter(self.T)
-        self.J = self.config.minimal_value_matrix_getter((self.T, self.r))
+        self.J = self.config.minimal_value_matrix_getter((self.T, self.config.rank))
         self._init_matrices(KD)
 
         self.U = self._exactly_solve_U()
@@ -57,7 +55,7 @@ class WCMF(BaseMF):
         self.KD = tf.cast(KD, dtype=tf.float32)
         self.DTKTKD = KD.T @ KD
 
-        self.I_l1 = self.config.lambda1 * np.eye(self.r)
+        self.I_l1 = self.config.lambda1 * np.eye(self.config.rank)
 
     def _update_V(self):
         # @tf.function
@@ -89,7 +87,7 @@ class WCMF(BaseMF):
 
         The internal U member is not modified by this method.
         V is assumed to be initialized."""
-        U = np.empty((self.N, self.r))
+        U = np.empty((self.N, self.config.rank))
 
         for n in range(self.N):
             U[n] = (

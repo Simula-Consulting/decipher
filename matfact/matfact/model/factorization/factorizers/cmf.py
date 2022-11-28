@@ -22,7 +22,6 @@ class CMF(BaseMF):
     def __init__(
         self,
         X,
-        V,
         config: ModelConfig,
     ):
         if not config.weight_matrix_getter.is_identity:
@@ -37,16 +36,15 @@ class CMF(BaseMF):
             )
 
         self.X = X
-        self.V = V
+        self.V = config.initial_basic_profiles_getter(X.shape[1], config.rank)
         self.config = config
 
-        self.r = V.shape[1]
         self.N, self.T = np.shape(self.X)
         self.nz_rows, self.nz_cols = np.nonzero(self.X)
 
         self.n_iter_ = 0
         KD = self.config.difference_matrix_getter(self.T)
-        self.J = self.config.minimal_value_matrix_getter((self.T, self.r))
+        self.J = self.config.minimal_value_matrix_getter((self.T, self.config.rank))
         self._init_matrices(KD)
         self._update_U()
 
@@ -58,8 +56,8 @@ class CMF(BaseMF):
         self.S = self.X.copy()
         self.mask = (self.X != 0).astype(np.float32)
 
-        self.I_l1 = self.config.lambda1 * np.identity(self.r)
-        self.I_l2 = self.config.lambda2 * np.identity(self.r)
+        self.I_l1 = self.config.lambda1 * np.identity(self.config.rank)
+        self.I_l2 = self.config.lambda2 * np.identity(self.config.rank)
 
         self.KD = KD
         self.DTKTKD = KD.T @ KD

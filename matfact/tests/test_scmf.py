@@ -70,9 +70,9 @@ def _generate_SCMF_logs() -> dict[str, np.ndarray]:
 
     rnd = np.random.default_rng(seed=42)
     X = rnd.integers(low=0, high=4, size=(N, T))  # Initial observation matrix
-    V = rnd.random((T, r))  # Initial basic profiles
     s_budget = list(range(-10, 11))
 
+    scmf = SCMF(X, ModelConfig(shift_budget=s_budget))
     # Allocate space for the logs
     logs = {
         "X": np.empty((iterations, *X.shape)),
@@ -81,14 +81,12 @@ def _generate_SCMF_logs() -> dict[str, np.ndarray]:
         # do this, in that case this test will fail.
         # If so, either disable checking of V, or
         # figure out the transformation from padded V to actual V.
-        "V_bc": np.empty((iterations, V.shape[0] + 2 * len(s_budget), V.shape[1])),
+        "V_bc": np.empty((iterations, *scmf.V_bc.shape)),
         "M": np.empty((iterations, N, T)),
         "U": np.empty((iterations, N, r)),
         "loss": np.empty(iterations),
         "s": np.empty((iterations, N)),
     }
-
-    scmf = SCMF(X, V, ModelConfig(shift_budget=s_budget))
 
     for i in range(iterations):
         scmf.run_step()

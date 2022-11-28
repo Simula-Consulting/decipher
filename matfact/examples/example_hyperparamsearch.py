@@ -109,9 +109,13 @@ def example_hyperparameter_search(objective_getter: Callable = get_objective_CV)
         mlflow.set_tag("Notes", "Hyperparameter search")
 
 
-if __name__ == "__main__":
+def main():
     # Set objective_getter to get_objective_CV to use cross validation.
     # Otherwise, get_objective uses simple train/test split.
     example_hyperparameter_search(
         objective_getter=functools.partial(get_objective_CV, log_folds=True)
     )
+
+
+if __name__ == "__main__":
+    main()

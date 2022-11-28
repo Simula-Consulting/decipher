@@ -6,10 +6,7 @@ from sklearn.metrics import matthews_corrcoef
 from matfact.model import CMF, SCMF, WCMF, BaseMF
 from matfact.model.config import DataWeightGetter, IdentityWeighGetter, ModelConfig
 from matfact.model.factorization.convergence import EpochGenerator
-from matfact.model.factorization.utils import (
-    convoluted_differences_matrix,
-    initialize_basis,
-)
+from matfact.model.factorization.utils import convoluted_differences_matrix
 from matfact.model.logging import MLFlowLogger
 from matfact.model.predict.classification_tree import estimate_probability_thresholds
 from matfact.model.predict.dataset_utils import prediction_data
@@ -21,7 +18,6 @@ def model_factory(
     use_convolution: bool = False,
     use_weights: bool = True,
     rank: int = 5,
-    seed: int = 42,
     **kwargs,
 ):
     """Initialize and return appropriate model based on arguments.
@@ -36,23 +32,22 @@ def model_factory(
     else:
         difference_matrix_getter = np.identity
 
-    V = initialize_basis(X.shape[1], rank, seed)
-
     config = ModelConfig(
         shift_budget=shift_range,
         difference_matrix_getter=difference_matrix_getter,
         weight_matrix_getter=(
             DataWeightGetter() if use_weights else IdentityWeighGetter()
         ),
+        rank=rank,
         **kwargs,
     )
 
     if len(shift_range):
-        return SCMF(X, V, config)
+        return SCMF(X, config)
     if config.weight_matrix_getter.is_identity:
-        return CMF(X, V, config)
+        return CMF(X, config)
     else:
-        return WCMF(X, V, config)
+        return WCMF(X, config)
 
 
 def train_and_log(

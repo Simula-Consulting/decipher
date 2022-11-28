@@ -90,14 +90,13 @@ class SCMF(BaseMF):
     def __init__(
         self,
         X,
-        V,
         config: ModelConfig,
     ):
 
         self.config = config
         self.W = self.config.weight_matrix_getter(X)
 
-        self.r = V.shape[1]
+        V = config.initial_basic_profiles_getter(X.shape[1], config.rank)
         self.N, self.T = np.shape(X)
         self.nz_rows, self.nz_cols = np.nonzero(X)
 
@@ -113,8 +112,8 @@ class SCMF(BaseMF):
             self.config.difference_matrix_getter(self.T + 2 * self.Ns), dtype=tf.float32
         )
 
-        self.I1 = self.config.lambda1 * np.identity(self.r)
-        self.I2 = self.config.lambda2 * np.identity(self.r)
+        self.I1 = self.config.lambda1 * np.identity(self.config.rank)
+        self.I2 = self.config.lambda2 * np.identity(self.config.rank)
 
         # Expand matrices with zeros over the extended left and right boundaries.
         self.X_bc = np.hstack(
@@ -124,7 +123,11 @@ class SCMF(BaseMF):
             [np.zeros((self.N, self.Ns)), self.W, np.zeros((self.N, self.Ns))]
         )
         self.V_bc = np.vstack(
-            [np.zeros((self.Ns, self.r)), V, np.zeros((self.Ns, self.r))]
+            [
+                np.zeros((self.Ns, self.config.rank)),
+                V,
+                np.zeros((self.Ns, self.config.rank)),
+            ]
         )
         # We know V_bc to be two-dimensional, so cast to please mypy.
         J_shape = cast(tuple[int, int], self.V_bc.shape)
@@ -220,7 +223,7 @@ class SCMF(BaseMF):
 
         The internal U member is not modified by this method.
         V is assumed to be initialized."""
-        U = np.empty((self.N, self.r))
+        U = np.empty((self.N, self.config.rank))
 
         for n in range(self.N):
             U[n] = (
