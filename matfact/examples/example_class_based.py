@@ -3,6 +3,9 @@
 Simple demo of the [`MatFact`][matfact.model.matfact.MatFact] class.
 """
 
+
+import contextlib
+
 import tensorflow as tf
 
 from matfact import settings
@@ -11,14 +14,11 @@ from matfact.model.config import ModelConfig
 from matfact.model.matfact import ArgmaxPredictor, MatFact
 from matfact.model.predict.dataset_utils import prediction_data
 
-try:
-    # Disabling the GPU makes everything faster.
-    # If tf is already initialized, we cannot modified visible devices, in which
-    # case we just proceed.
+# Disabling the GPU makes everything faster.
+# If tf is already initialized, we cannot modified visible devices, in which
+# case we just proceed.
+with contextlib.suppress(RuntimeError):
     tf.config.set_visible_devices([], "GPU")
-except RuntimeError as e:
-    if str(e) != "Visible devices cannot be modified after being initialized":
-        raise e
 
 
 def main():
