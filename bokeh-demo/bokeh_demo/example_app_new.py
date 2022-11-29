@@ -180,6 +180,7 @@ x = list(range(len(x_true)))
 sorted_x = [permutations.index(i) for i in x]
 
 xs = list(itertools.repeat(list(range(X_test.shape[1])), X_test.shape[0]))
+xs_age = list(np.array(xs) / 4 + 16)
 ys = X_test.astype(int).tolist()
 ys_pred = X_test.copy()
 ys_pred[range(len(ys_pred)), t_pred] = x_pred
@@ -208,6 +209,7 @@ source = ColumnDataSource(
     {
         "is": [[i] * len(xs[0]) for i in range(len(xs))],  # List of indices, hack!
         "xs": xs,
+        "xs_age": xs_age,
         "ys": ys,
         "ys_pred": ys_pred,
         "x": x,
@@ -219,6 +221,7 @@ source = ColumnDataSource(
         "probabilities": [[f"{ps:0.2f}" for ps in lst] for lst in p_pred],
         "is_end": [[i] * 2 for i in range(len(xs))],  # List of indices, hack!
         "xs_end": _get_first_last_index(ys),
+        "xs_end_year": list(np.array(_get_first_last_index(ys)) / 4 + 16),
         "years_end": [
             [years[i][start], years[i][end]]
             for i, (start, end) in enumerate(_get_first_last_index(ys))
@@ -242,6 +245,7 @@ scatter_source = ColumnDataSource(
         key: _get_cleaned(value)
         for key, value in {
             "x": xs,
+            "x_age": xs_age,
             "y": ys,
             "i": (
                 itertools.repeat(i, number_of_time_steps)
@@ -296,7 +300,7 @@ line_view = CDSView()
 
 
 lines = log_figure.multi_line(
-    xs="xs",
+    xs="xs_age",
     ys="ys",
     source=source,
     view=line_view,
@@ -304,7 +308,7 @@ lines = log_figure.multi_line(
     nonselection_line_alpha=0.0,
 )
 lines_pred = log_figure.multi_line(
-    xs="xs",
+    xs="xs_age",
     ys="ys_pred",
     source=source,
     view=line_view,
@@ -333,7 +337,7 @@ def cycle_mapper(cycle):
 
 
 lexis_ish_lines = lexis_ish_figure.multi_line(
-    "xs_end",
+    "xs_end_year",
     "is",
     source=source,
     color="lightgray",
@@ -341,7 +345,7 @@ lexis_ish_lines = lexis_ish_figure.multi_line(
 )
 
 lexis_ish_scatter = lexis_ish_figure.scatter(
-    "x",
+    "x_age",
     "i",
     marker=cycle_mapper(markers),
     color=cycle_mapper(colors),
@@ -370,7 +374,7 @@ def cycle_mapper(cycle):
 
 
 lexis_lines = lexis_figure.multi_line(
-    "xs_end",
+    "xs_end_year",
     "years_end",
     source=source,
     color="lightgray",
@@ -378,7 +382,7 @@ lexis_lines = lexis_figure.multi_line(
 )
 
 lexis_scatter = lexis_figure.scatter(
-    "x",
+    "x_age",
     "year",
     marker=cycle_mapper(markers),
     color=cycle_mapper(colors),
