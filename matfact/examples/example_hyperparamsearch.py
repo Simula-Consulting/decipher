@@ -1,3 +1,4 @@
+"""Example of an hyperparameter search."""
 import functools
 from typing import Callable
 

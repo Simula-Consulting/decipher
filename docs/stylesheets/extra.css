@@ -1,0 +1,4 @@
+/* Make the code highlight color more subtle. */
+:root > * {
+  --md-code-hl-color: rgba(255,255,0,0.2);
+}

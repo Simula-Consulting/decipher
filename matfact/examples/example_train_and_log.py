@@ -1,3 +1,9 @@
+"""Example using `train_and_log` for simpler workflow.
+
+!!! Warning
+
+    We might change the usage of `train_and_log` in the future.
+"""
 import pathlib
 from itertools import product
 

@@ -23,12 +23,23 @@ class ConvergenceMonitor:
     The model is said to have converged when the model's latent matrix (M) has
     a relative norm difference smaller than tolerance.
 
-    Sample usage:
-    >>> monitor = ConvergenceMonitor(tolerance=1e-5)
-    >>> for epoch in monitor(model):
-    >>>     # If model converges, the generator will deplete before the default number
-    >>>     # of epochs has been reached.
-    >>>     ...
+
+    Args:
+        number_of_epochs: the maximum number of epochs to generate.
+        epochs_per_val: convergence checking is done every epochs_per_val epoch.
+        patience: the minimum number of epcohs.
+        show_progress: enable tqdm progress bar.
+        tolerance: the tolerance under which the model is said to have converged.
+
+    Examples:
+
+        ```python
+        monitor = ConvergenceMonitor(tolerance=1e-5)
+        for epoch in monitor(model):
+            # If model converges, the generator will deplete before the default number
+            # of epochs has been reached.
+            ...
+        ```
     """
 
     def __init__(
@@ -39,14 +50,6 @@ class ConvergenceMonitor:
         show_progress: bool = True,
         tolerance: float = 1e-4,
     ):
-        """Initialize ConvergenceMonitor.
-
-        Args:
-          number_of_epochs: the maximum number of epochs to generate.
-          epochs_per_val: convergence checking is done every epochs_per_val epoch.
-          patience: the minimum number of epcohs.
-          show_progress: enable tqdm progress bar.
-          tolerance: the tolerance under which the model is said to have converged."""
 
         self.number_of_epochs = number_of_epochs
         self.tolerance = tolerance

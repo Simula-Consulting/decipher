@@ -1,3 +1,7 @@
+"""
+Simple example
+"""
+
 import pathlib
 from itertools import product
 

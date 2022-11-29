@@ -1,3 +1,9 @@
+"""Logging utilities.
+
+The logging is written in a general way, however at the moment only MLFlow is supported
+as backend.
+"""
+
 import pathlib
 import re
 from contextlib import nullcontext
@@ -25,16 +31,21 @@ def mlflow_logger(log_data: dict) -> None:
 
     Given a dictionary on the format below, add the run to mlflow.
     Assumes there to be an active MLFlow run!
+    The run is typically started by
+    [`MLFLowLogger`][matfact.model.logging.MLFlowLogger].
 
     Params and metrics should have values that are floats.
     Metric also accepts a list of floats, in which case they are interpreted as
     the metric value as a function of the epochs.
+    ```python
     {
         "params": {"param1": value, "param2": value,},
         "metrics": {"metric1": value, "metric2": [...]},
         "tags": {},
         "meta": {},  # Data not logged to MLFLow
-    }"""
+    }
+    ```
+    """
     for parameter, value in log_data["params"].items():
         mlflow.log_param(parameter, value)
     for metric, value in log_data["metrics"].items():
@@ -140,13 +151,15 @@ def batch_mlflow_logger(
     as one run.
 
     Arguments:
-    log_data: list of run data. Each entry in log_data should be compatible with the
-        format expected by `_mlflow_logger`.
-        {
-            "params": {"field1": value1,},
-            "metrics": {"field2": foo, "field_history": [...],},
-            "tags": {},
-        }
+        log_data: list of run data. Each entry in log_data should be compatible with the
+            format expected by `_mlflow_logger`.
+            ```python
+            {
+                "params": {"field1": value1,},
+                "metrics": {"field2": foo, "field_history": [...],},
+                "tags": {},
+            }
+            ```
     """
     new_log: dict = {
         "params": {},
@@ -180,18 +193,27 @@ class MLFlowLogger:
         logged as children in MLFlow.
      extra_tags: these tags will be appended to each run.
 
-    Example usage.
-    >>> with MLFlowLogger() as logger:
-    >>>     output = get_output_data()
-    >>>     # output = {
-    >>>     #     "params": {...},
-    >>>     #     "metrics": {...},
-    >>>     #     "meta": {...},
-    >>>     # }
-    >>>     logger(output)
+    Examples:
 
-    Raises MLFlowRunHierarchyException on enter if loggers are nested when allow_nesting
-    is False.
+        ```python
+        with MLFlowLogger() as logger:
+            output = get_output_data()
+            # output = {
+            #     "params": {...},
+            #     "metrics": {...},
+            #     "meta": {...},
+            # }
+            logger(output)
+        ```
+
+    Raises:
+        MLFlowRunHierarchyException: Raised on enter if
+            loggers are nested when allow_nesting is False.
+
+    See also:
+        - [MLFlowBatchLogger][matfact.model.logging.MLFlowBatchLogger]
+        - [MLFlowLoggerArtifact][matfact.model.logging.MLFlowLoggerArtifact]
+        - [MLFlowLoggerDiagnostic][matfact.model.logging.MLFlowLoggerDiagnostic]
     """
 
     def __init__(self, allow_nesting: bool = True, extra_tags: dict | None = None):
@@ -230,13 +252,21 @@ class MLFlowBatchLogger(MLFlowLogger):
     summary run, which is logged to MLFlow. Used in for example cross validation runs,
     where each fold is a subrun, and the entire cross validation is logged as one run.
 
-    It is possible to run MLFlowBatchLogger wrapped around subrun contexts.
-    >>> with MLFlowBatchLogger() as outer_logger:
-    >>>     for subrun in subruns:
-    >>>         with MLFlowLogger() as inner_logger:
-    >>>             ...
-    >>>             inner_logger(run_data)
-    >>>             outer_logger(run_data)
+    Examples:
+        It is possible to run MLFlowBatchLogger wrapped around subrun contexts.
+        >>> with MLFlowBatchLogger() as outer_logger:
+        >>>     for subrun in subruns:
+        >>>         with MLFlowLogger() as inner_logger:
+        >>>             ...
+        >>>             inner_logger(run_data)
+        >>>             outer_logger(run_data)  # (1)
+
+        1. The data is only logged to MLFlow when `MLFlowBatchLogger` exists.
+
+            ??? Note "How and when are things logged?"
+                Each call to the logger is stored as a subrun, which
+                on exit is aggregated together to one run which is logged to MLFLow.
+                See [matfact.model.logging.batch_mlflow_logger][] for details.
     """
 
     def __init__(

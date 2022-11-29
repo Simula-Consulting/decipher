@@ -91,8 +91,13 @@ class Dataset:
     """Screening dataset container
 
     This class simplifies generating, loading, and saving datasets.
-    Most methods returns the Dataset object, so that it is chainable, as
-    >>> Dataset.from_file(some_path).get_X_M()
+
+    !!! Note "Chaining"
+
+        Most methods returns the Dataset object, so that it is chainable, as
+        ```python
+        Dataset.from_file(some_path).get_X_M()
+        ```
     """
 
     def __init__(self, X: np.ndarray, M: np.ndarray, metadata: dict):
@@ -138,9 +143,11 @@ class Dataset:
         """Generate a Dataset
 
         produce_dataset_function should be a callable with signature
+        ```
         Callable(
             N, T, rank, sparsity_level, *, number_of_states, observation_probabilities
-        ) -> observed_matrix: ndarray, latent_matrix: ndarray, generation_name: str.
+        ) -> observed_matrix: ndarray, latent_matrix: ndarray, generation_name: str
+        ```
         """
         X, M, generation_name = produce_dataset_function(
             N,
