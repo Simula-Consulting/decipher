@@ -5,6 +5,7 @@ import itertools
 import pathlib
 
 import numpy as np
+import tensorflow as tf
 from bokeh.layouts import column, row
 from bokeh.models import (
     AllIndices,
@@ -23,9 +24,13 @@ from bokeh.models.tickers import FixedTicker
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import linear_cmap
 from matfact.data_generation import Dataset
-from matfact.experiments import train_and_log
-from matfact.experiments.logging import dummy_logger_context
+from matfact.model.config import ModelConfig
+from matfact.model.matfact import MatFact
+from matfact.model.predict.dataset_utils import prediction_data
 from matfact.plotting.diagnostic import _calculate_delta
+
+tf.config.set_visible_devices([], "GPU")
+
 
 # Base64 encoded SC png logo
 SC_logo_base64 = r"""iVBORw0KGgoAAAANSUhEUgAAAO4AAAC4CAYAAADkOdDIAAAABGdBTUEAALGPC/xhBQAAACBjSFJN
@@ -157,33 +162,28 @@ def get_permutation_list(array):
 dataset_path = pathlib.Path(__file__).parent.parent / "data/dataset1"
 dataset = Dataset.from_file(dataset_path)
 X_train, X_test, _, _ = dataset.get_split_X_M()
+X_train = X_train.astype(int)
+X_test = X_test.astype(int)
+X_test_masked, t_pred_test, x_true_test = prediction_data(X_test)
 
-# Fit the model, predict on test set
-output = train_and_log(
-    X_train,
-    X_test,
-    use_threshold_optimization=False,
-    logger_context=dummy_logger_context,
-)
+matfact = MatFact(ModelConfig())
 
-# Extract the quantities of interest from output dict
-p_pred = output["meta"]["results"]["p_pred"]
-x_pred = output["meta"]["results"]["x_pred"]
-t_pred = output["meta"]["results"]["t_pred"]
-x_true = output["meta"]["results"]["x_true"].astype(int)
-valid_rows = output["meta"]["results"]["valid_rows"]
-deltas = _calculate_delta(p_pred, x_true - 1)
-X_test = X_test[valid_rows]
+matfact.fit(X_train)
+predicted_probabilities = matfact.predict_probabilities(X_test, t_pred_test)
+# Could alternatively do matfact._predictor(predicted_probabilites) ...
+predicted_states = matfact.predict(X_test, t_pred_test)
 
+deltas = _calculate_delta(predicted_probabilities, x_true_test)
 permutations = get_permutation_list(deltas)
-x = list(range(len(x_true)))
+x = list(range(len(x_true_test)))
 sorted_x = [permutations.index(i) for i in x]
+
 
 xs = list(itertools.repeat(list(range(X_test.shape[1])), X_test.shape[0]))
 xs_age = list(np.array(xs) / 4 + 16)
 ys = X_test.astype(int).tolist()
 ys_pred = X_test.copy()
-ys_pred[range(len(ys_pred)), t_pred] = x_pred
+ys_pred[range(len(ys_pred)), t_pred_test] = predicted_states
 ys_pred = ys_pred.tolist()
 
 number_of_individuals = len(xs)
@@ -215,10 +215,12 @@ source = ColumnDataSource(
         "x": x,
         "y": deltas,
         "perm": sorted_x,
-        "predicted": x_pred,
-        "true": x_true,
-        "prediction_discrepancy": np.abs(x_pred - x_true),
-        "probabilities": [[f"{ps:0.2f}" for ps in lst] for lst in p_pred],
+        "predicted": predicted_states,
+        "true": x_true_test,
+        "prediction_discrepancy": np.abs(predicted_states - x_true_test),
+        "probabilities": [
+            [f"{ps:0.2f}" for ps in lst] for lst in predicted_probabilities
+        ],
         "is_end": [[i] * 2 for i in range(len(xs))],  # List of indices, hack!
         "xs_end": _get_first_last_index(ys),
         "xs_end_year": list(np.array(_get_first_last_index(ys)) / 4 + 16),
@@ -428,7 +430,7 @@ person_table = DataTable(
     styles={
         "border": "1px solid black",
         "margin-right": "40px",
-    }
+    },
 )
 
 slider = Slider(start=1, end=20, step=0.5, value=10, title="Marker size")
