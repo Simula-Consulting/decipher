@@ -189,7 +189,17 @@ ys_pred = ys_pred.tolist()
 number_of_individuals = len(xs)
 number_of_time_steps = len(xs[0])
 
+
 rng = np.random.default_rng()
+NO_VACCINE = -1
+## Fake vaccination date
+fake_vaccination_time = rng.choice(
+    (NO_VACCINE, rng.integers(0, number_of_time_steps)),
+    number_of_individuals,
+    p=(0.7, 0.3),
+)
+
+## Fake date of birth
 max_offset = 40  # Years
 fake_date_of_birth = [
     1960 + max_offset * factor for factor in rng.random(number_of_individuals)
@@ -205,6 +215,7 @@ def _get_first_last_index(ys):
 
 # Set up the Bokeh data source
 # Each row corresponds to one individual
+first_last_index = np.array(_get_first_last_index(ys))
 source = ColumnDataSource(
     {
         "is": [[i] * len(xs[0]) for i in range(len(xs))],  # List of indices, hack!
@@ -223,10 +234,20 @@ source = ColumnDataSource(
         ],
         "is_end": [[i] * 2 for i in range(len(xs))],  # List of indices, hack!
         "xs_end": _get_first_last_index(ys),
-        "xs_end_year": list(np.array(_get_first_last_index(ys)) / 4 + 16),
+        "xs_end_year": list(first_last_index / 4 + 16),
         "years_end": [
             [years[i][start], years[i][end]]
             for i, (start, end) in enumerate(_get_first_last_index(ys))
+        ],
+        "vaccine_end_age": [
+            [vaccine / 4 + 16, end / 4 + 16] if vaccine != NO_VACCINE else []
+            for vaccine, (first, end) in zip(fake_vaccination_time, first_last_index)
+        ],
+        "vaccine_end_year": [
+            [years[i][vaccine], years[i][end]]
+            for i, (vaccine, end) in enumerate(
+                zip(fake_vaccination_time, first_last_index[:, 1])
+            )
         ],
     }
 )
@@ -345,6 +366,13 @@ lexis_ish_lines = lexis_ish_figure.multi_line(
     color="lightgray",
     muted=True,
 )
+lexis_ish_vaccine_lines = lexis_ish_figure.multi_line(
+    "vaccine_end_age",
+    "is",
+    source=source,
+    color="red",
+    muted=True,
+)
 
 lexis_ish_scatter = lexis_ish_figure.scatter(
     "x_age",
@@ -380,6 +408,13 @@ lexis_lines = lexis_figure.multi_line(
     "years_end",
     source=source,
     color="lightgray",
+    muted=True,
+)
+lexis_vaccine_lines = lexis_figure.multi_line(
+    "vaccine_end_age",
+    "vaccine_end_year",
+    source=source,
+    color="red",
     muted=True,
 )
 
