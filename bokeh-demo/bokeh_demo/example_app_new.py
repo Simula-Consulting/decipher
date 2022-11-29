@@ -425,6 +425,10 @@ person_table = DataTable(
         TableColumn(title="Correct state", field="true"),
         TableColumn(title="Prediction discrepancy", field="prediction_discrepancy"),
     ],
+    styles={
+        "border": "1px solid black",
+        "margin-right": "40px",
+    }
 )
 
 slider = Slider(start=1, end=20, step=0.5, value=10, title="Marker size")
