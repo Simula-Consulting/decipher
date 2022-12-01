@@ -388,7 +388,7 @@ lexis_ish_scatter = lexis_ish_figure.scatter(
     marker=cycle_mapper(markers),
     color=cycle_mapper(colors),
     source=scatter_source,
-    legend_group="y_label",
+    # legend_group="y_label",  # We have the legend in the Lexis plot already
 )
 
 
@@ -428,7 +428,9 @@ lexis_vaccine_lines = lexis_figure.multi_line(
 lexis_figure.add_layout(
     Legend(
         items=[LegendItem(label="Vaccine", renderers=[lexis_vaccine_lines], index=0)],
-    )
+        orientation="horizontal",
+    ),
+    "above",
 )
 
 lexis_scatter = lexis_figure.scatter(
