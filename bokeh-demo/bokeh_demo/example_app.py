@@ -244,7 +244,11 @@ source = ColumnDataSource(
             for i, (start, end) in enumerate(_get_first_last_index(ys))
         ],
         "vaccine_end_age": [
-            [vaccine / 4 + 16, end / 4 + 16] if vaccine != NO_VACCINE else []
+            # NB!!!! We take vaccine < end. This is just a temporary hack until we
+            # define how we want to handle the end of the line (current date, death etc)
+            [vaccine / 4 + 16, end / 4 + 16]
+            if vaccine != NO_VACCINE and vaccine < end
+            else []
             for vaccine, (first, end) in zip(fake_vaccination_time, first_last_index)
         ],
         "vaccine_end_year": [
