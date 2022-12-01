@@ -312,7 +312,7 @@ delta_scatter = delta_figure.circle(
 # Add the time trajectory figure
 log_figure = figure(
     title="Individual state trajectories",
-    x_axis_label="Time",
+    x_axis_label="Age",
     y_axis_label="State",
     tools="tap,lasso_select," + default_tools,
     y_range=(-0.1, 4),
@@ -352,7 +352,7 @@ lines_pred = log_figure.multi_line(
 lexis_ish_figure = figure(
     title="Lexis-ish plot",
     tools="tap,lasso_select," + default_tools,
-    x_axis_label="Age at sample [months since 16]",
+    x_axis_label="Age",
     y_axis_label="Individual #",
 )
 markers = (None, "square", "circle", "diamond")
@@ -396,8 +396,8 @@ lexis_ish_scatter = lexis_ish_figure.scatter(
 lexis_figure = figure(
     title="Lexis plot",
     tools="tap,lasso_select," + default_tools,
-    x_axis_label="Age at sample [months since 16]",
-    y_axis_label="Date of sample",
+    x_axis_label="Age",
+    y_axis_label="Date",
 )
 markers = (None, "square", "circle", "diamond")
 colors = [None, "blue", "green", "red"]
