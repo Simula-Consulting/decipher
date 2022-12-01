@@ -361,14 +361,14 @@ def cycle_mapper(cycle):
 
 lexis_ish_lines = lexis_ish_figure.multi_line(
     "xs_end_year",
-    "is",
+    "is_end",
     source=source,
     color="lightgray",
     muted=True,
 )
 lexis_ish_vaccine_lines = lexis_ish_figure.multi_line(
     "vaccine_end_age",
-    "is",
+    "is_end",
     source=source,
     color="red",
     muted=True,
