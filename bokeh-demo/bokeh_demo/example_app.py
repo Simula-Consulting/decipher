@@ -378,7 +378,8 @@ lexis_ish_vaccine_lines = lexis_ish_figure.multi_line(
     "vaccine_end_age",
     "is_end",
     source=source,
-    color="red",
+    line_width=3,
+    color="tan",
     muted=True,
 )
 
@@ -422,7 +423,8 @@ lexis_vaccine_lines = lexis_figure.multi_line(
     "vaccine_end_age",
     "vaccine_end_year",
     source=source,
-    color="red",
+    line_width=3,
+    color="tan",
     muted=True,
 )
 lexis_figure.add_layout(
