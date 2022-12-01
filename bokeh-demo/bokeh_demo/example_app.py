@@ -192,11 +192,15 @@ number_of_time_steps = len(xs[0])
 
 rng = np.random.default_rng()
 NO_VACCINE = -1
+NO_VACCINE_PROB = 0.7
 ## Fake vaccination date
 fake_vaccination_time = rng.choice(
-    (NO_VACCINE, rng.integers(0, number_of_time_steps)),
+    (NO_VACCINE, *range(number_of_time_steps)),
     number_of_individuals,
-    p=(0.7, 0.3),
+    p=[
+        NO_VACCINE_PROB,
+        *[(1 - NO_VACCINE_PROB) / number_of_time_steps] * number_of_time_steps,
+    ],
 )
 
 ## Fake date of birth
