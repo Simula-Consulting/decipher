@@ -245,6 +245,9 @@ source = ColumnDataSource(
             [years[i][start], years[i][end]]
             for i, (start, end) in enumerate(_get_first_last_index(ys))
         ],
+        "vaccine_age": [
+            v / 4 + 16 if v != NO_VACCINE else None for v in fake_vaccination_time
+        ],
         "vaccine_end_age": [
             # NB!!!! We take vaccine < end. This is just a temporary hack until we
             # define how we want to handle the end of the line (current date, death etc)
@@ -320,7 +323,7 @@ log_figure.yaxis.ticker = FixedTicker(ticks=[0, 1, 2, 3, 4])
 hover_tool = HoverTool(
     tooltips=[
         ("Id", "$index"),
-        ("Predict", "@predicted"),
+        ("Vaccine", "@vaccine_age{0.0}"),
         ("Probabilities", "@probabilities"),
     ],
 )
