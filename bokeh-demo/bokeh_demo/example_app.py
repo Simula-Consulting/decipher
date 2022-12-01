@@ -271,6 +271,7 @@ def _get_cleaned(iterable, ys=ys):
     ]
 
 
+label_map = ["", "Normal", "Low risk", "High risk", "Cancer"]
 scatter_source = ColumnDataSource(
     {
         key: _get_cleaned(value)
@@ -286,11 +287,7 @@ scatter_source = ColumnDataSource(
         }.items()
     }
     | {
-        "y_label": [
-            ["", "Normal", "Low risk", "High risk", "Cancer"][y]
-            for y in itertools.chain.from_iterable(ys)
-            if y != 0
-        ],
+        "y_label": [label_map[y] for y in itertools.chain.from_iterable(ys) if y != 0],
     }
 )
 
@@ -326,6 +323,7 @@ hover_tool = HoverTool(
     ],
 )
 log_figure.add_tools(hover_tool)
+log_figure.yaxis.major_label_overrides = dict(enumerate(label_map))
 
 line_view = CDSView()
 
