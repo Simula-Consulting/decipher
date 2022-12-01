@@ -17,6 +17,8 @@ from bokeh.models import (
     Div,
     HoverTool,
     IndexFilter,
+    Legend,
+    LegendItem,
     Slider,
     TableColumn,
 )
@@ -422,6 +424,11 @@ lexis_vaccine_lines = lexis_figure.multi_line(
     source=source,
     color="red",
     muted=True,
+)
+lexis_figure.add_layout(
+    Legend(
+        items=[LegendItem(label="Vaccine", renderers=[lexis_vaccine_lines], index=0)],
+    )
 )
 
 lexis_scatter = lexis_figure.scatter(
