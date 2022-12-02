@@ -1,6 +1,7 @@
 # type: ignore
 # flake8: noqa
 """Example Bokeh server app"""
+import argparse
 import itertools
 import pathlib
 
@@ -32,6 +33,10 @@ from matfact.model.predict.dataset_utils import prediction_data
 from matfact.plotting.diagnostic import _calculate_delta
 
 tf.config.set_visible_devices([], "GPU")
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--large-data", action=argparse.BooleanOptionalAction)
+args = parser.parse_args()
 
 
 # Base64 encoded SC png logo
@@ -161,7 +166,11 @@ def get_permutation_list(array):
 
 
 # Import data
-dataset_path = pathlib.Path(__file__).parent.parent / "data/dataset1"
+dataset_path = (
+    pathlib.Path(__file__).parent.parent
+    / "data"
+    / ("dataset_large" if args.large_data else "dataset1")
+)
 dataset = Dataset.from_file(dataset_path)
 X_train, X_test, _, _ = dataset.get_split_X_M()
 X_train = X_train.astype(int)
