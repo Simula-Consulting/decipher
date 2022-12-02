@@ -175,7 +175,7 @@ predicted_probabilities = matfact.predict_probabilities(X_test, t_pred_test)
 # Could alternatively do matfact._predictor(predicted_probabilites) ...
 predicted_states = matfact.predict(X_test, t_pred_test)
 
-deltas = _calculate_delta(predicted_probabilities, x_true_test)
+deltas = _calculate_delta(predicted_probabilities, x_true_test - 1)
 permutations = get_permutation_list(deltas)
 x = list(range(len(x_true_test)))
 sorted_x = [permutations.index(i) for i in x]
