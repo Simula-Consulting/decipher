@@ -15,7 +15,6 @@ default_number_of_states = 4
 
 default_weights = range(1, default_number_of_states + 1)
 
-
 #### Data generation ####
 # Default observation values for five states.
 default_observation_probabilities = np.array([0.01, 0.03, 0.08, 0.12, 0.04])
@@ -29,3 +28,11 @@ minimum_number_of_observations = 3
 DEFAULT_NUMBER_OF_EPOCHS = 2000
 DEFAULT_EPOCHS_PER_VAL = 5
 DEFAULT_PATIENCE = 200
+
+
+### Classification tree ###
+
+# Age segment (inclusive) endpoints, in 'time points'
+# I.e. [a, b] correspond to the segments (<-, a), (a+1, b), (b+1, ->)
+
+DEFAULT_AGE_SEGMENTS = (76, 116)  # [35, 45] in years

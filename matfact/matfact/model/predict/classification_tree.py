@@ -10,10 +10,8 @@ the class to p2. Next, check p1 > t1, etc.
 
 In general, given probabilities [p0, p1, p2, ...] and thresholds [t1, t2, ...], set the
 class to max(i) where pi > ti.
-
-This prediction algorithm is implemented in `ClassificationTree`. In addition,
-`estimate_probability_thresholds` estimates the optimal values of the thresholds.
 """
+
 import itertools
 import random
 from enum import Enum, auto
