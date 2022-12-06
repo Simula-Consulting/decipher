@@ -6,8 +6,8 @@ import numpy.typing as npt
 from matfact.model.config import ModelConfig
 from matfact.model.factorization import CMF, SCMF, WCMF, BaseMF
 from matfact.model.predict.classification_tree import (
-    SegmentedClassificationTree,
-    estimate_probability_thresholds_segment,
+    ClassificationTree,
+    estimate_probability_thresholds,
 )
 from matfact.model.predict.dataset_utils import prediction_data
 from matfact.settings import DEFAULT_AGE_SEGMENTS
@@ -42,7 +42,7 @@ class ClassificationTreePredictor:
     Predict class from probabilities using thresholds biasing towards more rare states.
     See [matfact.model.predict.classification_tree][] for details."""
 
-    _classification_tree: SegmentedClassificationTree
+    _classification_tree: ClassificationTree
 
     def fit(self, matfact, observation_matrix):
         self.matfact = matfact
@@ -75,7 +75,7 @@ class ClassificationTreePredictor:
             observation_matrix_masked, time_points
         )
         age_segment_indexes = self._age_segment_index(time_points)
-        return estimate_probability_thresholds_segment(
+        return estimate_probability_thresholds(
             true_values, probabilities, age_segment_indexes, len(DEFAULT_AGE_SEGMENTS)
         )
 

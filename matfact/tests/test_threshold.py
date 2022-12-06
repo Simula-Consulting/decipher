@@ -8,9 +8,9 @@ from hypothesis.extra.numpy import arrays
 from sklearn.metrics import matthews_corrcoef
 
 from matfact.model.predict.classification_tree import (
+    ClassificationTree,
     Init,
-    SegmentedClassificationTree,
-    estimate_probability_thresholds_segment,
+    estimate_probability_thresholds,
 )
 
 
@@ -74,7 +74,7 @@ def test_segmented_classification_tree_prediction(
 ):
     """Test SegmentedClassificationTree predictions."""
     _probabilities = np.array(probabilities)
-    clf = SegmentedClassificationTree(thresholds)
+    clf = ClassificationTree(thresholds)
     predicted_state = clf.predict(_probabilities, age_segments)
     assert len(predicted_state) == len(age_segments)
     assert np.all(predicted_state == correct_class)
@@ -104,7 +104,7 @@ def test_segmented_classification_tree_estimation(
     init_method: Init,
 ):
     """Test ClassificationTree estimation."""
-    clf = estimate_probability_thresholds_segment(
+    clf = estimate_probability_thresholds(
         np.array(correct_classes),
         np.array(probabilities),
         age_segments,
@@ -143,9 +143,7 @@ def test_classification_predictions_argmax(probabilities):
     correct = np.argmax(probabilities, axis=1) + 1  # Compensate for 1-indexed
     number_of_samples = probabilities.shape[0]
     age_segments = [0] * number_of_samples
-    clf = estimate_probability_thresholds_segment(
-        correct, probabilities, age_segments, 1
-    )
+    clf = estimate_probability_thresholds(correct, probabilities, age_segments, 1)
     note(f"Correct: {correct}")
     note(f"Thresholds: {clf.thresholds}")
     predicted = clf.predict(probabilities, age_segments)
@@ -162,7 +160,7 @@ def test_all_partitions(probability_correct_pair):
 
     # Find optimal score
     threshold_limits = [(*set(p), 1) for p in probabilities.T[1:]]
-    clf = SegmentedClassificationTree()
+    clf = ClassificationTree()
     best_score = -float("inf")
     best_scoring_thresholds = []
     for thresholds in itertools.product(*threshold_limits):
@@ -174,7 +172,7 @@ def test_all_partitions(probability_correct_pair):
         note(f"{thresholds}, {prediction}, {score}")
 
     # Estimate
-    clf_estimated = estimate_probability_thresholds_segment(
+    clf_estimated = estimate_probability_thresholds(
         correct, probabilities, age_segments, 1
     )
     prediction_estimated = clf_estimated.predict(probabilities, age_segments)

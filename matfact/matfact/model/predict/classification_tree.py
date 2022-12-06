@@ -24,7 +24,7 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.utils import check_X_y
 
 
-class SegmentedClassificationTree(BaseEstimator, ClassifierMixin):
+class ClassificationTree(BaseEstimator, ClassifierMixin):
     """Perform hierarchical classification given probability thresholds.
 
     Class labels are 1 indexed integers.
@@ -107,7 +107,7 @@ class Init(Enum):
     PARTITION = auto()
 
 
-def estimate_probability_thresholds_segment(
+def estimate_probability_thresholds(
     y_true: np.ndarray,
     y_predicted_probabilities: np.ndarray,
     age_segments: list[int],
@@ -130,7 +130,7 @@ def estimate_probability_thresholds_segment(
         y_true: np.ndarray,
         y_predicted_probabilities: np.ndarray,
         age_segments: list[int],
-        clf: SegmentedClassificationTree,
+        clf: ClassificationTree,
     ):
         "Objective function to evaluate the differential evolution process."
         thresholds = thresholds.reshape((number_of_age_segments, number_of_classes - 1))
@@ -162,11 +162,11 @@ def estimate_probability_thresholds_segment(
             y_true,
             y_predicted_probabilities,
             age_segments,
-            SegmentedClassificationTree(),
+            ClassificationTree(),
         ),
         seed=seed,
         tol=tol,
         init=init,  # type: ignore  # Init may be either str or list of values
     )
     thresholds = result.x.reshape((number_of_age_segments, number_of_classes - 1))
-    return SegmentedClassificationTree(thresholds=thresholds)
+    return ClassificationTree(thresholds=thresholds)

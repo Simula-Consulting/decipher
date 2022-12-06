@@ -8,9 +8,7 @@ from matfact.model.config import DataWeightGetter, IdentityWeighGetter, ModelCon
 from matfact.model.factorization.convergence import EpochGenerator
 from matfact.model.factorization.utils import convoluted_differences_matrix
 from matfact.model.logging import MLFlowLogger
-from matfact.model.predict.classification_tree import (
-    estimate_probability_thresholds_segment,
-)
+from matfact.model.predict.classification_tree import estimate_probability_thresholds
 from matfact.model.predict.dataset_utils import prediction_data
 
 
@@ -133,7 +131,7 @@ def train_and_log(
             # Find the optimal threshold values
             X_train_masked, t_pred_train, x_true_train = prediction_data(X_train)
             p_pred_train = factoriser.predict_probability(X_train_masked, t_pred_train)
-            classification_tree = estimate_probability_thresholds_segment(
+            classification_tree = estimate_probability_thresholds(
                 x_true_train,
                 p_pred_train,
                 [0] * x_true_train.shape[0],
