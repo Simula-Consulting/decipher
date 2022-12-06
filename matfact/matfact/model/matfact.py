@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Protocol, Sequence
 
 import numpy as np
 import numpy.typing as npt
@@ -44,6 +44,9 @@ class ClassificationTreePredictor:
 
     _classification_tree: ClassificationTree
 
+    def __init__(self, segments: Sequence[int] | None = None):
+        self.segments = segments or DEFAULT_AGE_SEGMENTS
+
     def fit(self, matfact, observation_matrix):
         self.matfact = matfact
         self._classification_tree = self._estimate_classification_tree(
@@ -54,14 +57,12 @@ class ClassificationTreePredictor:
         age_segment_indexes = self._age_segment_index(time_points)
         return self._classification_tree.predict(probabilities, age_segment_indexes)
 
-    @staticmethod
-    def _age_segment_index(time_points):
+    def _age_segment_index(self, time_points):
         """Return the age segment index given time."""
-        segments = DEFAULT_AGE_SEGMENTS
-        last_segment_index = len(segments)
+        last_segment_index = len(self.segments)
         return [
             next(
-                (i for i, limit in enumerate(segments) if time <= limit),
+                (i for i, limit in enumerate(self.segments) if time <= limit),
                 last_segment_index,
             )
             for time in time_points
