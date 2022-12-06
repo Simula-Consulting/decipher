@@ -4,13 +4,13 @@ from typing import Callable
 
 import numpy as np
 import numpy.typing as npt
-
-from matfact import settings
 from matfact.model.factorization.utils import (
     convoluted_differences_matrix,
     initialize_basis,
 )
-from matfact.model.factorization.weights import data_weights
+from matfact.model.factorization.weights import data_weights, propensity_weights
+
+from matfact import settings
 
 
 class WeightGetter(ABC):
@@ -42,6 +42,11 @@ class IdentityWeighGetter(WeightGetter):
 class DataWeightGetter(WeightGetter):
     def __call__(self, X: npt.NDArray) -> npt.NDArray:
         return data_weights(X)
+
+
+class PropensityWeightGetter(WeightGetter):
+    def __call__(self, X: npt.NDArray) -> npt.NDArray:
+        return propensity_weights(X)
 
 
 @dataclass(frozen=True)
