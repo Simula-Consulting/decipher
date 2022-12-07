@@ -3,7 +3,7 @@ import pytest
 
 from matfact.model.predict.classification_tree import (
     ClassificationTree,
-    Init,
+    ThresholdInitMethod,
     estimate_probability_thresholds,
 )
 
@@ -35,7 +35,9 @@ def test_segmented_classification_tree_prediction(
     assert np.all(predicted_state == correct_class)
 
 
-@pytest.mark.parametrize("init_method", [Init.DEFAULT, Init.PARTITION])
+@pytest.mark.parametrize(
+    "init_method", [ThresholdInitMethod.DEFAULT, ThresholdInitMethod.PARTITION]
+)
 @pytest.mark.parametrize(
     "probabilities,correct_classes,age_segments,number_of_age_segments,max_thresholds",
     [
@@ -56,7 +58,7 @@ def test_segmented_classification_tree_estimation(
     age_segments: list[int],
     number_of_age_segments: int,
     max_thresholds: list[list[float]],
-    init_method: Init,
+    init_method: ThresholdInitMethod,
 ):
     """Test ClassificationTree estimation."""
     clf = estimate_probability_thresholds(

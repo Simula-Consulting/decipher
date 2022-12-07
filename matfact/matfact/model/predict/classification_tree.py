@@ -107,11 +107,16 @@ def _init_from_partitions(probabilities: np.ndarray, population_size: int = 15):
     )
 
 
-class Init(Enum):
+class ThresholdInitMethod(Enum):
     """Init method to use for threshold estimation."""
 
     DEFAULT = auto()
+    """Latin hypercube. Initialize with points drawn from evenly spaced partitions."""
     PARTITION = auto()
+    """Partition the threshold space using the observed probabilities.
+
+    This has the advantage of never selecting thresholds that fall in the
+    same probability partition."""
 
 
 def estimate_probability_thresholds(
@@ -119,7 +124,7 @@ def estimate_probability_thresholds(
     y_predicted_probabilities: np.ndarray,
     age_segments: list[int],
     number_of_age_segments: int,
-    init_method: Init = Init.DEFAULT,
+    init_method: ThresholdInitMethod = ThresholdInitMethod.DEFAULT,
     tol: float = 1e-6,
     seed: int = 42,
 ):
@@ -149,9 +154,9 @@ def estimate_probability_thresholds(
 
     init: str | list
     match init_method:
-        case Init.DEFAULT:
+        case ThresholdInitMethod.DEFAULT:
             init = "latinhypercube"
-        case Init.PARTITION:
+        case ThresholdInitMethod.PARTITION:
             init_single_segment = _init_from_partitions(y_predicted_probabilities)
             init = [
                 thresholds * number_of_age_segments
