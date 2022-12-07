@@ -60,6 +60,9 @@ class ClassificationTreePredictor:
     def _age_segment_index(self, time_points):
         """Return the age segment index given time."""
         last_segment_index = len(self.segments)
+        # For each time point, going from smaller segment limits,
+        # find the first segment limit larger than the time point.
+        # In case of no such limits, the correct segment is the last which has no limit.
         return [
             next(
                 (i for i, limit in enumerate(self.segments) if time <= limit),
@@ -69,6 +72,7 @@ class ClassificationTreePredictor:
         ]
 
     def _estimate_classification_tree(self, observation_matrix):
+        """Estimate a ClassificationTree based on the observation data."""
         observation_matrix_masked, time_points, true_values = prediction_data(
             observation_matrix
         )
@@ -76,8 +80,9 @@ class ClassificationTreePredictor:
             observation_matrix_masked, time_points
         )
         age_segment_indexes = self._age_segment_index(time_points)
+        number_of_age_segments = len(self.segments) + 1  # Fencepost problem
         return estimate_probability_thresholds(
-            true_values, probabilities, age_segment_indexes, len(DEFAULT_AGE_SEGMENTS)
+            true_values, probabilities, age_segment_indexes, number_of_age_segments
         )
 
 
