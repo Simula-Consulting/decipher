@@ -83,12 +83,19 @@ class ClassificationTree(BaseEstimator, ClassifierMixin):
 
 
 def _init_from_partitions(probabilities: np.ndarray, population_size: int = 15):
+    """Generate initial samples from the partitions defined by probabilities.
+
+    For each state, we need only test taking the threshold equal to the
+    probabilities observed. Here, we draw a population_size sample
+    from all possibilities."""
     # Per class, these are the 'interesting' threshold limits
     threshold_limits = ((*set(p), 1) for p in probabilities.T[1:])
     # Sample from all possible points
-    # TODO: sample intelligently
-    # Possible to add weights for more intelligent sampling
     population = list(itertools.product(*threshold_limits))
+
+    # If the population is smaller than the requested population_size, sample without
+    # replacement will fail. Therefore, return the entire population + random choices
+    # (with replacement) from the population as padding.
     if len(population) < population_size:
         return population + random.choices(
             population, k=population_size - len(population)
@@ -131,7 +138,7 @@ def estimate_probability_thresholds(
         y_predicted_probabilities: np.ndarray,
         age_segments: list[int],
         clf: ClassificationTree,
-    ):
+    ) -> float:
         "Objective function to evaluate the differential evolution process."
         thresholds = thresholds.reshape((number_of_age_segments, number_of_classes - 1))
         clf.set_params(thresholds=thresholds)
