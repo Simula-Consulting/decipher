@@ -1,4 +1,4 @@
-from typing import Protocol, Sequence
+from typing import Callable, Protocol, Sequence
 
 import numpy as np
 import numpy.typing as npt
@@ -17,7 +17,9 @@ class NotFittedException(Exception):
     pass
 
 
-def _model_factory(observation_matrix, config: ModelConfig) -> BaseMF:
+def _model_factory(
+    observation_matrix: npt.NDArray[np.int_], config: ModelConfig
+) -> BaseMF:
     if config.shift_budget:
         return SCMF(observation_matrix, config)
     if config.weight_matrix_getter.is_identity:
@@ -29,10 +31,12 @@ def _model_factory(observation_matrix, config: ModelConfig) -> BaseMF:
 class Predictor(Protocol):
     """Predictor takes probabilities and gives a prediction."""
 
-    def fit(self, matfact, observation_matrix) -> None:
+    def fit(self, matfact: "MatFact", observation_matrix: npt.NDArray[np.int_]) -> None:
         ...
 
-    def predict(self, probabilities, time_points) -> npt.NDArray:
+    def predict(
+        self, probabilities: npt.NDArray[np.float64], time_points: npt.NDArray[np.int_]
+    ) -> npt.NDArray[np.int_]:
         ...
 
 
@@ -44,20 +48,22 @@ class ClassificationTreePredictor:
 
     _classification_tree: ClassificationTree
 
-    def __init__(self, segments: Sequence[int] | None = None):
+    def __init__(self, segments: Sequence[int] | None = None) -> None:
         self.segments = segments or DEFAULT_AGE_SEGMENTS
 
-    def fit(self, matfact, observation_matrix):
+    def fit(self, matfact: "MatFact", observation_matrix: npt.NDArray[np.int_]) -> None:
         self.matfact = matfact
         self._classification_tree = self._estimate_classification_tree(
             observation_matrix
         )
 
-    def predict(self, probabilities, time_points):
+    def predict(
+        self, probabilities: npt.NDArray[np.float64], time_points: npt.NDArray[np.int_]
+    ) -> npt.NDArray[np.int_]:
         age_segment_indexes = self._age_segment_index(time_points)
         return self._classification_tree.predict(probabilities, age_segment_indexes)
 
-    def _age_segment_index(self, time_points):
+    def _age_segment_index(self, time_points: npt.NDArray[np.int_]) -> list[int]:
         """Return the age segment index given time."""
         last_segment_index = len(self.segments)
         # For each time point, going from smaller segment limits,
@@ -71,7 +77,9 @@ class ClassificationTreePredictor:
             for time in time_points
         ]
 
-    def _estimate_classification_tree(self, observation_matrix):
+    def _estimate_classification_tree(
+        self, observation_matrix: npt.NDArray[np.int_]
+    ) -> ClassificationTree:
         """Estimate a ClassificationTree based on the observation data."""
         observation_matrix_masked, time_points, true_values = prediction_data(
             observation_matrix
@@ -89,10 +97,12 @@ class ClassificationTreePredictor:
 class ArgmaxPredictor:
     """Maximum probability predictor."""
 
-    def fit(self, matfact, observation_matrix):
+    def fit(self, matfact: "MatFact", observation_matrix: npt.NDArray[np.int_]) -> None:
         ...
 
-    def predict(self, probabilities, time_points):
+    def predict(
+        self, probabilities: npt.NDArray[np.float64], time_points: npt.NDArray[np.int_]
+    ) -> npt.NDArray[np.int_]:
         return np.argmax(probabilities, axis=1) + 1
 
 
@@ -100,15 +110,21 @@ class ProbabilityEstimator(Protocol):
     """Return probabilities for the different states."""
 
     def predict_probability(
-        self, matfact, observation_matrix, time_points
-    ) -> npt.NDArray:
+        self,
+        matfact: "MatFact",
+        observation_matrix: npt.NDArray[np.int_],
+        time_points: npt.NDArray[np.int_],
+    ) -> npt.NDArray[np.float64]:
         ...
 
 
 class DefaultProbabilityEstimator:
     def predict_probability(
-        self, matfact, observation_matrix, time_points
-    ) -> npt.NDArray:
+        self,
+        matfact: "MatFact",
+        observation_matrix: npt.NDArray[np.int_],
+        time_points: npt.NDArray[np.int_],
+    ) -> npt.NDArray[np.float64]:
         return matfact._factorizer.predict_probability(observation_matrix, time_points)
 
 
@@ -122,8 +138,10 @@ class MatFact:
         config: ModelConfig,
         predictor: Predictor | None = None,
         probability_estimator: ProbabilityEstimator | None = None,
-        model_factory=_model_factory,
-    ):
+        model_factory: Callable[
+            [npt.NDArray[np.int_], ModelConfig], BaseMF
+        ] = _model_factory,
+    ) -> None:
         self._predictor = predictor or ClassificationTreePredictor()
         self._probability_estimator = (
             probability_estimator or DefaultProbabilityEstimator()
@@ -131,18 +149,26 @@ class MatFact:
         self.config = config
         self._model_factory = model_factory
 
-    def fit(self, observation_matrix):
+    def fit(self, observation_matrix: npt.NDArray[np.int_]) -> "MatFact":
         """Fit the model."""
         self._factorizer = self._model_factory(observation_matrix, self.config)
         self._factorizer.matrix_completion()
         self._predictor.fit(self, observation_matrix)
         return self
 
-    def predict(self, observation_matrix, time_points):
+    def predict(
+        self,
+        observation_matrix: npt.NDArray[np.int_],
+        time_points: npt.NDArray[np.int_],
+    ) -> npt.NDArray[np.int_]:
         probabilities = self.predict_probabilities(observation_matrix, time_points)
         return self._predictor.predict(probabilities, time_points)
 
-    def predict_probabilities(self, observation_matrix, time_points):
+    def predict_probabilities(
+        self,
+        observation_matrix: npt.NDArray[np.int_],
+        time_points: npt.NDArray[np.int_],
+    ) -> npt.NDArray[np.float64]:
         self._check_is_fitted()
         return self._probability_estimator.predict_probability(
             self, observation_matrix, time_points
