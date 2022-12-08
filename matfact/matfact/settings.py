@@ -29,3 +29,8 @@ minimum_number_of_observations = 3
 DEFAULT_NUMBER_OF_EPOCHS = 2000
 DEFAULT_EPOCHS_PER_VAL = 5
 DEFAULT_PATIENCE = 200
+
+
+### Projected Gradient Descent
+DEFAULT_TAU = 2.0
+DEFAULT_GAMMA = 3.0
