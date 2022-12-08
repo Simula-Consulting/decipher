@@ -3,6 +3,7 @@ from typing import Sequence
 import numpy as np
 import numpy.typing as npt
 import tensorflow as tf
+from scipy.linalg import svd
 from tensorflow.keras.constraints import Constraint
 from tensorflow.math import log, reduce_sum, sigmoid
 
@@ -36,7 +37,7 @@ def data_weights(
 def propensity_weights(
     observed_data_matrix: npt.NDArray[np.int_],
     lr=0.1,
-    n_iter=100,
+    n_iter=1000,
     tau=None,
     gamma=None,
 ) -> npt.NDArray:
@@ -44,8 +45,6 @@ def propensity_weights(
 
     Solves the Bernoulli maximum likelihood problem (Eq. (3) in Ma & Chen (2019))
     by minimizing a loss function defined as the opposite of the maximum likelihood.
-
-    TODO: Implement tau and gamma contraints (if necessary)
     """
     M = np.zeros_like(observed_data_matrix)
     M[observed_data_matrix != 0] = 1
@@ -57,7 +56,7 @@ def propensity_weights(
     tau_mn = (tau or settings.DEFAULT_TAU) * np.sqrt(m * n)
     gamma = settings.DEFAULT_GAMMA
 
-    constraints = Projection(NuclearNorm(tau_mn=tau_mn), ElementNorm(gamma=gamma))
+    constraints = BothConstraints(tau_mn=tau_mn, gamma=gamma)
 
     A = tf.Variable(tf.random.uniform(M.shape), constraint=constraints)
     optimizer = tf.optimizers.Adam(learning_rate=lr)
@@ -74,53 +73,42 @@ def propensity_weights(
     return (M / propensity_matrix).numpy()
 
 
-class NuclearNorm(Constraint):
-    """Projection"""
-
-    def __init__(self, tau_mn):
+class BothConstraints(Constraint):
+    def __init__(self, tau_mn, gamma):
         self.tau_mn = tau_mn
-
-    def simplex_projection(self, s):
-        """Projection onto the unit simplex."""
-        if np.sum(s) <= self.tau_mn:
-            return s
-        # Code taken from https://gist.github.com/daien/1272551
-        # get the array of cumulative sums of a sorted (decreasing) copy of v
-        u = np.sort(s)[::-1]
-        cssv = np.cumsum(u)
-        # get the number of > 0 components of the optimal solution
-        rho = np.nonzero(u * np.arange(1, len(u) + 1) > (cssv - 1))[0][-1]
-        # compute the Lagrange multiplier associated to the simplex constraint
-        theta = (cssv[rho] - self.tau_mn) / (rho + 1)
-        # compute the projection by thresholding v using theta
-        return np.maximum(s - theta, 0)
-
-    def nuclear_projection(self, s, U, V):
-        """Projection onto nuclear norm ball."""
-        s = self.simplex_projection(s)
-        return U.dot(np.diag(s).dot(V))
-
-    def __call__(self, A):
-        s, U, V = tf.linalg.svd(A)
-        if np.sum(s) > self.tau_mn and np.alltrue(s >= 0):
-            return A  # no need to project
-        return self.nuclear_projection(A)
-
-
-class ElementNorm(Constraint):
-    def __init__(self, gamma):
         self.gamma = gamma
 
-    def __call__(self, A):
+    def element_norm(self, _A):
         return tf.clip_by_value(
-            A, clip_value_max=self.gamma, clip_value_min=-self.gamma
+            _A, clip_value_max=self.gamma, clip_value_min=-self.gamma
         )
 
+    def _simplex_projection(self, s):
+        """Projection onto the unit simplex."""
+        if np.sum(s) <= self.tau_mn and np.alltrue(s >= 0):
+            # no need to project!
+            return s
+        # get the array of cumulative sums of a sorted (decreasing) copy of s
+        u = np.sort(s)[::-1]
+        cssv = np.cumsum(u)
 
-class Projection(Constraint):
-    def __init__(self, nuc_norm, elem_norm):
-        self.global_constraint = nuc_norm
-        self.elem_constraint = elem_norm
+        # get the number of > 0 components of the optimal solution
+        rho = np.nonzero(u * np.arange(1, len(u) + 1) > (cssv - self.tau_mn))[0][-1]
+        # compute the Lagrange multiplier associated to the simplex constraint
+        theta = (cssv[rho] - self.tau_mn) / (rho + 1)
+        # compute the projection by thresholding s using theta
+        return np.maximum(s - theta, 0)
+
+    def _nuclear_projection(self, s, U, V):
+        """Projection onto nuclear norm ball."""
+        s = self._simplex_projection(s)
+        return U.dot(np.diag(s).dot(V))
+
+    def nuclear_norm(self, _A):
+        U, s, V = svd(_A, full_matrices=False)
+        return self._nuclear_projection(s, U, V)
 
     def __call__(self, A):
-        return self.global_constraint(self.elem_constraint(A))
+        A = A.numpy()
+        A = self.nuclear_norm(A)
+        return self.element_norm(A)
