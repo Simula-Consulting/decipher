@@ -61,7 +61,7 @@ class Projection(Constraint):
         """Projection onto the unit simplex."""
         if np.sum(s) <= self.tau_mn and np.alltrue(s >= 0):
             return s
-        # get the array of cumulative sums of a sorted (decreasing) copy of v
+        # get the array of cumulative sums of a sorted (decreasing) copy of s
         u = np.sort(s)[::-1]
         cssv = np.cumsum(u)
 
@@ -69,7 +69,7 @@ class Projection(Constraint):
         rho = np.nonzero(u * np.arange(1, len(u) + 1) > (cssv - self.tau_mn))[0][-1]
         # compute the Lagrange multiplier associated to the simplex constraint
         theta = (cssv[rho] - self.tau_mn) / (rho + 1)
-        # compute the projection by thresholding v using theta
+        # compute the projection by thresholding s using theta
         return np.maximum(s - theta, 0)
 
     def _nuclear_projection(
