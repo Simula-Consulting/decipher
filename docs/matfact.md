@@ -59,15 +59,17 @@ During the development of the age dependent thresholds, several issues became ap
 
 For now we continue using the differential evolution solver, with two initialization strategies implemented:
 the default _latinhypercube_ and a custom that samples from the above mentioned exhaustive search.
-In the future, however, we could consider finding/implementing a better solver if we find that to important.
+In the future, however, we could consider finding/implementing a better solver if we find that to be important.
 Looking at the note and figure below, it is obvious that when moving a threshold, we need only recompute the points that the threshold line moves past, which could be utilized in a more optimal solver.
+The age segments are separate and do not affect each other, so the solver would have to apply its strategy individually for each age segment.
 
 ???+ Note "How the thresholds work"
 
-    The thresholds are shown pictorally in the figure below.
+    The thresholds for one age segment are shown pictorally in the figure below.
     For all probabilities $p_i, i > 1$ (recall state labels are 1-indexed), we find thresholds $\tau_i$.
     We select the state witht the highest label number for which $p_i \geq \tau_i$.
     The thresholds effectively divide our $p$ space into hypercubes that define which predictions to classify as which state.
+    There is one such space for each age segment.
 
     ![Thresholds figure](static/thresholds.svg)
 
