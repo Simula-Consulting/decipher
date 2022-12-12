@@ -1,0 +1,667 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.9">
+    
+    
+      
+        <title>Simple example - Decipher</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.20d9efc8.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.08040f6c.min.css">
+        
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#simple-example" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Decipher" class="md-header__button md-logo" aria-label="Decipher" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Decipher
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Simple example
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Decipher" class="md-nav__button md-logo" aria-label="Decipher" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Decipher
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../matfact/" class="md-nav__link">
+        MatFact
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../hmm/" class="md-nav__link">
+        HMM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Examples
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Examples" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Examples
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Simple example
+      </a>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../example_class_based/" class="md-nav__link">
+        Example usage of class based Matfact API.
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../example_hyperparamsearch/" class="md-nav__link">
+        Example of an hyperparameter search.
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../example_train_and_log/" class="md-nav__link">
+        Example using `train_and_log` for simpler workflow.
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="simple-example">Simple example</h1>
+<div class="highlight"><pre><span></span><code><span class="c1"># example.py</span>
+
+
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="kn">import</span> <span class="nn">mlflow</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">matthews_corrcoef</span>
+
+<span class="kn">from</span> <span class="nn">matfact</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">matfact.data_generation</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">matfact.model</span> <span class="kn">import</span> <span class="n">model_factory</span><span class="p">,</span> <span class="n">prediction_data</span><span class="p">,</span> <span class="n">reconstruction_mse</span>
+<span class="kn">from</span> <span class="nn">matfact.plotting</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">plot_basis</span><span class="p">,</span>
+    <span class="n">plot_certainty</span><span class="p">,</span>
+    <span class="n">plot_coefs</span><span class="p">,</span>
+    <span class="n">plot_confusion</span><span class="p">,</span>
+    <span class="n">plot_roc_curve</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">matfact.settings</span> <span class="kn">import</span> <span class="n">DATASET_PATH</span><span class="p">,</span> <span class="n">FIGURE_PATH</span>
+
+
+<span class="k">def</span> <span class="nf">experiment</span><span class="p">(</span>
+    <span class="n">hyperparams</span><span class="p">,</span>
+    <span class="n">enable_shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">enable_weighting</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">enable_convolution</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">mlflow_tags</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">dataset_path</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">DATASET_PATH</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Execute and log an experiment.</span>
+
+<span class="sd">    Loads the dataset in dataset_path and splits this into train and test sets.</span>
+<span class="sd">    The test set is masked, so that the last observation is hidden.</span>
+<span class="sd">    The matrix completion is solved on the train set and then the probability of the</span>
+<span class="sd">    possible states of the (masked) train set is comptued.</span>
+
+<span class="sd">    The run is tracked using MLFLow, using several metrics and artifacts (files).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        hyperparams: Dict of hyperparameters passed to the model. Common for all models</span>
+<span class="sd">            is</span>
+<span class="sd">            {</span>
+<span class="sd">                rank,</span>
+<span class="sd">                lambda1,</span>
+<span class="sd">                lambda2,</span>
+<span class="sd">            }</span>
+<span class="sd">        enable_shift: Use shifted model with shift range (-12,12)</span>
+<span class="sd">        enable_weighting: Use weighted model with weights as defined in</span>
+<span class="sd">            experiments.simulation::data_weights</span>
+<span class="sd">        enable_convolution: Use convolutional model.</span>
+<span class="sd">        mlflow_tags: Dict of tags to mark the MLFLow run with. For example</span>
+<span class="sd">            {</span>
+<span class="sd">                &quot;Developer&quot;: &quot;Ola Nordmann&quot;,</span>
+<span class="sd">                &quot;Notes&quot;: &quot;Using a very slow computer.&quot;,</span>
+<span class="sd">            }</span>
+<span class="sd">        dataset_path: pathlib.Path The path were dataset is stored.</span>
+
+<span class="sd">    TODO: option to plot and log figures</span>
+<span class="sd">    TODO: option to store and log artifacts like U,V,M,datasets,etc</span>
+<span class="sd">    TODO: more clearly separate train and predict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Setup and loading #</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">dataset_path</span><span class="p">)</span>
+    <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">M_train</span><span class="p">,</span> <span class="n">M_test</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_split_X_M</span><span class="p">()</span>
+
+    <span class="c1"># Simulate data for a prediction task by selecting the last data point in each</span>
+    <span class="c1"># sample vetor as the prediction target</span>
+    <span class="n">X_test_masked</span><span class="p">,</span> <span class="n">t_pred</span><span class="p">,</span> <span class="n">x_true</span> <span class="o">=</span> <span class="n">prediction_data</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">start_run</span><span class="p">()</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">set_tags</span><span class="p">(</span><span class="n">mlflow_tags</span><span class="p">)</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">(</span><span class="n">hyperparams</span><span class="p">)</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">prefixed_metadata</span><span class="p">())</span>
+
+    <span class="c1"># Generate the model</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">model_factory</span><span class="p">(</span>
+        <span class="n">X_train</span><span class="p">,</span>
+        <span class="n">shift_range</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">))</span> <span class="k">if</span> <span class="n">enable_shift</span> <span class="k">else</span> <span class="p">[],</span>
+        <span class="n">use_convolution</span><span class="o">=</span><span class="n">enable_convolution</span><span class="p">,</span>
+        <span class="n">use_weights</span><span class="o">=</span><span class="n">enable_weighting</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">hyperparams</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;model_name&quot;</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_short_model_name</span><span class="p">())</span>
+
+    <span class="c1"># Training and testing #</span>
+    <span class="c1"># Train the model (i.e. perform the matrix completion)</span>
+    <span class="n">extra_metrics</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;recMSE&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">model</span><span class="p">:</span> <span class="n">reconstruction_mse</span><span class="p">(</span><span class="n">M_train</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">M</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">matrix_completion</span><span class="p">(</span><span class="n">extra_metrics</span><span class="o">=</span><span class="n">extra_metrics</span><span class="p">)</span>
+
+    <span class="c1"># Predict the risk over the test set</span>
+    <span class="n">p_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_probability</span><span class="p">(</span><span class="n">X_test_masked</span><span class="p">,</span> <span class="n">t_pred</span><span class="p">)</span>
+    <span class="c1"># Estimate the mostl likely prediction result from the probabilities</span>
+    <span class="n">x_pred</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">p_pred</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># We set the backend to have the figure show on Mac.</span>
+    <span class="c1"># See https://matplotlib.org/stable/users/explain/backends.html for a reference</span>
+    <span class="c1"># on the matplotlib backends.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;MacOSX&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># We are not on a Mac</span>
+        <span class="k">pass</span>
+    <span class="n">plot_certainty</span><span class="p">(</span><span class="n">p_pred</span><span class="p">,</span> <span class="n">x_true</span><span class="p">)</span>
+
+    <span class="c1"># Log some metrics</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+        <span class="s2">&quot;matthew_score&quot;</span><span class="p">,</span> <span class="n">matthews_corrcoef</span><span class="p">(</span><span class="n">x_true</span><span class="p">,</span> <span class="n">x_pred</span><span class="p">),</span> <span class="n">step</span><span class="o">=</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;epochs&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+        <span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">x_true</span><span class="p">,</span> <span class="n">x_pred</span><span class="p">),</span> <span class="n">step</span><span class="o">=</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;epochs&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">loss</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;epochs&quot;</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;loss&quot;</span><span class="p">]):</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">extra_metrics</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">metric_value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;epochs&quot;</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="n">metric</span><span class="p">]):</span>
+            <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="n">metric_value</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span>
+
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;norm_difference&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;M&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">M_train</span><span class="p">))</span>
+
+    <span class="c1"># Plotting #</span>
+    <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">create_path_default</span><span class="p">:</span>
+        <span class="n">FIGURE_PATH</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">plot_coefs</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;U&quot;</span><span class="p">],</span> <span class="n">FIGURE_PATH</span><span class="p">)</span>
+    <span class="n">plot_basis</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;V&quot;</span><span class="p">],</span> <span class="n">FIGURE_PATH</span><span class="p">)</span>
+    <span class="n">plot_confusion</span><span class="p">(</span><span class="n">x_true</span><span class="p">,</span> <span class="n">x_pred</span><span class="p">,</span> <span class="n">FIGURE_PATH</span><span class="p">)</span>
+    <span class="n">plot_roc_curve</span><span class="p">(</span><span class="n">x_true</span><span class="p">,</span> <span class="n">p_pred</span><span class="p">,</span> <span class="n">FIGURE_PATH</span><span class="p">)</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifacts</span><span class="p">(</span><span class="n">FIGURE_PATH</span><span class="p">)</span>
+
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">end_run</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># Generate some data</span>
+    <span class="n">Dataset</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sparsity_level</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">DATASET_PATH</span><span class="p">)</span>
+
+    <span class="n">USE_GPU</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">USE_GPU</span><span class="p">:</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set_visible_devices</span><span class="p">([],</span> <span class="s2">&quot;GPU&quot;</span><span class="p">)</span>
+
+    <span class="n">mlflow_tags</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;Developer&quot;</span><span class="p">:</span> <span class="s2">&quot;Thorvald M. Ballestad&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;GPU&quot;</span><span class="p">:</span> <span class="n">USE_GPU</span><span class="p">,</span>
+        <span class="s2">&quot;Notes&quot;</span><span class="p">:</span> <span class="s2">&quot;tf.function commented out&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="c1"># NB! lamabda1, lambda2, lambda3 does *not* correspond directly to</span>
+    <span class="c1"># the notation used in the master thesis.</span>
+    <span class="n">hyperparams</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;rank&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="s2">&quot;lambda1&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="s2">&quot;lambda2&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="s2">&quot;lambda3&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="n">shift</span><span class="p">,</span> <span class="n">weight</span><span class="p">,</span> <span class="n">convolve</span> <span class="ow">in</span> <span class="n">product</span><span class="p">([</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">],</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+        <span class="n">experiment</span><span class="p">(</span>
+            <span class="n">hyperparams</span><span class="p">,</span>
+            <span class="n">shift</span><span class="p">,</span>
+            <span class="n">weight</span><span class="p">,</span>
+            <span class="n">convolve</span><span class="p">,</span>
+            <span class="n">mlflow_tags</span><span class="o">=</span><span class="n">mlflow_tags</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../../hmm/" class="md-footer__link md-footer__link--prev" aria-label="Previous: HMM" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              HMM
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../example_class_based/" class="md-footer__link md-footer__link--next" aria-label="Next: Example usage of class based Matfact API." rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Example usage of class based Matfact API.
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.annotate"], "search": "../../assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d6c3db9e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
