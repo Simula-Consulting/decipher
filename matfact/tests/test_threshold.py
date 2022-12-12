@@ -79,7 +79,13 @@ def test_segmented_classification_tree_estimation(
     max_thresholds: list[list[float]],
     init_method: ThresholdInitMethod,
 ):
-    """Test ClassificationTree estimation."""
+    """Test ClassificationTree estimation.
+
+    The solution of the thresholds are degenerate: in simple constructed cases, it
+    just has to be smaller than the value that would result in the 'next' class
+    to be predicted instead. The max_thresholds gives the highest accepted value.
+    """
+
     clf = estimate_probability_thresholds(
         np.array(correct_classes),
         np.array(probabilities),
