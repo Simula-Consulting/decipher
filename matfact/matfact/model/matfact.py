@@ -49,7 +49,7 @@ class ClassificationTreePredictor:
     _classification_tree: ClassificationTree
 
     def __init__(self, segments: Sequence[int] | None = None) -> None:
-        self.segments = segments or DEFAULT_AGE_SEGMENTS
+        self.segments = DEFAULT_AGE_SEGMENTS if segments is None else segments
 
     def fit(self, matfact: "MatFact", observation_matrix: npt.NDArray[np.int_]) -> None:
         self.matfact = matfact
