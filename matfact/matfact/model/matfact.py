@@ -89,9 +89,10 @@ class ClassificationTreePredictor:
         )
         age_segment_indexes = self._age_segment_index(time_points)
         number_of_age_segments = len(self.segments) + 1  # Fencepost problem
-        return estimate_probability_thresholds(
+        thresholds = estimate_probability_thresholds(
             true_values, probabilities, age_segment_indexes, number_of_age_segments
         )
+        return ClassificationTree(thresholds)
 
 
 class ArgmaxPredictor:

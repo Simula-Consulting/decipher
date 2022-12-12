@@ -9,7 +9,10 @@ from matfact.model.config import DataWeightGetter, IdentityWeighGetter, ModelCon
 from matfact.model.factorization.convergence import EpochGenerator
 from matfact.model.factorization.utils import convoluted_differences_matrix
 from matfact.model.logging import MLFlowLogger
-from matfact.model.predict.classification_tree import estimate_probability_thresholds
+from matfact.model.predict.classification_tree import (
+    ClassificationTree,
+    estimate_probability_thresholds,
+)
 from matfact.model.predict.dataset_utils import prediction_data
 from matfact.settings import DEFAULT_AGE_SEGMENTS
 
@@ -77,12 +80,13 @@ def _get_classification_tree(
 
     age_segments = DEFAULT_AGE_SEGMENTS
     age_segment_indexes = _age_segment_index(t_pred_train, age_segments)
-    return estimate_probability_thresholds(
+    thresholds = estimate_probability_thresholds(
         x_true_train,
         p_pred_train,
         age_segment_indexes,
         len(age_segments) + 1,
     )
+    return ClassificationTree(thresholds)
 
 
 def train_and_log(

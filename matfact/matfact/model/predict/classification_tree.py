@@ -182,5 +182,4 @@ def estimate_probability_thresholds(
         tol=tol,
         init=init,  # type: ignore  # Init may be either str or list of values
     )
-    thresholds = result.x.reshape((number_of_age_segments, number_of_classes - 1))
-    return ClassificationTree(thresholds=thresholds)
+    return result.x.reshape((number_of_age_segments, number_of_classes - 1))

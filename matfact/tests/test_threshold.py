@@ -86,13 +86,14 @@ def test_segmented_classification_tree_estimation(
     to be predicted instead. The max_thresholds gives the highest accepted value.
     """
 
-    clf = estimate_probability_thresholds(
+    threholds = estimate_probability_thresholds(
         np.array(correct_classes),
         np.array(probabilities),
         age_segments,
         number_of_age_segments,
         init_method=init_method,
     )
+    clf = ClassificationTree(threholds)
     for age_index in range(number_of_age_segments):
         assert all(
             max_threshold >= threshold
