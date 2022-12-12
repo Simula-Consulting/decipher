@@ -1,11 +1,30 @@
 import numpy as np
 import pytest
 
+from matfact.model.matfact import ClassificationTreePredictor
 from matfact.model.predict.classification_tree import (
     ClassificationTree,
     ThresholdInitMethod,
     estimate_probability_thresholds,
 )
+
+
+@pytest.mark.parametrize(
+    "segments, time_points, correct_segment_indices",
+    [
+        [[76, 116], [75, 76, 77, 115, 116, 117], [0, 0, 1, 1, 1, 2]],
+        [[116], [75, 76, 77, 115, 116, 117], [0, 0, 0, 0, 0, 1]],
+        [[], [75, 76, 77, 115, 116, 117], [0, 0, 0, 0, 0, 0]],
+    ],
+)
+def test_age_segment_index(
+    segments: list[int], time_points: list[int], correct_segment_indices: list[int]
+):
+    """Test that _age_segment_index returns the correct age segment."""
+    predictor = ClassificationTreePredictor(segments=segments)
+    assert (
+        predictor._age_segment_index(np.array(time_points)) == correct_segment_indices
+    )
 
 
 @pytest.mark.parametrize(
