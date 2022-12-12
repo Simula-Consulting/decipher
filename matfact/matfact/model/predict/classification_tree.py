@@ -10,6 +10,8 @@ the class to p2. Next, check p1 > t1, etc.
 
 In general, given probabilities [p0, p1, p2, ...] and thresholds [t1, t2, ...], set the
 class to max(i) where pi > ti.
+Furthermore, we segment the population into age segments, and perform the above
+individually per segment.
 """
 
 import itertools
