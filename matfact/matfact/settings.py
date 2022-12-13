@@ -32,5 +32,7 @@ DEFAULT_PATIENCE = 200
 
 
 ### Projected Gradient Descent
-DEFAULT_TAU = 2.0
+# Pretty much arbitrary values and require hyperparameter search on
+# real data.
+DEFAULT_TAU = 1.0
 DEFAULT_GAMMA = 3.0
