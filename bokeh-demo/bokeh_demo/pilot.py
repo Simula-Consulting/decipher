@@ -30,7 +30,7 @@ from bokeh.models import (
 )
 from bokeh.models.tickers import FixedTicker
 from bokeh.plotting import curdoc, figure
-from bokeh.transform import linear_cmap
+from bokeh.transform import factor_cmap, factor_mark, linear_cmap
 from matfact.data_generation import Dataset
 from matfact.model.config import ModelConfig
 from matfact.model.factorization.convergence import ConvergenceMonitor
@@ -49,9 +49,35 @@ args = parser.parse_args()
 class Settings(BaseSettings):
     number_of_epochs: int = 100
     label_map: list[str] = ["", "Normal", "Low risk", "High risk", "Cancer"]
+    default_tools: list[str] = [
+        "pan",
+        "wheel_zoom",
+        "box_zoom",
+        "save",
+        "reset",
+        "help",
+    ]
+    extra_tools: list[str] = ["tap", "lasso_select"]
 
 
 settings = Settings()
+
+
+class Faker:
+    def __init__(self, seed=42):
+        self.rng = np.random.default_rng(seed=seed)
+
+    def get_fake_year_of_birth(
+        self, person_index: int, first_possible: float = 1970, spread: float = 30
+    ) -> float:
+        """Generate a fake date of birth.
+
+        NB. does not return the same date for a given index. This could
+        be fixed by adding some sort of memory."""
+        return first_possible + self.rng.random() * spread
+
+
+faker = Faker()
 
 
 # Import data
@@ -63,7 +89,7 @@ dataset_path = (
 dataset = Dataset.from_file(dataset_path)
 
 
-def _get_enedpoint_indices(history: Sequence[int]) -> tuple[int, int]:
+def _get_endpoint_indices(history: Sequence[int]) -> tuple[int, int]:
     """Return the first and last index of non-zero entries.
 
     >>> _get_endpoint_indices((0, 1, 0, 2, 0))
@@ -80,6 +106,7 @@ def _get_enedpoint_indices(history: Sequence[int]) -> tuple[int, int]:
 @dataclass
 class Person:
     index: int
+    year_of_birth: float  # Float to allow granular date
     exam_results: Sequence[int]
     predicted_exam_results: Sequence[int]
     prediction_time: int
@@ -94,15 +121,23 @@ class Person:
 
         # We must have explicit x-values for the plotting
         exam_time_age = [16 + i * 4 for i, _ in enumerate(self.exam_results)]
-        return base_dict | {"exam_time_age": exam_time_age}
+        lexis_line_endpoints_index = [self.index] * 2
+        return base_dict | {
+            "exam_time_age": exam_time_age,
+            "lexis_line_endpoints_index": lexis_line_endpoints_index,
+        }
 
     def as_scatter_source_dict(self):
         # TODO: fix
-        exam_time_age = (16 + i * 4 for i, _ in enumerate(self.exam_results))
-        exam_time_year = (1990 + i * 4 for i, _ in enumerate(self.exam_results))
+        exam_time_age = (16 + i / 4 for i, _ in enumerate(self.exam_results))
+        exam_time_year = (
+            self.year_of_birth + (self.index % 4) * 4 + i / 4
+            for i, _ in enumerate(self.exam_results)
+        )
 
-        nonzero_exams = [i for i, state in enumerate(self.exam_results) if state != 0]
-        get_nonzero = lambda seq: [seq[i] for i in nonzero_exams]
+        get_nonzero = lambda seq: [
+            element for i, element in enumerate(seq) if self.exam_results[i] != 0
+        ]
 
         return {
             key: get_nonzero(value)
@@ -110,7 +145,7 @@ class Person:
                 ("age", exam_time_age),
                 ("year", exam_time_year),
                 ("state", self.exam_results),
-                ("person_index", itertools.repeat(self.index)),
+                ("person_index", itertools.repeat(self.index, len(self.exam_results))),
             )
         }
 
@@ -170,14 +205,18 @@ class PredictionData:
             predicted_exam_result[prediction_time] = prediction_state
 
             # Find end points of the lexis line
-            endpoints_indices = _get_enedpoint_indices(exam_result)
+            endpoints_indices = _get_endpoint_indices(exam_result)
             # TODO: fix
-            endpoints_age = [16 + i * 4 for i in endpoints_indices]
-            endpoints_year = [1980 + i * 4 for i in endpoints_indices]
+            endpoints_age = [16 + j / 4 for j in endpoints_indices]
+            year_of_birth = faker.get_fake_year_of_birth(i)
+            endpoints_year = [
+                year_of_birth + (i % 4) * 4 + j / 4 for j in endpoints_indices
+            ]
 
             people.append(
                 Person(
                     index=i,
+                    year_of_birth=year_of_birth,
                     exam_results=self.X_test[i],
                     predicted_exam_results=predicted_exam_result,
                     prediction_time=prediction_time,
@@ -206,34 +245,76 @@ def _combine_dicts(dictionaries: Sequence[dict]) -> dict:
     return new_dict
 
 
+def _combine_scatter_dicts(dictionaries: Sequence[dict]) -> dict:
+    """TODO should be combined with the above"""
+    dictionary_keys = dictionaries[0].keys()
+    assert {key for dic in dictionaries for key in dic.keys()} == set(
+        dictionary_keys
+    ), "All dictionaries must have the same fields"
+
+    return {
+        key: [value for dic in dictionaries for value in dic[key]]
+        for key in dictionary_keys
+    }
+
+
 def source_from_people(people: Sequence[Person]):
     source_dict = _combine_dicts((person.as_source_dict() for person in people))
     return ColumnDataSource(source_dict)
 
 
 def scatter_source_from_people(people: Sequence[Person]):
-    source_dict = _combine_dicts((person.as_scatter_source_dict() for person in people))
+    source_dict = _combine_scatter_dicts(
+        [person.as_scatter_source_dict() for person in people]
+    )
     return ColumnDataSource(source_dict)
 
 
 class LexisPlot:
-    _lexis_line_y_key: str
-    _lexis_line_x_key: str
-    _scatter_y_key: str = "state"
+    _lexis_line_y_key: str = "lexis_line_endpoints_index"
+    _lexis_line_x_key: str = "lexis_line_endpoints_age"
+    _scatter_y_key: str = "person_index"
     _scatter_x_key: str = "age"
 
+    _markers: list[str] = [None, "square", "circle", "diamond"]
+    _marker_colors: list[str] = [None, "blue", "green", "red"]
+    _marker_key: str = "state"
+    _marker_color_key: str = "state"
+
     def __init__(self, person_source, scatter_source):
-        self.figure = figure()
+        self.figure = figure(tools=self._get_tools())
+        life_line = self.figure.multi_line(
+            self._lexis_line_x_key,
+            self._lexis_line_y_key,
+            source=person_source,
+        )
         scatter = self.figure.scatter(
             self._scatter_x_key,
             self._scatter_y_key,
-            scatter_source,
+            source=scatter_source,
+            color={
+                "expr": CustomJSExpr(
+                    args={"colors": self._marker_colors},
+                    code=f"return this.data.{self._marker_color_key}.map(i => colors[i]);",
+                )
+            },
         )
+
+    def _get_tools(self):
+        return settings.default_tools + settings.extra_tools
+
+
+class LexisPlotAge(LexisPlot):
+    _scatter_y_key = "year"
+    _lexis_line_y_key = "lexis_line_endpoints_year"
 
 
 def test_plot(person_source, exam_source):
     lp = LexisPlot(person_source, exam_source)
-    curdoc().add_root(lp.figure)
+    lpa = LexisPlotAge(person_source, exam_source)
+    curdoc().add_root(
+        row(lp.figure, lpa.figure),
+    )
 
 
 def main():
