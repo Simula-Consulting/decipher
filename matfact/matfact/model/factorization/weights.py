@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import numpy as np
 import numpy.typing as npt
@@ -92,7 +92,7 @@ class Projection(Constraint):
 
 def get_one_zero_mask(
     M: npt.NDArray[np.int_] | tf.Tensor,
-) -> Tuple[npt.NDArray[np.bool_], npt.NDArray[np.bool_]]:
+) -> tuple[npt.NDArray[np.bool_], npt.NDArray[np.bool_]]:
     return (M == 1), (M == 0)
 
 
