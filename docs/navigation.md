@@ -5,3 +5,5 @@
     * [HMM](hmm.md)
 * Examples
     * examples/*
+* Wiki
+    * [MatFact Propensity Weighting](propensity_weights.md)
