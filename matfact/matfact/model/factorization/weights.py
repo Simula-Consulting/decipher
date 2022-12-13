@@ -133,7 +133,7 @@ def propensity_weights(
     n_iter: int = 100,
     tau: float = settings.DEFAULT_TAU,
     gamma: float = settings.DEFAULT_GAMMA,
-) -> npt.NDArray:
+) -> npt.NDArray[np.float_]:
     """Construct weight matrix scaled by the inverse propensity score.
     The propensity scores are calculated from a binary map of the observation matrix.
     """
