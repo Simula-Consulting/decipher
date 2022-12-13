@@ -1,22 +1,27 @@
-name: Publish docs via GitHub Pages
-
+name: Deploy Docs
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-
+ push:
+   branches: [main]
+ workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 jobs:
-  build:
-    name: Deploy docs
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4 
+      - uses: actions/setup-python@v4
         with:
-            python-version: '3.10'
-      - name: Deploy docs
-        uses: mhausenblas/mkdocs-deploy-gh-pages@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REQUIREMENTS: doc_requirements.txt
+          python-version: "3.10"
+      - run: pip install -r doc_requirements.txt
+      - run: mkdocs build
+      - uses: actions/upload-pages-artifact@v1
+        with:
+          path: 'site'
+      - id: deployment
+        uses: actions/deploy-pages@v1
