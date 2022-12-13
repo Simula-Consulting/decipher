@@ -39,5 +39,35 @@ A \in \mathcal{F}_{\tau, \gamma}:= \left\{
 \right\} \; \; ,
 $$
 
-where $\tau$ and $\gamma$ are user specified. This is an optimisation problem and can be solved using projected gradient descent in the preprocessing step (before training the MatFact model).
+where $\tau$ and $\gamma$ are user specified. This is an optimization problem and can be solved using projected gradient descent in the preprocessing step (before training the MatFact model). The only requirement is the binary observation mask $M_{i,j}$ which is known.
 
+## Implementation
+The optimization problem is solved with `tensorflow`. 
+
+### Constraints
+The projected gradient descent is implemented by imposing a [`tf.keras.constraints.Constraint`](https://www.tensorflow.org/api_docs/python/tf/keras/constraints/Constraint) on our optimisation [`Variable`](https://www.tensorflow.org/api_docs/python/tf/Variable), `A`:
+
+```python
+import tensorflow as tf
+A = tf.Variable(tf.random.uniform(M.shape), constraint=my_constraint(tau, gamma))
+```
+The constraint is a custom class enforces the two normalisations from above. 
+
+### Solving the Equation
+To maximize the likelihood function, we first define a loss function as the opposite of the likelihood:
+```python
+from tensorflow.math import log, reduce_sum, sigmoid
+
+M_one_mask, M_zero_mask = (M==1), (M==0)
+def loss():
+    term1 = reduce_sum(log(sigmoid(A[M_one_mask])))
+    term2 = reduce_sum(log(1 - sigmoid(A[M_zero_mask])))
+    return -(term1 + term2)
+```
+and then minimizing `A` based on this loss function with a normal Adam optimizer, automatically subject to the constraints:
+```python
+opt = tf.optimizers.Adam()
+
+for _ in range(n_iterations):
+    opt.minimize(loss, var_list=[A])
+```
