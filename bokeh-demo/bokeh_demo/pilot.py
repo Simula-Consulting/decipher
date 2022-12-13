@@ -96,6 +96,24 @@ class Person:
         exam_time_age = [16 + i * 4 for i, _ in enumerate(self.exam_results)]
         return base_dict | {"exam_time_age": exam_time_age}
 
+    def as_scatter_source_dict(self):
+        # TODO: fix
+        exam_time_age = (16 + i * 4 for i, _ in enumerate(self.exam_results))
+        exam_time_year = (1990 + i * 4 for i, _ in enumerate(self.exam_results))
+
+        nonzero_exams = [i for i, state in enumerate(self.exam_results) if state != 0]
+        get_nonzero = lambda seq: [seq[i] for i in nonzero_exams]
+
+        return {
+            key: get_nonzero(value)
+            for key, value in (
+                ("age", exam_time_age),
+                ("year", exam_time_year),
+                ("state", self.exam_results),
+                ("person_index", itertools.repeat(self.index)),
+            )
+        }
+
 
 @dataclass
 class PredictionData:
@@ -193,25 +211,37 @@ def source_from_people(people: Sequence[Person]):
     return ColumnDataSource(source_dict)
 
 
-def test_plot(source):
-    # Bokeh is not very good at failing, so explicitly check that the keys are present
-    assert all(key in source.data for key in ("exam_time_age", "exam_results"))
+def scatter_source_from_people(people: Sequence[Person]):
+    source_dict = _combine_dicts((person.as_scatter_source_dict() for person in people))
+    return ColumnDataSource(source_dict)
 
-    fig = figure()
-    lines = fig.multi_line(
-        xs="exam_time_age",
-        ys="exam_results",
-        source=source,
-    )
 
-    curdoc().add_root(fig)
+class LexisPlot:
+    _lexis_line_y_key: str
+    _lexis_line_x_key: str
+    _scatter_y_key: str = "state"
+    _scatter_x_key: str = "age"
+
+    def __init__(self, person_source, scatter_source):
+        self.figure = figure()
+        scatter = self.figure.scatter(
+            self._scatter_x_key,
+            self._scatter_y_key,
+            scatter_source,
+        )
+
+
+def test_plot(person_source, exam_source):
+    lp = LexisPlot(person_source, exam_source)
+    curdoc().add_root(lp.figure)
 
 
 def main():
     prediction_data = PredictionData.extract_and_predict(dataset)
     people = prediction_data.extract_people()
-    source = source_from_people(people)
-    test_plot(source)
+    person_source = source_from_people(people)
+    exam_source = scatter_source_from_people(people)
+    test_plot(person_source, exam_source)
 
 
 main()
