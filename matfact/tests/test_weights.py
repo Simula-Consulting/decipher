@@ -1,5 +1,6 @@
 import hypothesis.strategies as st
 import numpy as np
+import numpy.typing as npt
 import tensorflow as tf
 from hypothesis import given, settings
 from hypothesis.extra.numpy import array_shapes, arrays
@@ -7,15 +8,26 @@ from hypothesis.extra.numpy import array_shapes, arrays
 from matfact.model.factorization.weights import Projection, propensity_weights
 
 
-@settings(deadline=None)
-@given(
-    arrays(
-        float,
-        shape=array_shapes(min_dims=2, max_dims=2),
-        elements=st.integers(min_value=0, max_value=5),
+def array2D(
+    dtype=int,
+    element_strategy=st.integers,
+    min_value=0,
+    max_value=5,
+    min_side=1,
+    max_side=None,
+) -> st.SearchStrategy[np.ndarray]:
+    return arrays(
+        dtype=dtype,
+        shape=array_shapes(
+            min_dims=2, max_dims=2, min_side=min_side, max_side=max_side
+        ),
+        elements=element_strategy(min_value=min_value, max_value=max_value),
     )
-)
-def test_propensity_weights(observation_matrix) -> None:
+
+
+@settings(deadline=None)
+@given(array2D())
+def test_propensity_weights(observation_matrix: npt.NDArray[np.int_]) -> None:
     W_p = propensity_weights(observation_matrix, n_iter=2)
     assert isinstance(W_p, np.ndarray)
     assert W_p.shape == observation_matrix.shape
@@ -26,17 +38,9 @@ def test_propensity_weights(observation_matrix) -> None:
     assert np.all(W_p >= W)
 
 
-def generate_array():
-    return arrays(
-        float,
-        shape=array_shapes(min_dims=2, max_dims=2, min_side=10),
-        elements=st.floats(min_value=0, max_value=10),
-    )
-
-
 @settings(deadline=None)
 @given(
-    arr=generate_array(),
+    arr=array2D(dtype=float, min_side=10, element_strategy=st.floats, max_value=10),
     tau=st.floats(min_value=0.1, max_value=30),
     gamma=st.floats(min_value=0.1, max_value=30),
 )
