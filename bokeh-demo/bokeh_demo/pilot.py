@@ -122,9 +122,18 @@ class Person:
         # We must have explicit x-values for the plotting
         exam_time_age = [16 + i * 4 for i, _ in enumerate(self.exam_results)]
         lexis_line_endpoints_index = [self.index] * 2
+
+        # Delta score of the prediction
+        # TODO: we now hack this by using the lists, but in the future a better/more general _calculate_delta should be written
+        delta = _calculate_delta(
+            [self.prediction_probabilities],
+            [self.exam_results[self.prediction_time] - 1],
+        )
+
         return base_dict | {
             "exam_time_age": exam_time_age,
             "lexis_line_endpoints_index": lexis_line_endpoints_index,
+            "delta": delta,
         }
 
     def as_scatter_source_dict(self):
@@ -309,11 +318,26 @@ class LexisPlotAge(LexisPlot):
     _lexis_line_y_key = "lexis_line_endpoints_year"
 
 
+class DeltaScatter:
+    _delta_scatter_x_key: str = "index"
+    _delta_scatter_y_key: str = "delta"
+
+    def __init__(self, person_source, scatter_source):
+        self.figure = figure()
+        scatter = self.figure.scatter(
+            self._delta_scatter_x_key,
+            self._delta_scatter_y_key,
+            source=person_source,
+        )
+
+
 def test_plot(person_source, exam_source):
     lp = LexisPlot(person_source, exam_source)
     lpa = LexisPlotAge(person_source, exam_source)
+    delta = DeltaScatter(person_source, exam_source)
+
     curdoc().add_root(
-        row(lp.figure, lpa.figure),
+        row(lp.figure, lpa.figure, delta.figure),
     )
 
 
