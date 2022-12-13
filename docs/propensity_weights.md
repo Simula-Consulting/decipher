@@ -70,4 +70,6 @@ opt = tf.optimizers.Adam()
 
 for _ in range(n_iterations):
     opt.minimize(loss, var_list=[A])
+
+P_hat = sigmoid(A)
 ```
