@@ -28,14 +28,17 @@ def array2D(
 @settings(deadline=None)
 @given(array2D())
 def test_propensity_weights(observation_matrix: npt.NDArray[np.int_]) -> None:
-    W_p = propensity_weights(observation_matrix, n_iter=2)
-    assert isinstance(W_p, np.ndarray)
-    assert W_p.shape == observation_matrix.shape
+    propensity_weight_matrix = propensity_weights(observation_matrix, n_iter=2)
+    assert isinstance(propensity_weight_matrix, np.ndarray)
+    assert propensity_weight_matrix.shape == observation_matrix.shape
 
-    W = np.zeros_like(observation_matrix)
-    W[observation_matrix != 0] = 1
-
-    assert np.all(W_p >= W)
+    assert np.all(
+        np.where(
+            observation_matrix == 0,
+            propensity_weight_matrix == 0,
+            propensity_weight_matrix >= 1,
+        )
+    )
 
 
 @settings(deadline=None)
