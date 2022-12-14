@@ -177,3 +177,6 @@ def test_person_scatter_source_dict(person: Person):
         note(f"key: {key}, type: {type}")
         assert key in scatter_source_dict
         assert all(isinstance(element, type) for element in scatter_source_dict[key])
+
+
+# TODO test source discrepancy. Endpoints match extremal exam points etc
