@@ -109,6 +109,7 @@ def person_strategy(
     return Person(
         index=0,  # TODO: find out how to do the index
         year_of_birth=draw(st.floats(min_value=1960, max_value=2000)),
+        vaccine_age=draw(st.one_of(st.integers(min_value=0, max_value=30), st.none())),
         exam_results=exam_results,
         predicted_exam_result=predicted_state,
         prediction_time=prediction_time,

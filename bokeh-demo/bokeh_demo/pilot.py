@@ -85,8 +85,22 @@ class Faker:
         be fixed by adding some sort of memory."""
         return first_possible + self.rng.random() * spread
 
+    def get_fake_vaccine_age(
+        self,
+        vaccine_start_year: float = 12.0,
+        vaccine_spread: float = 10,
+        vaccine_prob: float = 0.3,
+    ) -> None | float:
+        # Beta 2, 5 is centered around 0.2 with a steep falloff.
+        return (
+            vaccine_start_year + vaccine_spread * self.rng.beta(2, 5)
+            if self.rng.random() < vaccine_prob
+            else None
+        )
+
 
 faker = Faker()
+
 
 @dataclass
 class TimeConverter:
@@ -97,13 +111,14 @@ class TimeConverter:
     points_per_year: float = 4
     """Number of time points per year."""
 
-
     @overload
     def time_point_to_age(self, time_points: int) -> float:
         ...
+
     @overload
     def time_point_to_age(self, time_points: Sequence[int]) -> Sequence[float]:
         ...
+
     def time_point_to_age(self, time_points):
         """Convert time point or points to age."""
         convert = lambda time: self.zero_point_age + time / self.points_per_year
@@ -112,6 +127,7 @@ class TimeConverter:
             return (convert(time_point) for time_point in time_points)
         except TypeError:  # Only one point
             return convert(time_points)
+
 
 time_converter = TimeConverter()
 
@@ -138,6 +154,7 @@ def _get_endpoint_indices(history: Sequence[int]) -> tuple[int, int]:
 class Person:
     index: int
     year_of_birth: float  # Float to allow granular date
+    vaccine_age: float | None
     exam_results: Sequence[int]
     predicted_exam_result: int
     prediction_time: int
@@ -188,7 +205,9 @@ class Person:
         }
 
     def as_scatter_source_dict(self):
-        exam_time_age = list(time_converter.time_point_to_age(range(len(self.exam_results))))
+        exam_time_age = list(
+            time_converter.time_point_to_age(range(len(self.exam_results)))
+        )
         exam_time_year = (self.year_of_birth + age for age in exam_time_age)
 
         get_nonzero = lambda seq: [
@@ -259,11 +278,13 @@ class PredictionData:
             prediction_state = self.predicted_states[i]
 
             year_of_birth = faker.get_fake_year_of_birth(i)
+            vaccine_age = faker.get_fake_vaccine_age()
 
             people.append(
                 Person(
                     index=i,
                     year_of_birth=year_of_birth,
+                    vaccine_age=vaccine_age,
                     exam_results=exam_result,
                     predicted_exam_result=prediction_state,
                     prediction_time=prediction_time,
