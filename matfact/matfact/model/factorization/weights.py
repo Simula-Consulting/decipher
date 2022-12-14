@@ -8,6 +8,7 @@ from tensorflow.keras.constraints import Constraint
 from tensorflow.math import log, reduce_sum, sigmoid
 
 from matfact import settings
+from matfact.model.factorization.convergence import ConvergenceMonitorLoss
 
 
 def data_weights(
@@ -97,7 +98,7 @@ def get_one_zero_mask(
 
 
 def calculate_propensity_scores(
-    M: tf.Tensor, learning_rate: float, n_iter: int, tau: float, gamma: float
+    M: tf.Tensor, learning_rate: float, max_iter: int, tau: float, gamma: float
 ) -> tf.Tensor:
     """Function to calculate a propensity score matrix based on a binary observation
     matrix. The propensity weights are calculated from the maximum likelihood equation
@@ -121,7 +122,8 @@ def calculate_propensity_scores(
         term2 = reduce_sum(log(1 - sigmoid(A[M_zero_mask])))
         return -(term1 + term2)
 
-    for _ in range(n_iter):
+    monitor = ConvergenceMonitorLoss(number_of_epochs=max_iter)
+    for _ in monitor(loss):
         optimizer.minimize(loss, var_list=[A])
 
     return sigmoid(A)
@@ -130,7 +132,7 @@ def calculate_propensity_scores(
 def propensity_weights(
     observed_data_matrix: npt.NDArray[np.int_],
     learning_rate: float = 0.1,
-    n_iter: int = 100,
+    max_iter: int = 100,
     tau: float = settings.DEFAULT_TAU,
     gamma: float = settings.DEFAULT_GAMMA,
 ) -> npt.NDArray[np.float_]:
@@ -142,7 +144,7 @@ def propensity_weights(
     M = tf.cast(M, dtype=tf.float32)
 
     propensity_scores = calculate_propensity_scores(
-        M, learning_rate=learning_rate, n_iter=n_iter, tau=tau, gamma=gamma
+        M, learning_rate=learning_rate, max_iter=max_iter, tau=tau, gamma=gamma
     )
 
     return (M / propensity_scores).numpy()

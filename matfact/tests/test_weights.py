@@ -28,7 +28,7 @@ def array2D(
 @settings(deadline=None)
 @given(array2D())
 def test_propensity_weights(observation_matrix: npt.NDArray[np.int_]) -> None:
-    propensity_weight_matrix = propensity_weights(observation_matrix, n_iter=2)
+    propensity_weight_matrix = propensity_weights(observation_matrix, max_iter=2)
     assert isinstance(propensity_weight_matrix, np.ndarray)
     assert propensity_weight_matrix.shape == observation_matrix.shape
 
