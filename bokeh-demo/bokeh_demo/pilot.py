@@ -206,19 +206,31 @@ class Person:
         )
 
     def get_lexis_endpoints(self):
-        """ "Return endpoints for the lexis life line"""
-        lexis_line_endpoints_index = [self.index] * 2
+        """Return endpoints for the lexis life line"""
+        lexis_line_endpoints_person_index = [self.index] * 2
 
         # The endpoints' indices in the exam result list
         endpoints_indices = _get_endpoint_indices(self.exam_results)
         # Indices to age
-        endpoints_age = [16 + i / 4 for i in endpoints_indices]
+        endpoints_age = list(time_converter.time_point_to_age(endpoints_indices))
         endpoints_year = [self.year_of_birth + age for age in endpoints_age]
 
+        # Vaccine life line endpoints
+        endpoints_age_vaccine = (
+            (self.vaccine_age, endpoints_age[-1])
+            if self.vaccine_age is not None
+            else ()
+        )
+        endpoints_year_vaccine = [
+            self.year_of_birth + age for age in endpoints_age_vaccine
+        ]
+
         return {
-            "lexis_line_endpoints_index": lexis_line_endpoints_index,
+            "lexis_line_endpoints_person_index": lexis_line_endpoints_person_index,
             "lexis_line_endpoints_age": endpoints_age,
             "lexis_line_endpoints_year": endpoints_year,
+            "vaccine_line_endpoints_age": endpoints_age_vaccine,
+            "vaccine_line_endpoints_year": endpoints_year_vaccine,
         }
 
     def as_scatter_source_dict(self):
@@ -359,15 +371,21 @@ class ToolsMixin:
 
 
 class LexisPlot(ToolsMixin):
-    _lexis_line_y_key: str = "lexis_line_endpoints_index"
+    _lexis_line_y_key: str = "lexis_line_endpoints_person_index"
     _lexis_line_x_key: str = "lexis_line_endpoints_age"
+    _vaccine_line_x_key: str = "vaccine_line_endpoints_age"
+    _vaccine_line_y_key: str = "lexis_line_endpoints_person_index"
     _scatter_y_key: str = "person_index"
     _scatter_x_key: str = "age"
 
-    _markers: list[str] = [None, "square", "circle", "diamond"]
-    _marker_colors: list[str] = [None, "blue", "green", "red"]
     _marker_key: str = "state"
     _marker_color_key: str = "state"
+
+    # TODO: move to config class or settings
+    _markers: list[str] = [None, "square", "circle", "diamond"]
+    _marker_colors: list[str] = [None, "blue", "green", "red"]
+    _vaccine_line_width: int = 3
+    _vaccine_line_color: str = "tan"
 
     def __init__(self, person_source, scatter_source):
         self.figure = figure(tools=self._get_tools())
@@ -375,6 +393,13 @@ class LexisPlot(ToolsMixin):
             self._lexis_line_x_key,
             self._lexis_line_y_key,
             source=person_source,
+        )
+        vaccine_line = self.figure.multi_line(
+            self._vaccine_line_x_key,
+            self._vaccine_line_y_key,
+            source=person_source,
+            line_width=self._vaccine_line_width,
+            color=self._vaccine_line_color,
         )
         scatter = self.figure.scatter(
             self._scatter_x_key,
@@ -392,6 +417,7 @@ class LexisPlot(ToolsMixin):
 class LexisPlotAge(LexisPlot):
     _scatter_y_key = "year"
     _lexis_line_y_key = "lexis_line_endpoints_year"
+    _vaccine_line_y_key: str = "vaccine_line_endpoints_year"
 
 
 def get_position_list(array: Sequence) -> Sequence[int]:

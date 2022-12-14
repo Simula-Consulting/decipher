@@ -145,12 +145,16 @@ def test_person_source_dict(person: Person):
         assert len({_guarded_length(source_dict[key]) for key in key_set}) == 1
 
     # Life lines should only have two points
-    for key in (
-        "lexis_line_endpoints_index",
-        "lexis_line_endpoints_age",
-        "lexis_line_endpoints_year",
+    # For unvaccinated, it should be empty
+    has_vaccine = person.vaccine_age is not None
+    for key, length in (
+        ("lexis_line_endpoints_person_index", 2),
+        ("lexis_line_endpoints_age", 2),
+        ("lexis_line_endpoints_year", 2),
+        ("vaccine_line_endpoints_age", 2 if has_vaccine else 0),
+        ("vaccine_line_endpoints_year", 2 if has_vaccine else 0),
     ):
-        assert len(source_dict[key]) == 2
+        assert len(source_dict[key]) == length
 
 
 @given(person_strategy())
