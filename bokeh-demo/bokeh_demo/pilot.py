@@ -371,14 +371,51 @@ class DeltaScatter:
         )
 
 
+class PersonTable:
+    def __init__(self, person_source, scatter_source):
+        # Add column for correct state and prediction discrepancy
+        exam_results = person_source.data["exam_results"]
+        exam_times = person_source.data["prediction_time"]
+        true_state_at_prediction = [
+            exam_result[exam_time]
+            for exam_result, exam_time in zip(exam_results, exam_times)
+        ]
+        prediction_discrepancy = [
+            true - predicted
+            for true, predicted in zip(
+                true_state_at_prediction, person_source.data["predicted_exam_result"]
+            )
+        ]
+
+        person_source.data["persontable__true_state"] = true_state_at_prediction
+        person_source.data["persontable__discrepancy"] = prediction_discrepancy
+
+        self.person_table = DataTable(
+            source=person_source,
+            columns=[
+                TableColumn(title="Delta score", field="delta"),
+                TableColumn(title="Predicted state", field="predicted_exam_result"),
+                TableColumn(title="Correct state", field="persontable__true_state"),
+                TableColumn(
+                    title="Prediction discrepancy", field="persontable__discrepancy"
+                ),
+            ],
+            styles={
+                "border": "1px solid black",
+                "margin-right": "40px",
+            },
+        )
+
+
 def test_plot(person_source, exam_source):
     lp = LexisPlot(person_source, exam_source)
     lpa = LexisPlotAge(person_source, exam_source)
     delta = DeltaScatter(person_source, exam_source)
     traj = TrajectoriesPlot(person_source, exam_source)
+    table = PersonTable(person_source, exam_source)
 
     curdoc().add_root(
-        row(lp.figure, lpa.figure, delta.figure, traj.figure),
+        row(lp.figure, lpa.figure, delta.figure, traj.figure, table.person_table),
     )
 
 
