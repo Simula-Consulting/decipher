@@ -278,7 +278,12 @@ def scatter_source_from_people(people: Sequence[Person]):
     return ColumnDataSource(source_dict)
 
 
-class LexisPlot:
+class ToolsMixin:
+    def _get_tools(self):
+        return settings.default_tools + settings.extra_tools
+
+
+class LexisPlot(ToolsMixin):
     _lexis_line_y_key: str = "lexis_line_endpoints_index"
     _lexis_line_x_key: str = "lexis_line_endpoints_age"
     _scatter_y_key: str = "person_index"
@@ -308,9 +313,6 @@ class LexisPlot:
             },
         )
 
-    def _get_tools(self):
-        return settings.default_tools + settings.extra_tools
-
 
 class LexisPlotAge(LexisPlot):
     _scatter_y_key = "year"
@@ -330,12 +332,12 @@ def get_position_list(array: Sequence) -> Sequence[int]:
     return [index_map[n] for n in range(len(array))]
 
 
-class TrajectoriesPlot:
+class TrajectoriesPlot(ToolsMixin):
     _exam_color: str = "blue"
     _predicted_exam_color: str = "red"
 
     def __init__(self, person_source, scatter_source):
-        self.figure = figure()
+        self.figure = figure(tools=self._get_tools())
 
         exam_plot = self.figure.multi_line(
             "exam_time_age",
@@ -351,12 +353,12 @@ class TrajectoriesPlot:
         )
 
 
-class DeltaScatter:
+class DeltaScatter(ToolsMixin):
     _delta_scatter_x_key: str = "deltascatter__delta_score_index"
     _delta_scatter_y_key: str = "delta"
 
     def __init__(self, person_source, scatter_source):
-        self.figure = figure()
+        self.figure = figure(tools=self._get_tools())
 
         # Generate a index list based on delta score
         # TODO: consider guard for overwrite
