@@ -1,5 +1,16 @@
 # type: ignore
-"""Example Bokeh server app"""
+"""Example Bokeh server app.
+
+The app consist of two main "parts"
+  1. The data must be processed and put into sources
+  2. The visualization itself
+
+For part 1, the most important classes are `PredictionData` and `Person`.
+`PredictionData` is responsible for reading in the data and then constructing 
+`Person` instances from it.
+The `Person` class is responsible for generating the source objects to be used 
+by the visualization.
+"""
 from __future__ import annotations  # Postponed evaluation of types
 
 import argparse
