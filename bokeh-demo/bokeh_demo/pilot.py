@@ -18,7 +18,7 @@ import itertools
 import pathlib
 from collections import defaultdict
 from dataclasses import asdict, dataclass
-from typing import Sequence
+from typing import Sequence, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -87,6 +87,33 @@ class Faker:
 
 
 faker = Faker()
+
+@dataclass
+class TimeConverter:
+    """Convert between time point index and age."""
+
+    zero_point_age: int = 16
+    """Zero point of the measurement data."""
+    points_per_year: float = 4
+    """Number of time points per year."""
+
+
+    @overload
+    def time_point_to_age(self, time_points: int) -> float:
+        ...
+    @overload
+    def time_point_to_age(self, time_points: Sequence[int]) -> Sequence[float]:
+        ...
+    def time_point_to_age(self, time_points):
+        """Convert time point or points to age."""
+        convert = lambda time: self.zero_point_age + time / self.points_per_year
+
+        try:
+            return (convert(time_point) for time_point in time_points)
+        except TypeError:  # Only one point
+            return convert(time_points)
+
+time_converter = TimeConverter()
 
 
 # Import data
@@ -161,8 +188,7 @@ class Person:
         }
 
     def as_scatter_source_dict(self):
-        # TODO: fix
-        exam_time_age = [16 + i / 4 for i, _ in enumerate(self.exam_results)]
+        exam_time_age = list(time_converter.time_point_to_age(range(len(self.exam_results))))
         exam_time_year = (self.year_of_birth + age for age in exam_time_age)
 
         get_nonzero = lambda seq: [
