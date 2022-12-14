@@ -421,11 +421,33 @@ def test_plot(person_source, exam_source):
     )
 
 
+def link_sources(person_source, exam_source):
+    def select_person_callback(attr, old, selected_people):
+        all_indices = [
+            i
+            for i, person_index in enumerate(exam_source.data["person_index"])
+            if person_index in selected_people
+        ]
+
+        exam_source.selected.indices = all_indices
+        person_source.selected.indices = selected_people
+
+    def set_group_selected_callback(attr, old, new):
+        if new == []:  # Avoid unsetting when hitting a line in scatter plot
+            return
+        selected_people = list({exam_source.data["person_index"][i] for i in new})
+        select_person_callback(None, None, selected_people)
+
+    exam_source.selected.on_change("indices", set_group_selected_callback)
+    person_source.selected.on_change("indices", select_person_callback)
+
+
 def main():
     prediction_data = PredictionData.extract_and_predict(dataset)
     people = prediction_data.extract_people()
     person_source = source_from_people(people)
     exam_source = scatter_source_from_people(people)
+    link_sources(person_source, exam_source)
     test_plot(person_source, exam_source)
 
 
