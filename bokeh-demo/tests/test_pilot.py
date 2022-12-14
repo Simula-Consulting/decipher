@@ -6,6 +6,7 @@ from hypothesis import strategies as st
 
 from bokeh_demo.pilot import (
     Person,
+    TimeConverter,
     _combine_dicts,
     _combine_scatter_dicts,
     get_position_list,
@@ -181,3 +182,29 @@ def test_person_scatter_source_dict(person: Person):
 
 
 # TODO test source discrepancy. Endpoints match extremal exam points etc
+
+
+def _get_times(max_time: int = 1000):
+    """Return a strategy for either one time point or a list of them."""
+    time_point_strategy = st.integers(min_value=0, max_value=max_time)
+    return st.one_of(time_point_strategy, st.lists(time_point_strategy))
+
+
+@given(
+    _get_times(),
+    st.integers(min_value=0, max_value=24),
+    st.integers(min_value=2, max_value=6),
+)
+def test_time_converter(
+    times: int | list[int], zero_point_age: int, points_per_year: int
+) -> None:
+    """See that time converting to age and back gives the original time."""
+    time_converter = TimeConverter(zero_point_age, points_per_year)
+    there_and_back = time_converter.age_to_time_point(
+        time_converter.time_point_to_age(times)
+    )
+    if isinstance(times, list):
+        assert isinstance(there_and_back, types.GeneratorType)
+        assert list(there_and_back) == times
+    else:
+        assert there_and_back == times

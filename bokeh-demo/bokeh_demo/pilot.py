@@ -128,6 +128,23 @@ class TimeConverter:
         except TypeError:  # Only one point
             return convert(time_points)
 
+    @overload
+    def age_to_time_point(self, ages: float) -> int:
+        ...
+
+    @overload
+    def age_to_time_point(self, ages: Sequence[float]) -> Sequence[int]:
+        ...
+
+    def age_to_time_point(self, ages):
+        """Convert ages to closest time points."""
+        convert = lambda age: round((age - self.zero_point_age) * self.points_per_year)
+
+        try:
+            return (convert(age) for age in ages)
+        except TypeError:  # Only one point
+            return convert(ages)
+
 
 time_converter = TimeConverter()
 
