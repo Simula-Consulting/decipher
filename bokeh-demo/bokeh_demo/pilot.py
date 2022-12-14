@@ -330,6 +330,27 @@ def get_position_list(array: Sequence) -> Sequence[int]:
     return [index_map[n] for n in range(len(array))]
 
 
+class TrajectoriesPlot:
+    _exam_color: str = "blue"
+    _predicted_exam_color: str = "red"
+
+    def __init__(self, person_source, scatter_source):
+        self.figure = figure()
+
+        exam_plot = self.figure.multi_line(
+            "exam_time_age",
+            "exam_results",
+            source=person_source,
+            color=self._exam_color,
+        )
+        predicted_exam_plot = self.figure.multi_line(
+            "exam_time_age",
+            "predicted_exam_results",
+            source=person_source,
+            color=self._predicted_exam_color,
+        )
+
+
 class DeltaScatter:
     _delta_scatter_x_key: str = "deltascatter__delta_score_index"
     _delta_scatter_y_key: str = "delta"
@@ -354,9 +375,10 @@ def test_plot(person_source, exam_source):
     lp = LexisPlot(person_source, exam_source)
     lpa = LexisPlotAge(person_source, exam_source)
     delta = DeltaScatter(person_source, exam_source)
+    traj = TrajectoriesPlot(person_source, exam_source)
 
     curdoc().add_root(
-        row(lp.figure, lpa.figure, delta.figure),
+        row(lp.figure, lpa.figure, delta.figure, traj.figure),
     )
 
 
