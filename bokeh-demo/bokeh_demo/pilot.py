@@ -151,11 +151,8 @@ class Person:
 
     def as_scatter_source_dict(self):
         # TODO: fix
-        exam_time_age = (16 + i / 4 for i, _ in enumerate(self.exam_results))
-        exam_time_year = (
-            self.year_of_birth + (self.index % 4) * 4 + i / 4
-            for i, _ in enumerate(self.exam_results)
-        )
+        exam_time_age = [16 + i / 4 for i, _ in enumerate(self.exam_results)]
+        exam_time_year = (self.year_of_birth + age for age in exam_time_age)
 
         get_nonzero = lambda seq: [
             element for i, element in enumerate(seq) if self.exam_results[i] != 0
