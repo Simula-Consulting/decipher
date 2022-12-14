@@ -158,15 +158,6 @@ MjItMTEtMTZUMDg6MDM6NDMrMDA6MDAxtXJ+AAAAKHRFWHRkYXRlOnRpbWVzdGFtcAAyMDIyLTEx
 LTE2VDA4OjEyOjMyKzAwOjAw5F7l8gAAAABJRU5ErkJggg=="""
 
 
-def get_permutation_list(array):
-    """Given an array, return a list of indices that sorts the array.
-
-    >>> get_permutation_list([3, 2, 1])
-    [2, 1, 0]
-    >>> get_permutation_list([10, 100, 20])
-    [0, 2, 1]
-    """
-    return [i for i, v in sorted(enumerate(array), key=lambda iv: iv[1])]
 
 
 # Import data

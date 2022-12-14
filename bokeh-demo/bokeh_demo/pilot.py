@@ -37,17 +37,15 @@ from matfact.model.factorization.convergence import ConvergenceMonitor
 from matfact.model.matfact import MatFact
 from matfact.model.predict.dataset_utils import prediction_data
 from matfact.plotting.diagnostic import _calculate_delta
-from pydantic import BaseSettings
+from pydantic import BaseSettings, DirectoryPath
 
 tf.config.set_visible_devices([], "GPU")
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--large-data", action=argparse.BooleanOptionalAction)
-args = parser.parse_args()
 
 
 class Settings(BaseSettings):
     number_of_epochs: int = 100
+    dataset_path: DirectoryPath = pathlib.Path(__file__).parents[1] / "data/dataset1"
+
     label_map: list[str] = ["", "Normal", "Low risk", "High risk", "Cancer"]
     default_tools: list[str] = [
         "pan",
@@ -81,12 +79,7 @@ faker = Faker()
 
 
 # Import data
-dataset_path = (
-    pathlib.Path(__file__).parent.parent
-    / "data"
-    / ("dataset_large" if args.large_data else "dataset1")
-)
-dataset = Dataset.from_file(dataset_path)
+dataset = Dataset.from_file(settings.dataset_path)
 
 
 def _get_endpoint_indices(history: Sequence[int]) -> tuple[int, int]:
@@ -108,7 +101,7 @@ class Person:
     index: int
     year_of_birth: float  # Float to allow granular date
     exam_results: Sequence[int]
-    predicted_exam_results: Sequence[int]
+    predicted_exam_result: int
     prediction_time: int
     prediction_probabilities: Sequence[float]
     lexis_line_endpoints_age: tuple[int, int]
@@ -128,12 +121,17 @@ class Person:
         delta = _calculate_delta(
             [self.prediction_probabilities],
             [self.exam_results[self.prediction_time] - 1],
-        )
+        )[0]
+
+        # Generate the predicted states
+        predicted_exam_results = self.exam_results.copy()
+        predicted_exam_results[self.prediction_time] = self.predicted_exam_result
 
         return base_dict | {
             "exam_time_age": exam_time_age,
             "lexis_line_endpoints_index": lexis_line_endpoints_index,
             "delta": delta,
+            "predicted_exam_results": predicted_exam_results,
         }
 
     def as_scatter_source_dict(self):
@@ -318,12 +316,30 @@ class LexisPlotAge(LexisPlot):
     _lexis_line_y_key = "lexis_line_endpoints_year"
 
 
+def get_position_list(array: Sequence) -> Sequence[int]:
+    """Given an array, return the position of each element in the sorted list.
+    
+    >>> get_position_list([2, 0, 1, 4])
+    [2, 0, 1, 3]
+    >>> get_position_list([1, 4, 9, 2])
+    [0, 2, 3, 2]
+    """
+    sorted_indices = (i for i,_ in sorted(enumerate(array), key=lambda iv: iv[1]))
+    index_map = {n: i for i, n in enumerate(sorted_indices)}
+    return [index_map[n] for n in range(len(array))]
+
+
 class DeltaScatter:
-    _delta_scatter_x_key: str = "index"
+    _delta_scatter_x_key: str = "deltascatter__delta_score_index"
     _delta_scatter_y_key: str = "delta"
 
     def __init__(self, person_source, scatter_source):
         self.figure = figure()
+
+        # Generate a index list based on delta score
+        # TODO: consider guard for overwrite
+        person_source.data["deltascatter__delta_score_index"] = get_position_list(person_source.data["delta"])
+
         scatter = self.figure.scatter(
             self._delta_scatter_x_key,
             self._delta_scatter_y_key,
