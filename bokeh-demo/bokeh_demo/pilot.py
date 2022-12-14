@@ -104,9 +104,6 @@ class Person:
     predicted_exam_result: int
     prediction_time: int
     prediction_probabilities: Sequence[float]
-    lexis_line_endpoints_age: tuple[int, int]
-    # TODO this is sort of unnecessary when we have the endpoits age and date of birth...
-    lexis_line_endpoints_year: tuple[int, int]
 
     def as_source_dict(self):
         """Return a dict representation appropriate for a ColumnDataSource."""
@@ -114,7 +111,6 @@ class Person:
 
         # We must have explicit x-values for the plotting
         exam_time_age = [16 + i * 4 for i, _ in enumerate(self.exam_results)]
-        lexis_line_endpoints_index = [self.index] * 2
 
         # Delta score of the prediction
         # TODO: we now hack this by using the lists, but in the future a better/more general _calculate_delta should be written
@@ -127,11 +123,30 @@ class Person:
         predicted_exam_results = self.exam_results.copy()
         predicted_exam_results[self.prediction_time] = self.predicted_exam_result
 
-        return base_dict | {
-            "exam_time_age": exam_time_age,
+        return (
+            base_dict
+            | {
+                "exam_time_age": exam_time_age,
+                "delta": delta,
+                "predicted_exam_results": predicted_exam_results,
+            }
+            | self.get_lexis_endpoints()
+        )
+
+    def get_lexis_endpoints(self):
+        """ "Return endpoints for the lexis life line"""
+        lexis_line_endpoints_index = [self.index] * 2
+
+        # The endpoints' indices in the exam result list
+        endpoints_indices = _get_endpoint_indices(self.exam_results)
+        # Indices to age
+        endpoints_age = [16 + i / 4 for i in endpoints_indices]
+        endpoints_year = [self.year_of_birth + age for age in endpoints_age]
+
+        return {
             "lexis_line_endpoints_index": lexis_line_endpoints_index,
-            "delta": delta,
-            "predicted_exam_results": predicted_exam_results,
+            "lexis_line_endpoints_age": endpoints_age,
+            "lexis_line_endpoints_year": endpoints_year,
         }
 
     def as_scatter_source_dict(self):
@@ -208,28 +223,17 @@ class PredictionData:
             exam_result = self.X_test[i]
             prediction_time = self.time_of_prediction[i]
             prediction_state = self.predicted_states[i]
-            predicted_exam_result = exam_result.copy()
-            predicted_exam_result[prediction_time] = prediction_state
 
-            # Find end points of the lexis line
-            endpoints_indices = _get_endpoint_indices(exam_result)
-            # TODO: fix
-            endpoints_age = [16 + j / 4 for j in endpoints_indices]
             year_of_birth = faker.get_fake_year_of_birth(i)
-            endpoints_year = [
-                year_of_birth + (i % 4) * 4 + j / 4 for j in endpoints_indices
-            ]
 
             people.append(
                 Person(
                     index=i,
                     year_of_birth=year_of_birth,
-                    exam_results=self.X_test[i],
-                    predicted_exam_results=predicted_exam_result,
+                    exam_results=exam_result,
+                    predicted_exam_result=prediction_state,
                     prediction_time=prediction_time,
                     prediction_probabilities=self.predicted_probabilities[i],
-                    lexis_line_endpoints_age=endpoints_age,
-                    lexis_line_endpoints_year=endpoints_year,
                 )
             )
 
@@ -318,13 +322,13 @@ class LexisPlotAge(LexisPlot):
 
 def get_position_list(array: Sequence) -> Sequence[int]:
     """Given an array, return the position of each element in the sorted list.
-    
+
     >>> get_position_list([2, 0, 1, 4])
     [2, 0, 1, 3]
     >>> get_position_list([1, 4, 9, 2])
     [0, 2, 3, 2]
     """
-    sorted_indices = (i for i,_ in sorted(enumerate(array), key=lambda iv: iv[1]))
+    sorted_indices = (i for i, _ in sorted(enumerate(array), key=lambda iv: iv[1]))
     index_map = {n: i for i, n in enumerate(sorted_indices)}
     return [index_map[n] for n in range(len(array))]
 
@@ -338,7 +342,9 @@ class DeltaScatter:
 
         # Generate a index list based on delta score
         # TODO: consider guard for overwrite
-        person_source.data["deltascatter__delta_score_index"] = get_position_list(person_source.data["delta"])
+        person_source.data["deltascatter__delta_score_index"] = get_position_list(
+            person_source.data["delta"]
+        )
 
         scatter = self.figure.scatter(
             self._delta_scatter_x_key,
