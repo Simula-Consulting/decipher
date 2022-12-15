@@ -1,6 +1,7 @@
-from typing import Callable, Optional, Type
+from typing import Callable, Optional, Sequence, Type
 
 import numpy as np
+import numpy.typing as npt
 from sklearn.metrics import matthews_corrcoef
 
 from matfact.model import CMF, SCMF, WCMF, BaseMF
@@ -8,8 +9,12 @@ from matfact.model.config import DataWeightGetter, IdentityWeighGetter, ModelCon
 from matfact.model.factorization.convergence import EpochGenerator
 from matfact.model.factorization.utils import convoluted_differences_matrix
 from matfact.model.logging import MLFlowLogger
-from matfact.model.predict.classification_tree import estimate_probability_thresholds
+from matfact.model.predict.classification_tree import (
+    ClassificationTree,
+    estimate_probability_thresholds,
+)
 from matfact.model.predict.dataset_utils import prediction_data
+from matfact.settings import DEFAULT_AGE_SEGMENTS
 
 
 def model_factory(
@@ -48,6 +53,40 @@ def model_factory(
         return CMF(X, config)
     else:
         return WCMF(X, config)
+
+
+def _age_segment_index(
+    time_points: npt.NDArray[np.int_], age_segments: Sequence[int]
+) -> list[int]:
+    """Return the age segment index given time."""
+    last_segment_index = len(age_segments)
+    # For each time point, going from smaller segment limits,
+    # find the first segment limit larger than the time point.
+    # In case of no such limits, the correct segment is the last which has no limit.
+    return [
+        next(
+            (i for i, limit in enumerate(age_segments) if time <= limit),
+            last_segment_index,
+        )
+        for time in time_points
+    ]
+
+
+def _get_classification_tree(
+    observation_matrix: npt.NDArray, age_segments: Sequence[int], factoriser: BaseMF
+):
+    X_train_masked, t_pred_train, x_true_train = prediction_data(observation_matrix)
+    p_pred_train = factoriser.predict_probability(X_train_masked, t_pred_train)
+
+    age_segments = DEFAULT_AGE_SEGMENTS
+    age_segment_indexes = _age_segment_index(t_pred_train, age_segments)
+    thresholds = estimate_probability_thresholds(
+        x_true_train,
+        p_pred_train,
+        age_segment_indexes,
+        len(age_segments) + 1,
+    )
+    return ClassificationTree(thresholds)
 
 
 def train_and_log(
@@ -129,10 +168,8 @@ def train_and_log(
         }
         if use_threshold_optimization:
             # Find the optimal threshold values
-            X_train_masked, t_pred_train, x_true_train = prediction_data(X_train)
-            p_pred_train = factoriser.predict_probability(X_train_masked, t_pred_train)
-            classification_tree = estimate_probability_thresholds(
-                x_true_train, p_pred_train
+            classification_tree = _get_classification_tree(
+                X_train, DEFAULT_AGE_SEGMENTS, factoriser
             )
             threshold_values = {
                 f"classification_tree_{key}": value
@@ -141,7 +178,9 @@ def train_and_log(
             mlflow_output["params"].update(threshold_values)
 
             # Use threshold values on the test set
-            x_pred = classification_tree.predict(p_pred)
+            x_pred = classification_tree.predict(
+                p_pred, _age_segment_index(t_pred, DEFAULT_AGE_SEGMENTS)
+            )
         else:
             # Simply choose the class with the highest probability
             # Class labels are 1-indexed, so add one to the arg index.

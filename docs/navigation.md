@@ -5,3 +5,5 @@
     * [HMM](hmm.md)
 * Examples
     * examples/*
+* Wiki
+    * wiki/*
