@@ -375,6 +375,10 @@ class ToolsMixin:
 
 
 class LexisPlot(ToolsMixin):
+    _title: str = "Lexis plot"
+    _x_label: str = "Age"
+    _y_label: str = "Individual #"
+
     _lexis_line_y_key: str = "lexis_line_endpoints_person_index"
     _lexis_line_x_key: str = "lexis_line_endpoints_age"
     _vaccine_line_x_key: str = "vaccine_line_endpoints_age"
@@ -392,7 +396,12 @@ class LexisPlot(ToolsMixin):
     _vaccine_line_color: str = "tan"
 
     def __init__(self, person_source, scatter_source):
-        self.figure = figure(tools=self._get_tools())
+        self.figure = figure(
+            title=self._title,
+            x_axis_label=self._x_label,
+            y_axis_label=self._y_label,
+            tools=self._get_tools(),
+        )
         life_line = self.figure.multi_line(
             self._lexis_line_x_key,
             self._lexis_line_y_key,
@@ -419,6 +428,7 @@ class LexisPlot(ToolsMixin):
 
 
 class LexisPlotAge(LexisPlot):
+    _y_label: str = "Year"
     _scatter_y_key = "year"
     _lexis_line_y_key = "lexis_line_endpoints_year"
     _vaccine_line_y_key: str = "vaccine_line_endpoints_year"
@@ -442,7 +452,7 @@ class TrajectoriesPlot(ToolsMixin):
     _predicted_exam_color: str = "red"
 
     def __init__(self, person_source, scatter_source):
-        self.figure = figure(tools=self._get_tools())
+        self.figure = figure(x_axis_label="Age", tools=self._get_tools())
 
         # In order to totally deactivate the lines that are not selected
         # we add a filter which only shows the selected lines.
@@ -475,6 +485,7 @@ class TrajectoriesPlot(ToolsMixin):
             source=person_source,
             view=self.only_selected_view,
             color=self._exam_color,
+            legend_label="Actual observation",
         )
         predicted_exam_plot = self.figure.multi_line(
             "exam_time_age",
@@ -482,6 +493,7 @@ class TrajectoriesPlot(ToolsMixin):
             source=person_source,
             view=self.only_selected_view,
             color=self._predicted_exam_color,
+            legend_label="Predicted observation",
         )
 
         # Simple tooltip
@@ -500,13 +512,23 @@ class TrajectoriesPlot(ToolsMixin):
         )
         self.figure.add_tools(hover_tool)
 
+        # Set y-ticks to state names
+        self.figure.yaxis.ticker = FixedTicker(
+            ticks=list(range(len(settings.label_map)))
+        )
+        self.figure.yaxis.major_label_overrides = dict(enumerate(settings.label_map))
+
 
 class DeltaScatter(ToolsMixin):
     _delta_scatter_x_key: str = "deltascatter__delta_score_index"
     _delta_scatter_y_key: str = "delta"
 
     def __init__(self, person_source, scatter_source):
-        self.figure = figure(tools=self._get_tools())
+        self.figure = figure(
+            x_axis_label="Individual",
+            y_axis_label="Delta score (lower better)",
+            tools=self._get_tools(),
+        )
 
         # Generate a index list based on delta score
         # TODO: consider guard for overwrite
