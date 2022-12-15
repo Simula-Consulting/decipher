@@ -31,6 +31,7 @@ from bokeh.models import (
     CustomJS,
     CustomJSExpr,
     CustomJSFilter,
+    CustomJSHover,
     DataTable,
     Div,
     HoverTool,
@@ -480,6 +481,22 @@ class TrajectoriesPlot(ToolsMixin):
             view=self.only_selected_view,
             color=self._predicted_exam_color,
         )
+
+        # Simple tooltip
+        list_formatter = CustomJSHover(
+            code="""
+        return `[${value.map(n => n.toFixed(2)).join(', ')}]`
+        """
+        )
+        hover_tool = HoverTool(
+            tooltips=[
+                ("Id", "$index"),
+                ("Vaccine", "@vaccine_age{0.0}"),
+                ("Probabilities", "@prediction_probabilities{custom}"),
+            ],
+            formatters={"@prediction_probabilities": list_formatter},
+        )
+        self.figure.add_tools(hover_tool)
 
 
 class DeltaScatter(ToolsMixin):
