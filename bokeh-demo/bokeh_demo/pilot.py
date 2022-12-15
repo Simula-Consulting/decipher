@@ -598,32 +598,37 @@ class PersonTable:
         )
 
 
-class HistogramPlot:
+class HistogramPlot(ToolsMixin):
     def __init__(self, person_source, exam_source):
         self.person_source = person_source
         self.exam_source = exam_source
         self._number_of_individuals = len(self.person_source.data["index"])
 
-        self.figure = figure()
+        self.figure = figure(tools=self._get_tools())
         self._set_quad(self.compute_histogram_data())
 
         self.person_source.selected.on_change(
             "indices", self.get_update_histogram_callback()
         )
 
-        self.figure.y_range.start = 0
-        self.figure.legend.location = "center_right"
-        self.figure.legend.background_fill_color = "#fefefe"
-        self.figure.xaxis.axis_label = "State"
-        self.figure.yaxis.axis_label = "Count"
-        self.figure.grid.grid_line_color = "white"
-        self.figure.xaxis.ticker = [1, 2, 3, 4]
-        self.figure.xaxis.major_label_overrides = {
-            1: "Normal",
-            2: "Low-risk",
-            3: "High-risk",
-            4: "Cancer",
+        self._set_properties()
+
+    def _set_properties(self):
+        properties = {
+            "y_range": {"start": 0},
+            "legend": {"location": "center_right", "background_fill_color": "#fefefe"},
+            "xaxis": {
+                "axis_label": "State",
+                "ticker": list(range(len(settings.label_map))),
+                "major_label_overrides": dict(enumerate(settings.label_map)),
+            },
+            "yaxis": {"axis_label": "Count"},
+            "grid": {"grid_line_color": "white"},
         }
+
+        for module, module_options in properties.items():
+            for option, value in module_options.items():
+                setattr(getattr(self.figure, module), option, value)
 
     def compute_histogram_data(self, selected_indices=None):
         selected_indices = selected_indices or range(self._number_of_individuals)
