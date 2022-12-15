@@ -30,6 +30,7 @@ from bokeh.models import (
     ColumnDataSource,
     CustomJS,
     CustomJSExpr,
+    CustomJSFilter,
     DataTable,
     Div,
     HoverTool,
@@ -440,16 +441,43 @@ class TrajectoriesPlot(ToolsMixin):
     def __init__(self, person_source, scatter_source):
         self.figure = figure(tools=self._get_tools())
 
+        # In order to totally deactivate the lines that are not selected
+        # we add a filter which only shows the selected lines.
+        # This could be done with a IndexFilter and a callback,
+        # but a JS filter is faster.
+
+        self.only_selected_view = CDSView(filter=IndexFilter())
+        # There is apparently some issues in Bokeh with re-rendering on updating
+        # filters. See #7273 in Bokeh
+        # https://github.com/bokeh/bokeh/issues/7273
+        # The emit seems to resolve this for us, but it is rather hacky.
+        person_source.selected.js_on_change(
+            "indices",
+            CustomJS(
+                args={"source": person_source, "view": self.only_selected_view},
+                code="""
+            if (source.selected.indices.length){
+                view.filter.indices = source.selected.indices;
+            } else {
+                view.filter.indices = [...Array(source.get_length()).keys()];
+            }
+            source.change.emit();
+            """,
+            ),
+        )
+
         exam_plot = self.figure.multi_line(
             "exam_time_age",
             "exam_results",
             source=person_source,
+            view=self.only_selected_view,
             color=self._exam_color,
         )
         predicted_exam_plot = self.figure.multi_line(
             "exam_time_age",
             "predicted_exam_results",
             source=person_source,
+            view=self.only_selected_view,
             color=self._predicted_exam_color,
         )
 
