@@ -36,6 +36,7 @@ from bokeh.models import (
     Div,
     HoverTool,
     IndexFilter,
+    Label,
     Legend,
     LegendItem,
     Slider,
@@ -598,7 +599,69 @@ class PersonTable:
         )
 
 
-class HistogramPlot(ToolsMixin):
+class LabelSelectedMixin:
+    def add_label(self):
+        self.label = Label(
+            x=10,
+            y=410,
+            x_units="screen",
+            y_units="screen",
+            text=self._get_label_text(),
+            text_font_size="12px",
+            border_line_color="black",
+            border_line_alpha=1.0,
+            background_fill_color="white",
+            background_fill_alpha=1.0,
+        )
+        self.figure.add_layout(self.label)
+
+    def _get_age_at_exam(self, selected_indices):
+        return [
+            [
+                age
+                for age, state in zip(
+                    self.person_source.data["exam_time_age"][i],
+                    self.person_source.data["exam_results"][i],
+                )
+                if state != 0
+            ]
+            for i in selected_indices
+        ]
+
+    @staticmethod
+    def _compute_average_screening_interval(nested_age_at_exam):
+        screening_intervals = []
+        for x in nested_age_at_exam:
+            screening_intervals += np.diff(x).tolist()
+        # Convert to months
+        return np.mean(screening_intervals) * 12
+
+    def _get_label_text(self, selected_indices=None):
+        selected_indices = selected_indices or range(self._number_of_individuals)
+        n_vaccines = sum(
+            self.person_source.data["vaccine_age"][i] is not None
+            for i in selected_indices
+        )
+
+        nested_age_at_exam = self._get_age_at_exam(selected_indices)
+        average_screening_interval = self._compute_average_screening_interval(
+            nested_age_at_exam
+        )
+        return (
+            f" Individuals selected: {len(selected_indices)} \n"
+            f" Individuals with vaccinations: {n_vaccines} \n"
+            f" Average screening interval: ~{round(average_screening_interval, 2)} months "
+        )
+
+    def get_update_label_callback(self):
+        def update_label_callback(attr, old, new):
+            new = new if len(new) else list(range(self._number_of_individuals))
+            self.label.text = self._get_label_text(new)
+
+        return update_label_callback
+
+
+class HistogramPlot(ToolsMixin, LabelSelectedMixin):
     def __init__(self, person_source, exam_source):
         self.person_source = person_source
         self.exam_source = exam_source
@@ -609,6 +672,12 @@ class HistogramPlot(ToolsMixin):
 
         self.person_source.selected.on_change(
             "indices", self.get_update_histogram_callback()
+        )
+
+        # Add label from LabelSelectedMixin
+        self.add_label()
+        self.person_source.selected.on_change(
+            "indices", self.get_update_label_callback()
         )
 
         self._set_properties()
