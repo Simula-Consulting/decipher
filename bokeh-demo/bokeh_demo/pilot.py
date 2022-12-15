@@ -668,7 +668,16 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
         self._number_of_individuals = len(self.person_source.data["index"])
 
         self.figure = figure(tools=self._get_tools())
-        self._set_quad(self.compute_histogram_data())
+        self.quad = self.figure.quad(
+            top=self.compute_histogram_data(),
+            bottom=0,
+            left=np.arange(0, 4) + 0.5,
+            right=np.arange(1, 5) + 0.5,
+            fill_color="navy",
+            line_color="white",
+            alpha=0.5,
+            name="quad",
+        )
 
         self.person_source.selected.on_change(
             "indices", self.get_update_histogram_callback()
@@ -685,7 +694,6 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
     def _set_properties(self):
         properties = {
             "y_range": {"start": 0},
-            "legend": {"location": "center_right", "background_fill_color": "#fefefe"},
             "xaxis": {
                 "axis_label": "State",
                 "ticker": list(range(len(settings.label_map))),
@@ -723,27 +731,11 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
                 out[state] += 1
         return out
 
-    def _set_quad(self, hist_data):
-        self.figure.quad(
-            top=hist_data,
-            bottom=0,
-            left=np.arange(0, 4) + 0.5,
-            right=np.arange(1, 5) + 0.5,
-            fill_color="navy",
-            line_color="white",
-            alpha=0.5,
-            name="quad",
-        )
-
     def get_update_histogram_callback(self):
         def update_histogram(attr, old, new):
             new = new if len(new) else list(range(self._number_of_individuals))
 
-            quad = self.figure.select_one({"name": "quad"})
-            self.figure.renderers.remove(quad)
-
-            hist_data = self.compute_histogram_data(new)
-            self._set_quad(hist_data)
+            self.quad.data_source.data["top"] = self.compute_histogram_data(new)
 
         return update_histogram
 
