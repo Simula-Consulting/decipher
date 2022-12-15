@@ -184,7 +184,9 @@ class Person:
         base_dict = asdict(self)
 
         # We must have explicit x-values for the plotting
-        exam_time_age = [16 + i * 4 for i, _ in enumerate(self.exam_results)]
+        exam_time_age = list(
+            time_converter.time_point_to_age(range(len(self.exam_results)))
+        )
 
         # Delta score of the prediction
         # TODO: we now hack this by using the lists, but in the future a better/more general _calculate_delta should be written
