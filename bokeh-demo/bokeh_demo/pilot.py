@@ -253,6 +253,11 @@ class Person:
                 ("age", exam_time_age),
                 ("year", exam_time_year),
                 ("state", self.exam_results),
+                # Used for legend generation
+                (
+                    "state_label",
+                    [settings.label_map[state] for state in self.exam_results],
+                ),
                 ("person_index", itertools.repeat(self.index, len(self.exam_results))),
             )
         }
@@ -414,6 +419,18 @@ class LexisPlot(ToolsMixin):
             line_width=self._vaccine_line_width,
             color=self._vaccine_line_color,
         )
+
+        # Legend
+        # TODO: Make more general by using mixin
+        # The legend layout code must come before the scatter renderer,
+        # which will add new items to the legend.
+        self.figure.add_layout(
+            Legend(
+                items=[LegendItem(label="Vaccine", renderers=[vaccine_line], index=0)],
+                orientation="horizontal",
+            ),
+            "above",
+        )
         scatter = self.figure.scatter(
             self._scatter_x_key,
             self._scatter_y_key,
@@ -424,6 +441,7 @@ class LexisPlot(ToolsMixin):
                     code=f"return this.data.{self._marker_color_key}.map(i => colors[i]);",
                 )
             },
+            legend_group="state_label",
         )
 
 
