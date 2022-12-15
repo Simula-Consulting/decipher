@@ -6,14 +6,13 @@ The app consist of two main "parts"
   2. The visualization itself
 
 For part 1, the most important classes are `PredictionData` and `Person`.
-`PredictionData` is responsible for reading in the data and then constructing 
+`PredictionData` is responsible for reading in the data and then constructing
 `Person` instances from it.
-The `Person` class is responsible for generating the source objects to be used 
+The `Person` class is responsible for generating the source objects to be used
 by the visualization.
 """
 from __future__ import annotations  # Postponed evaluation of types
 
-import argparse
 import itertools
 import pathlib
 from collections import defaultdict
@@ -23,28 +22,23 @@ from typing import Sequence, overload
 import numpy as np
 import numpy.typing as npt
 import tensorflow as tf
-from bokeh.layouts import column, row
+from bokeh.layouts import row
 from bokeh.models import (
-    AllIndices,
     CDSView,
     ColumnDataSource,
     CustomJS,
     CustomJSExpr,
-    CustomJSFilter,
     CustomJSHover,
     DataTable,
-    Div,
     HoverTool,
     IndexFilter,
     Label,
     Legend,
     LegendItem,
-    Slider,
     TableColumn,
 )
 from bokeh.models.tickers import FixedTicker
 from bokeh.plotting import curdoc, figure
-from bokeh.transform import factor_cmap, factor_mark, linear_cmap
 from matfact.data_generation import Dataset
 from matfact.model.config import ModelConfig
 from matfact.model.factorization.convergence import ConvergenceMonitor
@@ -125,7 +119,9 @@ class TimeConverter:
 
     def time_point_to_age(self, time_points):
         """Convert time point or points to age."""
-        convert = lambda time: self.zero_point_age + time / self.points_per_year
+
+        def convert(time):
+            return self.zero_point_age + time / self.points_per_year
 
         try:
             return (convert(time_point) for time_point in time_points)
@@ -142,7 +138,9 @@ class TimeConverter:
 
     def age_to_time_point(self, ages):
         """Convert ages to closest time points."""
-        convert = lambda age: round((age - self.zero_point_age) * self.points_per_year)
+
+        def convert(age):
+            return round((age - self.zero_point_age) * self.points_per_year)
 
         try:
             return (convert(age) for age in ages)
@@ -165,7 +163,10 @@ def _get_endpoint_indices(history: Sequence[int]) -> tuple[int, int]:
     >>> _get_endpoint_indices((0, 1))
     (1, 1)
     """
-    first_nonzero_index = lambda seq: next(i for i, y in enumerate(seq) if y != 0)
+
+    def first_nonzero_index(seq):
+        return next(i for i, y in enumerate(seq) if y != 0)
+
     first = first_nonzero_index(history)
     last = len(history) - 1 - first_nonzero_index(reversed(history))
     return first, last
@@ -191,7 +192,8 @@ class Person:
         )
 
         # Delta score of the prediction
-        # TODO: we now hack this by using the lists, but in the future a better/more general _calculate_delta should be written
+        # TODO: we now hack this by using the lists, but in the future a better/more
+        # general _calculate_delta should be written
         delta = _calculate_delta(
             [self.prediction_probabilities],
             [self.exam_results[self.prediction_time] - 1],
@@ -245,9 +247,10 @@ class Person:
         )
         exam_time_year = (self.year_of_birth + age for age in exam_time_age)
 
-        get_nonzero = lambda seq: [
-            element for i, element in enumerate(seq) if self.exam_results[i] != 0
-        ]
+        def get_nonzero(seq):
+            return [
+                element for i, element in enumerate(seq) if self.exam_results[i] != 0
+            ]
 
         return {
             key: get_nonzero(value)
@@ -336,7 +339,7 @@ class PredictionData:
 
 
 def _combine_dicts(dictionaries: Sequence[dict]) -> dict:
-    """Combine dictionaries to one, with the values of the new dict being a list of the values of the old dicts.
+    """Combine dictionaries by making lists of observed values.
 
     >>> a = {'a': 4}
     >>> b = {'a': 3}
@@ -352,7 +355,9 @@ def _combine_dicts(dictionaries: Sequence[dict]) -> dict:
 
 
 def _combine_scatter_dicts(dictionaries: Sequence[dict]) -> dict:
-    """TODO should be combined with the above"""
+    """Combine dictionaries by making flattened lists of observed values.
+
+    TODO should be combined with the above"""
     dictionary_keys = dictionaries[0].keys()
     assert {key for dic in dictionaries for key in dic.keys()} == set(
         dictionary_keys
@@ -409,12 +414,12 @@ class LexisPlot(ToolsMixin):
             y_axis_label=self._y_label,
             tools=self._get_tools(),
         )
-        life_line = self.figure.multi_line(
+        self.life_line = self.figure.multi_line(
             self._lexis_line_x_key,
             self._lexis_line_y_key,
             source=person_source,
         )
-        vaccine_line = self.figure.multi_line(
+        self.vaccine_line = self.figure.multi_line(
             self._vaccine_line_x_key,
             self._vaccine_line_y_key,
             source=person_source,
@@ -428,19 +433,21 @@ class LexisPlot(ToolsMixin):
         # which will add new items to the legend.
         self.figure.add_layout(
             Legend(
-                items=[LegendItem(label="Vaccine", renderers=[vaccine_line], index=0)],
+                items=[
+                    LegendItem(label="Vaccine", renderers=[self.vaccine_line], index=0)
+                ],
                 orientation="horizontal",
             ),
             "above",
         )
-        scatter = self.figure.scatter(
+        self.scatter = self.figure.scatter(
             self._scatter_x_key,
             self._scatter_y_key,
             source=scatter_source,
             color={
                 "expr": CustomJSExpr(
                     args={"colors": self._marker_colors},
-                    code=f"return this.data.{self._marker_color_key}.map(i => colors[i]);",
+                    code=f"return this.data.{self._marker_color_key}.map(i => colors[i]);",  # noqa: E501
                 )
             },
             legend_group="state_label",
@@ -499,7 +506,7 @@ class TrajectoriesPlot(ToolsMixin):
             ),
         )
 
-        exam_plot = self.figure.multi_line(
+        self.exam_plot = self.figure.multi_line(
             "exam_time_age",
             "exam_results",
             source=person_source,
@@ -507,7 +514,7 @@ class TrajectoriesPlot(ToolsMixin):
             color=self._exam_color,
             legend_label="Actual observation",
         )
-        predicted_exam_plot = self.figure.multi_line(
+        self.predicted_exam_plot = self.figure.multi_line(
             "exam_time_age",
             "predicted_exam_results",
             source=person_source,
@@ -556,7 +563,7 @@ class DeltaScatter(ToolsMixin):
             person_source.data["delta"]
         )
 
-        scatter = self.figure.scatter(
+        self.scatter = self.figure.scatter(
             self._delta_scatter_x_key,
             self._delta_scatter_y_key,
             source=person_source,
@@ -650,7 +657,7 @@ class LabelSelectedMixin:
         return (
             f" Individuals selected: {len(selected_indices)} \n"
             f" Individuals with vaccinations: {n_vaccines} \n"
-            f" Average screening interval: ~{round(average_screening_interval, 2)} months "
+            f" Average screening interval: ~{round(average_screening_interval, 2)} months"  # noqa: E501
         )
 
     def get_update_label_callback(self):
