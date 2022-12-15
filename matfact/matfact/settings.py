@@ -30,8 +30,14 @@ DEFAULT_EPOCHS_PER_VAL = 5
 DEFAULT_PATIENCE = 200
 
 
-### Classification tree ###
+### Projected Gradient Descent
+# Pretty much arbitrary values and require hyperparameter search on
+# real data.
+DEFAULT_TAU = 1.0
+DEFAULT_GAMMA = 3.0
 
+
+### Classification tree ###
 # Age segment (inclusive) endpoints, in 'time points'
 # I.e. [a, b] correspond to the segments (<-, a), (a+1, b), (b+1, ->)
 

@@ -27,9 +27,9 @@ class ConvergenceMonitor:
     Args:
         number_of_epochs: the maximum number of epochs to generate.
         epochs_per_val: convergence checking is done every epochs_per_val epoch.
+        tolerance: the tolerance under which the model is said to have converged.
         patience: the minimum number of epcohs.
         show_progress: enable tqdm progress bar.
-        tolerance: the tolerance under which the model is said to have converged.
 
     Examples:
 
@@ -46,14 +46,14 @@ class ConvergenceMonitor:
         self,
         number_of_epochs: int = DEFAULT_NUMBER_OF_EPOCHS,
         epochs_per_val: int = DEFAULT_EPOCHS_PER_VAL,
+        tolerance: float = 1e-4,
         patience: int = DEFAULT_PATIENCE,
         show_progress: bool = True,
-        tolerance: float = 1e-4,
     ):
 
         self.number_of_epochs = number_of_epochs
-        self.tolerance = tolerance
         self.epochs_per_val = epochs_per_val
+        self.tolerance = tolerance
         self.patience = patience
         self._range = trange if show_progress else range
 
@@ -73,3 +73,48 @@ class ConvergenceMonitor:
                 if self._difference_func(_model.M, _old_M) < self.tolerance:
                     break
                 _old_M = model.M
+
+
+class ConvergenceMonitorLoss:
+    """Epoch generator to monitor a loss function and terminates when converged.
+
+    Convergence is defined as when the difference in loss between two
+    subsequent optimization steps is less than a specified tolerence.
+
+    Args:
+        number_of_epochs: the maximum number of epochs to generate.
+        patience: the minimum number of epcohs.
+        tolerance: the tolerance under which the model is said to have converged.
+        show_progress: enable tqdm progress bar.
+
+    Examples:
+
+        ```python
+        monitor = ConvergenceMonitor(tolerance=1e-5)
+        for epoch in monitor(loss):
+            # If loss converges, the generator will deplete before the default number
+            # of epochs has been reached.
+            ...
+        ```
+    """
+
+    def __init__(
+        self,
+        number_of_epochs: int,
+        tolerance: int = 10,
+        patience: int = 3,
+        show_progress: bool = True,
+    ):
+        self.number_of_epochs = number_of_epochs
+        self.tolerance = tolerance
+        self.patience = patience
+        self._range = trange if show_progress else range
+
+    def __call__(self, loss):
+        old_loss = loss()
+        for i in self._range(self.number_of_epochs):
+            yield i
+            new_loss = loss()
+            if i > self.patience and np.abs(new_loss - old_loss) < self.tolerance:
+                break
+            old_loss = new_loss

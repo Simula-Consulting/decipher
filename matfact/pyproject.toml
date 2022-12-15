@@ -46,7 +46,7 @@ module = [
     #
     "mlflow",
     #
-    "tensorflow",
+    "tensorflow.*",
     #
     "skopt.*",
     #
