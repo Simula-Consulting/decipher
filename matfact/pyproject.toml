@@ -11,7 +11,7 @@ numpy = "^1.23.2"
 scipy = "^1.9.1"
 seaborn = "^0.11.2"
 sklearn = "^0.0"
-tensorflow = {version="^2.9.2", markers="platform_machine != 'arm64'"}
+tensorflow = {version="^2.9.3", markers="platform_machine != 'arm64'"}
 tensorflow-macos = {version="^2.9.2", markers="platform_machine == 'arm64'"}
 tensorflow-metal = {version="^0.5.1", markers="platform_machine == 'arm64'"}
 mlflow = "^1.28.0"
