@@ -1,15 +1,11 @@
 # type: ignore
-# flake9: noqa
+# flake8: noqa
 """Example Bokeh server app"""
 import argparse
 import itertools
 import pathlib
-from collections import defaultdict
-from dataclasses import asdict, dataclass
-from typing import Sequence
 
 import numpy as np
-import numpy.typing as npt
 import tensorflow as tf
 from bokeh.layouts import column, row
 from bokeh.models import (
@@ -43,12 +39,12 @@ parser.add_argument("--large-data", action=argparse.BooleanOptionalAction)
 args = parser.parse_args()
 
 
-# Base65 encoded SC png logo
-SC_logo_base65 = r"""iVBORw0KGgoAAAANSUhEUgAAAO4AAAC4CAYAAADkOdDIAAAABGdBTUEAALGPC/xhBQAAACBjSFJN
-AAB7JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QA/wD/AP+gvaeTAAAA
-CXBIWXMAACE4AAAhNwEzWJ96AAAAB3RJTUUH5gsQCAwgssgKzQAAF5RJREFUeNrt3XmYW3W9x/H3
-TKcrLSkgrR1oiU2ZVPatUClXWRQYBYeyDY+gYRFQFB/Hq4hQuPfCoCDi8CBwUdmC3MogCpVCWSxL
-RQpiyy7TQEoCZWihQNOWbrPk/vE9p3NyJpnJrJl5+nk9zzxNTk5Ofjk9v/P7/b6/JSAiIiIiIiIi
+# Base64 encoded SC png logo
+SC_logo_base64 = r"""iVBORw0KGgoAAAANSUhEUgAAAO4AAAC4CAYAAADkOdDIAAAABGdBTUEAALGPC/xhBQAAACBjSFJN
+AAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QA/wD/AP+gvaeTAAAA
+CXBIWXMAACE3AAAhNwEzWJ96AAAAB3RJTUUH5gsQCAwgssgKzQAAF5RJREFUeNrt3XmYW3W9x/H3
+TKcrLSkgrR0oiU2ZVPatUClXWRQYBYeyDY+gYRFQFB/Hq4hQuPfCoCDi8CBwUdmC3MogCpVCWSxL
+RQpiyy6TQEoCZWihQNOWbrPk/vE9p3NyJpnJrJl5+nk9zzxNTk5Ofjk9v/P7/b6/JSAiIiIiIiIi
 IiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIi
 IiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIi
 Ir2UiUZGlDoNMvyVlToB24pMNDIZmAd8CfgXUBuIxdOlTleRaa8C9vBseigQi7eUOl3bsopSJ2Ab
@@ -158,6 +154,15 @@ MjItMTEtMTZUMDg6MDM6NDMrMDA6MDAxtXJ+AAAAKHRFWHRkYXRlOnRpbWVzdGFtcAAyMDIyLTEx
 LTE2VDA4OjEyOjMyKzAwOjAw5F7l8gAAAABJRU5ErkJggg=="""
 
 
+def get_permutation_list(array):
+    """Given an array, return a list of indices that sorts the array.
+
+    >>> get_permutation_list([3, 2, 1])
+    [2, 1, 0]
+    >>> get_permutation_list([10, 100, 20])
+    [0, 2, 1]
+    """
+    return [i for i, v in sorted(enumerate(array), key=lambda iv: iv[1])]
 
 
 # Import data
@@ -167,86 +172,17 @@ dataset_path = (
     / ("dataset_large" if args.large_data else "dataset1")
 )
 dataset = Dataset.from_file(dataset_path)
+X_train, X_test, _, _ = dataset.get_split_X_M()
+X_train = X_train.astype(int)
+X_test = X_test.astype(int)
+X_test_masked, t_pred_test, x_true_test = prediction_data(X_test)
 
+matfact = MatFact(ModelConfig())
 
-def _get_enedpoint_indices(history: Sequence[int]) -> tuple[int, int]:
-    """Return the first and last index of non-zero entries.
-
-    >>> _get_endpoint_indices((0, 1, 0, 2, 0))
-    (1, 3)
-    >>> _get_endpoint_indices((0, 1))
-    (1, 1)
-    """
-    first_nonzero_index = lambda seq: next(i for i, y in enumerate(seq) if y != 0)
-    first = first_nonzero_index(history)
-    last = len(history) - 1 - first_nonzero_index(reversed(history))
-    return first, last
-
-
-@dataclass
-class PredictionData:
-    X_train: npt.NDArray[np.int_]
-    X_test: npt.NDArray[np.int_]
-    X_test_masked: npt.NDArray[np.int_]
-    time_of_prediction: Sequence[int]
-    true_state_at_prediction: int
-    predicted_probabilities: Sequence[float]
-    predicted_states: Sequence[int]
-
-    @classmethod
-    def extract_and_predict(
-        cls, dataset: Dataset, model: MatFact | None = None
-    ) -> PredictionData:
-        model = model or MatFact(ModelConfig())
-
-        X_train, X_test, _, _ = dataset.get_split_X_M()
-        X_test_masked, t_pred_test, x_true_test = prediction_data(X_test)
-
-        model.fit(X_train)
-        predicted_probabilities = model.predict_probabilities(X_test, t_pred_test)
-        # Could alternatively do matfact._predictor(predicted_probabilites) ...
-        predicted_states = model.predict(X_test, t_pred_test)
-
-        return PredictionData(
-            X_train=X_train,
-            X_test=X_test,
-            X_test_masked=X_test_masked,
-            time_of_prediction=t_pred_test,
-            true_state_at_prediction=x_true_test,
-            predicted_probabilities=predicted_probabilities,
-            predicted_states=predicted_states,
-        )
-
-    def extract_people(self) -> list[Person]:
-        # We take the individuals from the test set, not the train set, as
-        # it is for these people we have prediction results.
-        number_of_individuals, number_of_time_steps = self.X_test.shape
-
-        people = []
-        for i in range(number_of_individuals):
-            # Generate the predicted exam history by changing the state at exam time
-            exam_result = self.X_test[i]
-            prediction_time = self.time_of_prediction[i]
-            prediction_state = self.predicted_states[i]
-            predicted_exam_result = exam_result.copy()
-            predicted_exam_result[prediction_time] = prediction_state
-
-            # Find end points of the lexis line
-            endpoints_indices = _get_enedpoint_indices(exam_result)
-            # TODO: fix
-            endpoints_age = [16 + i * 4 for i in endpoints_indices]
-            endpoints_year = [1980 + i * 4 for i in endpoints_indices]
-
-            Person(
-                index=i,
-                exam_results=self.X_test[i],
-                predicted_exam_results=predicted_exam_result,
-                prediction_time=prediction_time,
-                prediction_probabilities=self.predicted_probabilities[i],
-                lexis_line_endpoints_age=endpoints_age,
-                lexis_line_endpoints_year=endpoints_year,
-            )
-
+matfact.fit(X_train)
+predicted_probabilities = matfact.predict_probabilities(X_test, t_pred_test)
+# Could alternatively do matfact._predictor(predicted_probabilites) ...
+predicted_states = matfact.predict(X_test, t_pred_test)
 
 deltas = _calculate_delta(predicted_probabilities, x_true_test - 1)
 permutations = get_permutation_list(deltas)
@@ -290,44 +226,6 @@ years = [[age + fake_date_of_birth[i] for age in ages] for i, ages in enumerate(
 
 def _get_first_last_index(ys):
     return [[func(np.nonzero(y)) for func in (np.min, np.max)] for y in ys]
-
-
-@dataclass
-class Person:
-    index: int
-    exam_results: Sequence[int]
-    predicted_exam_results: Sequence[int]
-    prediction_time: int
-    prediction_probabilities: Sequence[float]
-    lexis_line_endpoints_age: tuple[int, int]
-    # TODO this is sort of unnecessary when we have the endpoits age and date of birth...
-    lexis_line_endpoints_year: tuple[int, int]
-
-    def as_source_dict(self):
-        """Return a dict representation appropriate for a ColumnDataSource."""
-        base_dict = asdict(self)
-        return base_dict
-
-
-def _combine_dicts(dictionaries: Sequence[dict]) -> dict:
-    """Combine dictionaries to one, with the values of the new dict being a list of the values of the old dicts.
-
-    >>> a = {'a': 4}
-    >>> b = {'a': 3}
-    >>> _combine_dicts((a, b))
-    {'a': [4, 3]}
-    """
-    new_dict = defaultdict(list)
-    for dictionary in dictionaries:
-        for key, value in dictionary.items():
-            new_dict[key].append(value)
-
-    return new_dict
-
-
-def source_from_people(people: Sequence[Person]):
-    source_dict = _combine_dicts((person.as_source_dict() for person in people))
-    return ColumnDataSource(source_dict)
 
 
 # Set up the Bokeh data source
