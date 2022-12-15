@@ -598,15 +598,99 @@ class PersonTable:
         )
 
 
+class HistogramPlot:
+    def __init__(self, person_source, exam_source):
+        self.person_source = person_source
+        self.exam_source = exam_source
+        self._number_of_individuals = len(self.person_source.data["index"])
+
+        self.figure = figure()
+        self._set_quad(self.compute_histogram_data())
+
+        self.person_source.selected.on_change(
+            "indices", self.get_update_histogram_callback()
+        )
+
+        self.figure.y_range.start = 0
+        self.figure.legend.location = "center_right"
+        self.figure.legend.background_fill_color = "#fefefe"
+        self.figure.xaxis.axis_label = "State"
+        self.figure.yaxis.axis_label = "Count"
+        self.figure.grid.grid_line_color = "white"
+        self.figure.xaxis.ticker = [1, 2, 3, 4]
+        self.figure.xaxis.major_label_overrides = {
+            1: "Normal",
+            2: "Low-risk",
+            3: "High-risk",
+            4: "Cancer",
+        }
+
+    def compute_histogram_data(self, selected_indices=None):
+        selected_indices = selected_indices or range(self._number_of_individuals)
+        state_occurrences = self._count_state_occurrences(
+            [
+                [
+                    yi
+                    for i in selected_indices
+                    for yi in self.person_source.data["exam_results"][i]
+                    if yi != 0
+                ]
+            ]
+        )
+        return [
+            value for _, value in sorted(state_occurrences.items(), key=lambda x: x[0])
+        ]
+
+    @staticmethod
+    def _count_state_occurrences(nested_list_of_states):
+        out = {1: 0, 2: 0, 3: 0, 4: 0}
+        for list_of_states in nested_list_of_states:
+            for state in list_of_states:
+                out[state] += 1
+        return out
+
+    def _set_quad(self, hist_data):
+        self.figure.quad(
+            top=hist_data,
+            bottom=0,
+            left=np.arange(0, 4) + 0.5,
+            right=np.arange(1, 5) + 0.5,
+            fill_color="navy",
+            line_color="white",
+            alpha=0.5,
+            name="quad",
+        )
+
+    def get_update_histogram_callback(self):
+        def update_histogram(attr, old, new):
+            new = new if len(new) else list(range(self._number_of_individuals))
+
+            quad = self.figure.select_one({"name": "quad"})
+            self.figure.renderers.remove(quad)
+
+            hist_data = self.compute_histogram_data(new)
+            self._set_quad(hist_data)
+
+        return update_histogram
+
+
 def test_plot(person_source, exam_source):
     lp = LexisPlot(person_source, exam_source)
     lpa = LexisPlotAge(person_source, exam_source)
     delta = DeltaScatter(person_source, exam_source)
     traj = TrajectoriesPlot(person_source, exam_source)
     table = PersonTable(person_source, exam_source)
+    hist = HistogramPlot(person_source, exam_source)
 
     curdoc().add_root(
-        row(lp.figure, lpa.figure, delta.figure, traj.figure, table.person_table),
+        row(
+            hist.figure,
+            lp.figure,
+            lpa.figure,
+            delta.figure,
+            traj.figure,
+            table.person_table,
+        ),
     )
 
 
