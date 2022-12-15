@@ -616,7 +616,7 @@ class LabelSelectedMixin:
         self.figure.add_layout(self.label)
 
     def _get_age_at_exam(self, selected_indices):
-        return [
+        return (
             [
                 age
                 for age, state in zip(
@@ -626,7 +626,7 @@ class LabelSelectedMixin:
                 if state != 0
             ]
             for i in selected_indices
-        ]
+        )
 
     @staticmethod
     def _compute_average_screening_interval(nested_age_at_exam):
