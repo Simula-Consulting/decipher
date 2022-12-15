@@ -168,6 +168,9 @@ def test_person_scatter_source_dict(person: Person):
         assert isinstance(value, list)
         assert all(isinstance(element, int | float | str) for element in value)
 
+    # Only observed values should be included
+    assert all(exam != 0 for exam in scatter_source_dict["state"])
+
     # All lists should be the same length
     assert len({len(value) for value in scatter_source_dict.values()}) == 1
 
