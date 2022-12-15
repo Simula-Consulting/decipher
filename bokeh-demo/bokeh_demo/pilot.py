@@ -67,6 +67,7 @@ class Settings(BaseSettings):
         "save",
         "reset",
         "help",
+        "examine",  # For debugging
     ]
     extra_tools: list[str] = ["tap", "lasso_select"]
 
