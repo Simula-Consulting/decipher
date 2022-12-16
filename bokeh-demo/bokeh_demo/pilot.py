@@ -75,6 +75,7 @@ settings = Settings()
 class ExamTypes(str, Enum):
     Cytology = "cytology"
     Histology = "histology"
+    HPV = "HPV"
 
 
 @dataclass
@@ -96,6 +97,10 @@ EXAM_RESULT_LOOKUP = {
         "HistDiagnosis3",
         "HistDiagnosis4",
     ],
+    ExamTypes.HPV: [
+        "HPV Negative",
+        "HPV Positive",
+    ],
 }
 
 # Mapping from diagnosis to coarse state
@@ -111,6 +116,10 @@ EXAM_RESULT_MAPPING = {
         2,
         3,
         4,
+    ],
+    ExamTypes.HPV: [
+        1,
+        3,
     ],
 }
 
