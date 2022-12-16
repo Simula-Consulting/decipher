@@ -35,6 +35,8 @@ jobs:
       run: cd matfact && poetry install
     - name: Poetry in HMM
       run: cd hmm_synthetic && poetry install
+    - name: Poetry in bokeh_app
+      run: cd bokeh-demo && poetry install
     - name: Run pre-commit
       run: |
         pre-commit run --all-files
