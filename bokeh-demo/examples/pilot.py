@@ -13,15 +13,21 @@ by the visualization.
 """
 
 import tensorflow as tf
-from backend import (
+from bokeh.layouts import row
+from bokeh.plotting import curdoc
+from matfact.data_generation import Dataset
+from matfact.model.config import ModelConfig
+from matfact.model.factorization.convergence import ConvergenceMonitor
+from matfact.model.matfact import MatFact
+from matfact.model.predict.dataset_utils import prediction_data
+
+from bokeh_demo.backend import (
     PredictionData,
     link_sources,
     scatter_source_from_people,
     source_from_people,
 )
-from bokeh.layouts import row
-from bokeh.plotting import curdoc
-from frontend import (
+from bokeh_demo.frontend import (
     DeltaScatter,
     HistogramPlot,
     LexisPlot,
@@ -29,12 +35,7 @@ from frontend import (
     PersonTable,
     TrajectoriesPlot,
 )
-from matfact.data_generation import Dataset
-from matfact.model.config import ModelConfig
-from matfact.model.factorization.convergence import ConvergenceMonitor
-from matfact.model.matfact import MatFact
-from matfact.model.predict.dataset_utils import prediction_data
-from settings import settings
+from bokeh_demo.settings import settings
 
 tf.config.set_visible_devices([], "GPU")
 
