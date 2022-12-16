@@ -9,7 +9,6 @@ packages = [{include = "bokeh_demo"}]
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 bokeh = "^3.0.2"
-matfact = {path = "../matfact", develop = true}
 pydantic = "^1.10.2"
 
 
@@ -18,6 +17,13 @@ mypy = "^0.982"
 flake8 = "^5.0.4"
 black = {version = "^22.10.0", allow-prereleases = true}
 pytest = "^7.2.0"
+hypothesis = "^6.61.0"
+
+[tool.poetry.group.examples]
+optional = true
+
+[tool.poetry.group.examples.dependencies]
+matfact = {path = "../matfact", develop = true}
 
 [build-system]
 requires = ["poetry-core"]
