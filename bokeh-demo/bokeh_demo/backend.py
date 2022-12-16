@@ -7,7 +7,7 @@ from typing import Sequence, overload
 
 import numpy as np
 import numpy.typing as npt
-from bokeh.models import ColumnDataSource
+from bokeh.models import CDSView, ColumnDataSource, CustomJS, IndexFilter
 
 from .exam_data import EXAM_RESULT_LOOKUP, ExamResult
 from .faker import faker
@@ -280,18 +280,6 @@ def _combine_scatter_dicts(dictionaries: Sequence[dict]) -> dict:
     }
 
 
-def source_from_people(people: Sequence[Person]):
-    source_dict = _combine_dicts((person.as_source_dict() for person in people))
-    return ColumnDataSource(source_dict)
-
-
-def scatter_source_from_people(people: Sequence[Person]):
-    source_dict = _combine_scatter_dicts(
-        [person.as_scatter_source_dict() for person in people]
-    )
-    return ColumnDataSource(source_dict)
-
-
 def link_sources(person_source, exam_source):
     def select_person_callback(attr, old, selected_people):
         all_indices = [
@@ -311,3 +299,48 @@ def link_sources(person_source, exam_source):
 
     exam_source.selected.on_change("indices", set_group_selected_callback)
     person_source.selected.on_change("indices", select_person_callback)
+
+
+class SourceManager:
+    def __init__(self, person_source, exam_source):
+        self.person_source = person_source
+        self.exam_source = exam_source
+        link_sources(self.person_source, self.exam_source)
+
+        self.only_selected_view = CDSView(filter=IndexFilter())
+        # There is apparently some issues in Bokeh with re-rendering on updating
+        # filters. See #7273 in Bokeh
+        # https://github.com/bokeh/bokeh/issues/7273
+        # The emit seems to resolve this for us, but it is rather hacky.
+        self.person_source.selected.js_on_change(
+            "indices",
+            CustomJS(
+                args={"source": self.person_source, "view": self.only_selected_view},
+                code="""
+            if (source.selected.indices.length){
+                view.filter.indices = source.selected.indices;
+            } else {
+                view.filter.indices = [...Array(source.get_length()).keys()];
+            }
+            source.change.emit();
+            """,
+            ),
+        )
+
+    @classmethod
+    def from_people(cls, people: Sequence[Person]) -> SourceManager:
+        return SourceManager(
+            cls.source_from_people(people), cls.scatter_source_from_people(people)
+        )
+
+    @staticmethod
+    def source_from_people(people: Sequence[Person]):
+        source_dict = _combine_dicts((person.as_source_dict() for person in people))
+        return ColumnDataSource(source_dict)
+
+    @staticmethod
+    def scatter_source_from_people(people: Sequence[Person]):
+        source_dict = _combine_scatter_dicts(
+            [person.as_scatter_source_dict() for person in people]
+        )
+        return ColumnDataSource(source_dict)
