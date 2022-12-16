@@ -17,6 +17,7 @@ import itertools
 import pathlib
 from collections import defaultdict
 from dataclasses import asdict, dataclass
+from enum import Enum
 from typing import Sequence, overload
 
 import numpy as np
@@ -25,6 +26,7 @@ import tensorflow as tf
 from bokeh.layouts import row
 from bokeh.models import (
     CDSView,
+    Circle,
     ColumnDataSource,
     CustomJS,
     CustomJSExpr,
@@ -70,9 +72,61 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
+class ExamTypes(str, Enum):
+    Cytology = "cytology"
+    Histology = "histology"
+
+
+@dataclass
+class ExamResult:
+    type: ExamTypes
+    result: int  # Must be looked up
+
+
+EXAM_RESULT_LOOKUP = {
+    ExamTypes.Cytology: [
+        "CytDiagnosis0",
+        "CytDiagnosis1",
+        "CytDiagnosis2",
+    ],
+    ExamTypes.Histology: [
+        "HistDiagnosis0",
+        "HistDiagnosis1",
+        "HistDiagnosis2",
+        "HistDiagnosis3",
+        "HistDiagnosis4",
+    ],
+}
+
+# Mapping from diagnosis to coarse state
+EXAM_RESULT_MAPPING = {
+    ExamTypes.Cytology: [
+        1,
+        2,
+        3,
+    ],
+    ExamTypes.Histology: [
+        1,
+        1,
+        2,
+        3,
+        4,
+    ],
+}
+
+
+def get_inverse_mapping() -> dict[int, list[ExamResult]]:
+    possible_diagnosis = defaultdict(list)
+    for type, states in EXAM_RESULT_MAPPING.items():
+        for diagnosis_index, coarse_state in enumerate(states):
+            possible_diagnosis[coarse_state].append(ExamResult(type, diagnosis_index))
+    return dict(possible_diagnosis)  # We want KeyError for unknown states
+
+
 class Faker:
     def __init__(self, seed=42):
         self.rng = np.random.default_rng(seed=seed)
+        self.coarse_state_to_exam_result = get_inverse_mapping()
 
     def get_fake_year_of_birth(
         self, person_index: int, first_possible: float = 1970, spread: float = 30
@@ -95,6 +149,14 @@ class Faker:
             if self.rng.random() < vaccine_prob
             else None
         )
+
+    def get_fake_detailed_result(
+        self, coarse_exam_result: Sequence[int]
+    ) -> Sequence[ExamResult | None]:
+        return [
+            self.rng.choice(self.coarse_state_to_exam_result[state]) if state else None
+            for state in coarse_exam_result
+        ]
 
 
 faker = Faker()
@@ -178,6 +240,7 @@ class Person:
     year_of_birth: float  # Float to allow granular date
     vaccine_age: float | None
     exam_results: Sequence[int]
+    detailed_exam_results: Sequence[ExamResult | None]
     predicted_exam_result: int
     prediction_time: int
     prediction_probabilities: Sequence[float]
@@ -265,6 +328,15 @@ class Person:
                 ),
                 ("person_index", itertools.repeat(self.index, len(self.exam_results))),
             )
+        } | {
+            "exam_type": [
+                exam.type.value for exam in self.detailed_exam_results if exam
+            ],
+            "exam_result": [
+                EXAM_RESULT_LOOKUP[exam.type][exam.result]
+                for exam in self.detailed_exam_results
+                if exam
+            ],
         }
 
 
@@ -320,6 +392,8 @@ class PredictionData:
             prediction_time = self.time_of_prediction[i]
             prediction_state = self.predicted_states[i]
 
+            detailed_exam_result = faker.get_fake_detailed_result(exam_result)
+
             year_of_birth = faker.get_fake_year_of_birth(i)
             vaccine_age = faker.get_fake_vaccine_age()
 
@@ -329,6 +403,7 @@ class PredictionData:
                     year_of_birth=year_of_birth,
                     vaccine_age=vaccine_age,
                     exam_results=exam_result,
+                    detailed_exam_results=detailed_exam_result,
                     predicted_exam_result=prediction_state,
                     prediction_time=prediction_time,
                     prediction_probabilities=self.predicted_probabilities[i],
@@ -440,7 +515,7 @@ class LexisPlot(ToolsMixin):
             ),
             "above",
         )
-        self.scatter = self.figure.scatter(
+        self.scatter = self.figure.circle(
             self._scatter_x_key,
             self._scatter_y_key,
             source=scatter_source,
@@ -452,6 +527,14 @@ class LexisPlot(ToolsMixin):
             },
             legend_group="state_label",
         )
+
+        # Tooltip for detailed exam data
+        hover_tool = HoverTool(
+            tooltips=[("Type", "@exam_type"), ("Result", "@exam_result")],
+            renderers=[self.scatter],
+        )
+        self.figure.add_tools(hover_tool)
+        self.scatter.hover_glyph = Circle(x="x", y="y", line_width=10, line_color="red")
 
 
 class LexisPlotAge(LexisPlot):

@@ -1,3 +1,4 @@
+import dataclasses
 import itertools
 import types
 
@@ -5,10 +6,12 @@ from hypothesis import given, note
 from hypothesis import strategies as st
 
 from bokeh_demo.pilot import (
+    ExamTypes,
     Person,
     TimeConverter,
     _combine_dicts,
     _combine_scatter_dicts,
+    get_inverse_mapping,
     get_position_list,
 )
 
@@ -64,6 +67,17 @@ def test_combine_scatter_dicts(dictionaries: list[dict]) -> None:
         assert value == flattened
 
 
+COARSE_TO_RESULT_MAPPING = get_inverse_mapping()
+
+
+def exam_result_strategy(coarse_result: int | None = None):
+    if coarse_result is None:
+        sample_set = itertools.chain.from_iterable(COARSE_TO_RESULT_MAPPING.values())
+    else:
+        sample_set = COARSE_TO_RESULT_MAPPING[coarse_result]
+    return st.sampled_from(sample_set)
+
+
 @st.composite
 def person_strategy(
     draw,
@@ -87,6 +101,9 @@ def person_strategy(
             max_size=number_of_time_steps,
         ).filter(lambda lst: len([el for el in lst if el != 0]) >= min_number_exams)
     )
+    detailed_exam_results = [
+        draw(exam_result_strategy(state)) if state else None for state in exam_results
+    ]
     prediction_time = draw(st.integers(min_value=0, max_value=number_of_time_steps - 1))
     prediction_probabilities = draw(
         st.lists(
@@ -112,6 +129,7 @@ def person_strategy(
         year_of_birth=draw(st.floats(min_value=1960, max_value=2000)),
         vaccine_age=draw(st.one_of(st.integers(min_value=0, max_value=30), st.none())),
         exam_results=exam_results,
+        detailed_exam_results=detailed_exam_results,
         predicted_exam_result=predicted_state,
         prediction_time=prediction_time,
         prediction_probabilities=prediction_probabilities,
@@ -138,8 +156,27 @@ def test_person_source_dict(person: Person):
     for value in source_dict.values():
         assert not isinstance(value, types.GeneratorType)
 
+    for state, detailed_state in zip(
+        source_dict["exam_results"], source_dict["detailed_exam_results"]
+    ):
+        if state == 0:
+            assert detailed_state is None
+        else:
+            # detailed_state is not of type ExamResult, but converted to a dict
+            assert isinstance(detailed_state["type"], ExamTypes)
+            assert detailed_state in [
+                dataclasses.asdict(result) for result in COARSE_TO_RESULT_MAPPING[state]
+            ]
+
     # Each of these must have the same "shape"
-    SAME_LENGTH = (("exam_results", "predicted_exam_results", "exam_time_age"),)
+    SAME_LENGTH = (
+        (
+            "exam_results",
+            "detailed_exam_results",
+            "predicted_exam_results",
+            "exam_time_age",
+        ),
+    )
     for key_set in SAME_LENGTH:
         assert all(key in source_dict for key in key_set)
         assert len({_guarded_length(source_dict[key]) for key in key_set}) == 1
@@ -181,6 +218,8 @@ def test_person_scatter_source_dict(person: Person):
         ("year", float),
         ("state", int),
         ("person_index", int),
+        ("exam_type", str),
+        ("exam_result", str),
     )
     for key, type in EXPECTED_KEYS:
         note(f"key: {key}, type: {type}")
