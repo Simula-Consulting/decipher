@@ -5,15 +5,15 @@ import types
 from hypothesis import given, note
 from hypothesis import strategies as st
 
-from bokeh_demo.pilot import (
-    ExamTypes,
+from bokeh_demo.backend import (
     Person,
     TimeConverter,
     _combine_dicts,
     _combine_scatter_dicts,
-    get_inverse_mapping,
-    get_position_list,
 )
+from bokeh_demo.exam_data import ExamTypes
+from bokeh_demo.faker import get_inverse_mapping
+from bokeh_demo.frontend import get_position_list
 
 
 @given(st.lists(st.integers()))
