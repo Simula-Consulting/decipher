@@ -38,4 +38,3 @@ module = [
     "scipy.*"
 ]
 ignore_missing_imports = true
-    
