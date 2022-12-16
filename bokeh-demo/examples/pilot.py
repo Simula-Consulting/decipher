@@ -21,12 +21,7 @@ from matfact.model.factorization.convergence import ConvergenceMonitor
 from matfact.model.matfact import MatFact
 from matfact.model.predict.dataset_utils import prediction_data
 
-from bokeh_demo.backend import (
-    PredictionData,
-    link_sources,
-    scatter_source_from_people,
-    source_from_people,
-)
+from bokeh_demo.backend import PredictionData, SourceManager
 from bokeh_demo.frontend import (
     DeltaScatter,
     HistogramPlot,
@@ -74,13 +69,13 @@ def extract_and_predict(
     )
 
 
-def test_plot(person_source, exam_source):
-    lp = LexisPlot(person_source, exam_source)
-    lpa = LexisPlotAge(person_source, exam_source)
-    delta = DeltaScatter(person_source, exam_source)
-    traj = TrajectoriesPlot(person_source, exam_source)
-    table = PersonTable(person_source, exam_source)
-    hist = HistogramPlot(person_source, exam_source)
+def test_plot(source_manager):
+    lp = LexisPlot(source_manager)
+    lpa = LexisPlotAge(source_manager)
+    delta = DeltaScatter(source_manager)
+    traj = TrajectoriesPlot(source_manager)
+    table = PersonTable(source_manager)
+    hist = HistogramPlot(source_manager)
 
     curdoc().add_root(
         row(
@@ -97,10 +92,8 @@ def test_plot(person_source, exam_source):
 def main():
     prediction_data = extract_and_predict(dataset)
     people = prediction_data.extract_people()
-    person_source = source_from_people(people)
-    exam_source = scatter_source_from_people(people)
-    link_sources(person_source, exam_source)
-    test_plot(person_source, exam_source)
+    source_manager = SourceManager.from_people(people)
+    test_plot(source_manager)
 
 
 main()
