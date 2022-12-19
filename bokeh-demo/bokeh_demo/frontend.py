@@ -126,7 +126,7 @@ def get_position_list(array: Sequence) -> Sequence[int]:
     >>> get_position_list([2, 0, 1, 4])
     [2, 0, 1, 3]
     >>> get_position_list([1, 4, 9, 2])
-    [0, 2, 3, 2]
+    [0, 2, 3, 1]
     """
     sorted_indices = (i for i, _ in sorted(enumerate(array), key=lambda iv: iv[1]))
     index_map = {n: i for i, n in enumerate(sorted_indices)}
