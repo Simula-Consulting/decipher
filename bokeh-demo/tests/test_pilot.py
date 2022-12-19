@@ -72,7 +72,9 @@ COARSE_TO_RESULT_MAPPING = get_inverse_mapping()
 
 def exam_result_strategy(coarse_result: int | None = None):
     if coarse_result is None:
-        sample_set = itertools.chain.from_iterable(COARSE_TO_RESULT_MAPPING.values())
+        sample_set = list(
+            itertools.chain.from_iterable(COARSE_TO_RESULT_MAPPING.values())
+        )
     else:
         sample_set = COARSE_TO_RESULT_MAPPING[coarse_result]
     return st.sampled_from(sample_set)

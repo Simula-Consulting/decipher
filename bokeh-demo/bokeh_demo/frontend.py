@@ -1,7 +1,14 @@
 from typing import Sequence
 
 import numpy as np
-from bokeh.models import (
+
+# mypy complains that bokeh.models does not have these attributes.
+# We were unsuccessful in finding the origin of the bug.
+# What we know is that for, for example, the DataTable, mypy correctly
+# identifies it in bokeh.models.widgets.tables and also that it is exported
+# to bokeh.models.widgets. However, for some reason, it is not propagated to
+# bokeh.models.
+from bokeh.models import (  # type: ignore
     Circle,
     CustomJSExpr,
     CustomJSHover,
@@ -40,8 +47,8 @@ class LexisPlot(ToolsMixin):
     _marker_color_key: str = "state"
 
     # TODO: move to config class or settings
-    _markers: list[str] = [None, "square", "circle", "diamond"]
-    _marker_colors: list[str] = [None, "blue", "green", "red"]
+    _markers: list[str | None] = [None, "square", "circle", "diamond"]
+    _marker_colors: list[str | None] = [None, "blue", "green", "red"]
     _vaccine_line_width: int = 3
     _vaccine_line_color: str = "tan"
 
