@@ -128,9 +128,7 @@ def get_position_list(array: Sequence) -> Sequence[int]:
     >>> get_position_list([1, 4, 9, 2])
     [0, 2, 3, 1]
     """
-    sorted_indices = (i for i, _ in sorted(enumerate(array), key=lambda iv: iv[1]))
-    index_map = {n: i for i, n in enumerate(sorted_indices)}
-    return [index_map[n] for n in range(len(array))]
+    return list(np.argsort(np.argsort(array)))
 
 
 class TrajectoriesPlot(ToolsMixin):
