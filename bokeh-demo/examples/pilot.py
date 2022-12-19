@@ -13,7 +13,7 @@ by the visualization.
 """
 
 import tensorflow as tf
-from bokeh.layouts import row
+from bokeh.layouts import column, row
 from bokeh.plotting import curdoc
 from matfact.data_generation import Dataset
 from matfact.model.config import ModelConfig
@@ -78,14 +78,18 @@ def test_plot(source_manager):
     hist = HistogramPlot(source_manager)
 
     curdoc().add_root(
-        row(
-            hist.figure,
-            lp.figure,
-            lpa.figure,
-            delta.figure,
-            traj.figure,
-            table.person_table,
-        ),
+        column(
+            row(
+                lp.figure,
+                lpa.figure,
+                traj.figure,
+                table.person_table,
+            ),
+            row(
+                hist.figure,
+                delta.figure,
+            ),
+        )
     )
 
 
