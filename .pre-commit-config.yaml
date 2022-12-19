@@ -1,4 +1,4 @@
-exclude: ^((matfact|hmm_synthetic)/examples|docs)
+exclude: ^(.*/examples|docs)
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -13,15 +13,36 @@ repos:
     rev: 6.0.0
     hooks:
     -   id: flake8
+        name: flake8 for matfact
+        stages: [commit]
         additional_dependencies: [flake8-typing-imports==1.7.0]
-        exclude: venv, .git, .pyenv
+        entry: bash -c 'cd matfact && poetry run flake8'
+  
+-   repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+    -   id: flake8
+        name: flake8 for hmm_synthetic
+        stages: [commit]
+        additional_dependencies: [flake8-typing-imports==1.7.0]
+        entry: bash -c 'cd hmm_synthetic && poetry run flake8'
 
 
 -   repo: https://github.com/pycqa/isort
     rev: 5.11.2
     hooks:
     -   id: isort
-        name: isort (python)
+        name: isort for matfact (python)
+        stages: [commit]
+        entry: bash -c 'cd matfact && poetry run isort .'
+
+-   repo: https://github.com/pycqa/isort
+    rev: 5.11.2
+    hooks:
+    -   id: isort
+        name: isort for hmm_synthetic (python)
+        stages: [commit]
+        entry: bash -c 'cd hmm_synthetic && poetry run isort .'
 
 
 -   repo: https://github.com/psf/black.git
