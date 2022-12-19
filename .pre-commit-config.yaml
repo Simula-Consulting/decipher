@@ -10,7 +10,7 @@ repos:
     -   id: check-yaml
 
 -   repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 5.0.4
     hooks:
     -   id: flake8
         name: flake8 for matfact
@@ -19,7 +19,7 @@ repos:
         entry: bash -c 'cd matfact && poetry run flake8'
 
 -   repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 5.0.4
     hooks:
     -   id: flake8
         name: flake8 for hmm_synthetic
@@ -57,3 +57,4 @@ repos:
     hooks:
     -   id: mypy
         name: mypy
+        exclude: ^.*/examples
