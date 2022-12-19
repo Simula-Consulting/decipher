@@ -3,7 +3,7 @@ from __future__ import annotations  # Postponed evaluation of types
 import itertools
 from collections import defaultdict
 from dataclasses import asdict, dataclass
-from typing import Sequence, overload
+from typing import Iterable, Sequence, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -88,16 +88,20 @@ def _get_endpoint_indices(history: Sequence[int]) -> tuple[int, int]:
 
 def _calculate_delta(
     probabilities: Sequence[float],
-    correct_indices: int,
+    correct_index: int,
 ) -> float:
-    """Calculate the delta value from probabilities for different classes."""
-    deltas = []
-    for estimates, correct in zip(probabilities, correct_indices):
-        incorrect_estimates = (*estimates[:correct], *estimates[correct + 1 :])
-        # Set default=0 for the edge case that there is only one state, in which
-        # case incorrect_estimates is empty.
-        deltas.append(max(incorrect_estimates, default=0) - estimates[correct])
-    return deltas
+    """Calculate the delta value from probabilities for different classes.
+
+    Note:
+        The correct_index is the _index_ of the correct class, not its label!
+    """
+    incorrect_estimates = (
+        *probabilities[:correct_index],
+        *probabilities[correct_index + 1 :],
+    )
+    # Set default=0 for the edge case that there is only one state, in which
+    # case incorrect_estimates is empty.
+    return max(incorrect_estimates, default=0) - probabilities[correct_index]
 
 
 @dataclass
@@ -121,12 +125,10 @@ class Person:
         )
 
         # Delta score of the prediction
-        # TODO: we now hack this by using the lists, but in the future a better/more
-        # general _calculate_delta should be written
         delta = _calculate_delta(
-            [self.prediction_probabilities],
-            [self.exam_results[self.prediction_time] - 1],
-        )[0]
+            self.prediction_probabilities,
+            self.exam_results[self.prediction_time] - 1,
+        )
 
         # Generate the predicted states
         predicted_exam_results = self.exam_results.copy()
@@ -213,7 +215,7 @@ class PredictionData:
     X_test_masked: npt.NDArray[np.int_]
     time_of_prediction: Sequence[int]
     true_state_at_prediction: int
-    predicted_probabilities: Sequence[float]
+    predicted_probabilities: Sequence[Sequence[float]]
     predicted_states: Sequence[int]
 
     def extract_people(self) -> list[Person]:
@@ -249,7 +251,7 @@ class PredictionData:
         return people
 
 
-def _combine_dicts(dictionaries: Sequence[dict]) -> dict:
+def _combine_dicts(dictionaries: Iterable[dict]) -> dict:
     """Combine dictionaries by making lists of observed values.
 
     >>> a = {'a': 4}
