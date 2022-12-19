@@ -30,13 +30,13 @@ class Faker:
 
     def get_fake_vaccine_age(
         self,
-        vaccine_start_year: float = 12.0,
+        vaccine_start_age: float = 12.0,
         vaccine_spread: float = 10,
         vaccine_prob: float = 0.3,
     ) -> None | float:
         # Beta 2, 5 is centered around 0.2 with a steep falloff.
         return (
-            vaccine_start_year + vaccine_spread * self.rng.beta(2, 5)
+            vaccine_start_age + vaccine_spread * self.rng.beta(2, 5)
             if self.rng.random() < vaccine_prob
             else None
         )
