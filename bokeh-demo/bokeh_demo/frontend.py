@@ -98,6 +98,11 @@ class LexisPlot(ToolsMixin):
             renderers=[self.scatter],
         )
         self.figure.add_tools(hover_tool)
+        # It is not possible to have the hover_glyph have a different size than normal
+        # See https://github.com/bokeh/bokeh/issues/2367 (about nonselection_glyph,
+        # but same issue.)
+        # We get around this issue by instead having a thick line_width, which
+        # gives a similar effect to having a bigger marker.
         self.scatter.hover_glyph = Circle(x="x", y="y", line_width=10, line_color="red")
 
 
