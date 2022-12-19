@@ -69,7 +69,7 @@ def extract_and_predict(
     )
 
 
-def test_plot(source_manager):
+def example_app(source_manager):
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
     delta = DeltaScatter(source_manager)
@@ -97,7 +97,8 @@ def main():
     prediction_data = extract_and_predict(dataset)
     people = prediction_data.extract_people()
     source_manager = SourceManager.from_people(people)
-    test_plot(source_manager)
+    example_app(source_manager)
 
 
+# Name is not main when run through bokeh serve, so no __name__ == __main__ guard
 main()
