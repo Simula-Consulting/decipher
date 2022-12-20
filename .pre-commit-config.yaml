@@ -8,6 +8,7 @@ repos:
     -   id: check-json
     -   id: check-added-large-files
     -   id: check-yaml
+        args: [--unsafe]
 
 -   repo: https://github.com/PyCQA/flake8
     rev: 5.0.4
