@@ -7,7 +7,14 @@ from typing import Iterable, Sequence, overload
 
 import numpy as np
 import numpy.typing as npt
-from bokeh.models import CDSView, ColumnDataSource, CustomJS, IndexFilter
+from bokeh.models import (
+    AllIndices,
+    CDSView,
+    ColumnDataSource,
+    CustomJS,
+    IndexFilter,
+    IntersectionFilter,
+)
 
 from .exam_data import EXAM_RESULT_LOOKUP, ExamResult
 from .faker import faker
@@ -303,6 +310,144 @@ def link_sources(person_source, exam_source):
     person_source.selected.on_change("indices", select_person_callback)
 
 
+@dataclass
+class Filter:
+    source_manager: SourceManager
+    active: bool = False
+    inverted: bool = False
+
+    def get_set_active_callback(self):
+        def set_active(attr, old, new: bool):
+            self.active = new
+            self.source_manager.update_views()
+
+        return set_active
+
+    def get_set_inverted_callback(self):
+        def set_inverted(attr, old, new: bool):
+            self.inverted = new
+            self.source_manager.update_views()
+
+        return set_inverted
+
+    def get_set_value_callback(self):
+        raise NotImplementedError("abstract")
+
+    def get_filter(self):
+        pass
+
+    def get_exam_filter(self):
+        pass
+
+    @staticmethod
+    def _person_to_exam_indices(person_filter_indices, exam_person_index_list):
+        return [
+            i
+            for i, person_index in enumerate(exam_person_index_list)
+            if person_index in person_filter_indices
+        ]
+
+    @staticmethod
+    def _exam_to_person_indices(exam_indices, exam_source_data):
+        return list({exam_source_data["person_index"][i] for i in exam_indices})
+
+
+class DecoupledSimpleFilter(Filter):
+    def __init__(self, person_indices, exam_indices, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.person_indices = person_indices
+        self.exam_indices = exam_indices
+        self.person_filter = IndexFilter(self.person_indices)
+        self.exam_filter = IndexFilter(self.exam_indices)
+
+    def get_filter(self):
+        if not self.active:
+            return AllIndices()
+        return ~self.person_filter if self.inverted else self.person_filter
+
+    def get_exam_filter(self):
+        if not self.active:
+            return AllIndices()
+        return ~self.exam_filter if self.inverted else self.exam_filter
+
+
+class PersonSimpleFilter(DecoupledSimpleFilter):
+    def __init__(self, person_indices, *args, **kwargs):
+        exam_data = kwargs["source_manager"].exam_source.data
+        exam_indices = self._person_to_exam_indices(
+            person_indices, exam_data["person_index"]
+        )
+        super().__init__(person_indices, exam_indices, *args, **kwargs)
+
+
+class ExamSimpleFilter(DecoupledSimpleFilter):
+    def __init__(self, exam_indices, *args, **kwargs):
+        exam_data = kwargs["source_manager"].exam_source.data
+        person_indices = self._exam_to_person_indices(exam_indices, exam_data)
+        super().__init__(person_indices, exam_indices, *args, **kwargs)
+
+
+class RangeFilter(Filter):
+    _range = (-float("inf"), float("inf"))  # 'Accept all'
+
+    def __init__(self, field: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.field = field
+        self.selected = self._get_selection_indices()
+
+    def _get_selection_indices(self):
+        data = self.source_manager.person_source.data[self.field]
+        min, max = self._range
+        return [
+            i
+            for i, value in enumerate(data)
+            if value is not None and min <= value <= max
+        ]
+
+    def get_set_value_callback(self):
+        def set_value_callback(attr, old, new: tuple):
+            assert len(new) == 2
+            self._range = new
+            self.selected = self._get_selection_indices()
+            self.source_manager.update_views()
+
+        return set_value_callback
+
+    def get_filter(self):
+        if not self.active:
+            return AllIndices()
+        return (
+            ~IndexFilter(self.selected) if self.inverted else IndexFilter(self.selected)
+        )
+
+    def get_exam_filter(self):
+        if not self.active:
+            return AllIndices()
+        filter = IndexFilter(
+            self._person_to_exam_indices(
+                self.selected, self.source_manager.exam_source.data["person_index"]
+            )
+        )
+        return ~filter if self.inverted else filter
+
+
+def _at_least_one_high_risk(person_source):
+    """Return people with at least one high risk"""
+    return [
+        i
+        for i, exam_results in enumerate(person_source.data["exam_results"])
+        if 3 in exam_results
+    ]
+
+
+def _has_vaccine(person_source):
+    return [
+        i
+        for i, vaccine_age in enumerate(person_source.data["vaccine_age"])
+        if vaccine_age
+    ]
+
+
 class SourceManager:
     def __init__(self, person_source, exam_source):
         self.person_source = person_source
@@ -327,6 +472,53 @@ class SourceManager:
             source.change.emit();
             """,
             ),
+        )
+
+        self.view = CDSView()
+        self.exam_view = CDSView()
+        self.combined_view = CDSView(
+            filter=self.view.filter & self.only_selected_view.filter
+        )
+
+        def cllback(attr, old, new):
+            self.combined_view.filter = (
+                self.view.filter & self.only_selected_view.filter
+            )
+
+        self.view.on_change("filter", cllback)
+
+        self.filters = {
+            "high_risk": PersonSimpleFilter(
+                source_manager=self,
+                person_indices=_at_least_one_high_risk(self.person_source),
+            ),
+            "high_risk_2": DecoupledSimpleFilter(
+                source_manager=self,
+                person_indices=_at_least_one_high_risk(self.person_source),
+                exam_indices=[
+                    i
+                    for i, state in enumerate(self.exam_source.data["state"])
+                    if state == 3
+                ],
+            ),
+            "high_risk_3": ExamSimpleFilter(
+                source_manager=self,
+                exam_indices=[
+                    i
+                    for i, state in enumerate(self.exam_source.data["state"])
+                    if state == 3
+                ],
+            ),
+            "vaccine_age": RangeFilter(source_manager=self, field="vaccine_age"),
+        }
+
+    def update_views(self):
+        self.view.filter = IntersectionFilter(
+            operands=[filter.get_filter() for filter in self.filters.values()]
+        )
+        # TODO this can be optimized by simply getting the result from the above intersection, right?
+        self.exam_view.filter = IntersectionFilter(
+            operands=[filter.get_exam_filter() for filter in self.filters.values()]
         )
 
     @classmethod

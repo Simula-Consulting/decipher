@@ -9,6 +9,7 @@ import numpy as np
 # to bokeh.models.widgets. However, for some reason, it is not propagated to
 # bokeh.models.
 from bokeh.models import (  # type: ignore
+    CDSView,
     Circle,
     CustomJSExpr,
     CustomJSHover,
@@ -64,11 +65,13 @@ class LexisPlot(ToolsMixin):
             self._lexis_line_x_key,
             self._lexis_line_y_key,
             source=source_manager.person_source,
+            view=source_manager.view,
         )
         self.vaccine_line = self.figure.multi_line(
             self._vaccine_line_x_key,
             self._vaccine_line_y_key,
             source=source_manager.person_source,
+            view=source_manager.view,
             line_width=self._vaccine_line_width,
             color=self._vaccine_line_color,
         )
@@ -90,6 +93,7 @@ class LexisPlot(ToolsMixin):
             self._scatter_x_key,
             self._scatter_y_key,
             source=self.source_manager.exam_source,
+            view=source_manager.exam_view,
             color={
                 "expr": CustomJSExpr(
                     args={"colors": self._marker_colors},
@@ -137,12 +141,13 @@ class TrajectoriesPlot(ToolsMixin):
 
     def __init__(self, source_manager: SourceManager):
         self.figure = figure(x_axis_label="Age", tools=self._get_tools())
+        # self.combined_view = CDSView(filter=source_manager.view.filter & source_manager.only_selected_view.filter)
 
         self.exam_plot = self.figure.multi_line(
             "exam_time_age",
             "exam_results",
             source=source_manager.person_source,
-            view=source_manager.only_selected_view,
+            view=source_manager.combined_view,
             color=self._exam_color,
             legend_label="Actual observation",
         )
@@ -150,7 +155,7 @@ class TrajectoriesPlot(ToolsMixin):
             "exam_time_age",
             "predicted_exam_results",
             source=source_manager.person_source,
-            view=source_manager.only_selected_view,
+            view=source_manager.combined_view,
             color=self._predicted_exam_color,
             legend_label="Predicted observation",
         )
@@ -199,6 +204,7 @@ class DeltaScatter(ToolsMixin):
             self._delta_scatter_x_key,
             self._delta_scatter_y_key,
             source=source_manager.person_source,
+            view=source_manager.view,
         )
 
 
