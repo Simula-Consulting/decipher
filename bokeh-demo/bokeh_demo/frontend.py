@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from typing import Sequence
 
 import numpy as np
@@ -8,6 +9,7 @@ import numpy as np
 # identifies it in bokeh.models.widgets.tables and also that it is exported
 # to bokeh.models.widgets. However, for some reason, it is not propagated to
 # bokeh.models.
+from bokeh.layouts import row
 from bokeh.models import (  # type: ignore
     CDSView,
     Circle,
@@ -18,12 +20,22 @@ from bokeh.models import (  # type: ignore
     Label,
     Legend,
     LegendItem,
+    Paragraph,
+    RangeSlider,
+    Switch,
     TableColumn,
 )
 from bokeh.models.tickers import FixedTicker
 from bokeh.plotting import figure
 
-from .backend import SourceManager
+from .backend import (
+    DecoupledSimpleFilter,
+    ExamSimpleFilter,
+    Filter,
+    PersonSimpleFilter,
+    RangeFilter,
+    SourceManager,
+)
 from .settings import settings
 
 
@@ -389,3 +401,46 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
             self.quad.data_source.data["top"] = self.compute_histogram_data(new)
 
         return update_histogram
+
+
+class FilterValueUIElement(Enum):
+    RangeSlider = auto()
+
+
+def get_filter_element(filter_name: str, source_manager: SourceManager):
+    """Return a filter element corresponding to a filter in a source_manager."""
+    if filter_name not in source_manager.filters:
+        raise ValueError(f"The source manager does not have the filter {filter_name}.")
+
+    filter_value_element_mapping = {
+        Filter: None,
+        DecoupledSimpleFilter: None,
+        PersonSimpleFilter: None,
+        ExamSimpleFilter: None,
+        RangeFilter: FilterValueUIElement.RangeSlider,
+    }
+
+    activation_toggle = Switch(active=False)
+    inversion_toggle = Switch(active=False)
+
+    filter = source_manager.filters[filter_name]
+    activation_toggle.on_change("active", filter.get_set_active_callback())
+    inversion_toggle.on_change("active", filter.get_set_inverted_callback())
+
+    match (filter_value_element_mapping[type(filter)]):
+        case FilterValueUIElement.RangeSlider:
+            value_element = RangeSlider(value=(0, 100), start=0, end=100)
+            value_element.on_change("value", filter.get_set_value_callback())
+        case None:
+            value_element = None
+        case _:
+            raise ValueError()
+
+    label = Paragraph(text=filter_name)
+
+    included_elements = (
+        element
+        for element in (activation_toggle, inversion_toggle, value_element, label)
+        if element is not None
+    )
+    return row(*included_elements)

@@ -30,6 +30,7 @@ from bokeh_demo.frontend import (
     LexisPlotAge,
     PersonTable,
     TrajectoriesPlot,
+    get_filter_element,
 )
 from bokeh_demo.settings import settings
 
@@ -77,35 +78,13 @@ def example_app(source_manager):
     traj = TrajectoriesPlot(source_manager)
     table = PersonTable(source_manager)
     hist = HistogramPlot(source_manager)
-    filter_toggle = Switch(active=False)
-    filter_toggle.on_change(
-        "active", source_manager.filters["high_risk"].get_set_active_callback()
+    high_risk_person_group = get_filter_element("high_risk_person", source_manager)
+    high_risk_exam_group = get_filter_element("high_risk_exam", source_manager)
+    high_risk_decoupled_group = get_filter_element(
+        "high_risk_decoupled", source_manager
     )
 
-    high_risk_toggle = Switch(active=False)
-    high_risk_toggle.on_change(
-        "active", source_manager.filters["high_risk_2"].get_set_active_callback()
-    )
-
-    high_risk_exam_toggle = Switch(active=False)
-    high_risk_exam_toggle.on_change(
-        "active", source_manager.filters["high_risk_3"].get_set_active_callback()
-    )
-    # radio_group = RadioButtonGroup(labels=["Off", "On", "Inverted"])
-    # radio_group.on_change("active", source_manager.get_filter_callback("vaccine"))
-
-    vaccine_filter_toggle = Switch(active=False)
-    vaccine_filter_toggle.on_change(
-        "active", source_manager.filters["vaccine_age"].get_set_active_callback()
-    )
-    vaccine_filter_invert_toggle = Switch(active=False)
-    vaccine_filter_invert_toggle.on_change(
-        "active", source_manager.filters["vaccine_age"].get_set_inverted_callback()
-    )
-    range_slider = RangeSlider(value=(0, 100), start=0, end=100)
-    range_slider.on_change(
-        "value", source_manager.filters["vaccine_age"].get_set_value_callback()
-    )
+    vaccine_group = get_filter_element("vaccine_age", source_manager)
 
     curdoc().add_root(
         column(
@@ -119,14 +98,10 @@ def example_app(source_manager):
                 hist.figure,
                 delta.figure,
                 column(
-                    filter_toggle,
-                    high_risk_toggle,
-                    high_risk_exam_toggle,
-                    row(
-                        vaccine_filter_toggle,
-                        vaccine_filter_invert_toggle,
-                        range_slider,
-                    ),
+                    high_risk_person_group,
+                    high_risk_exam_group,
+                    high_risk_decoupled_group,
+                    vaccine_group,
                 ),
             ),
         )

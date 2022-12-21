@@ -488,11 +488,11 @@ class SourceManager:
         self.view.on_change("filter", cllback)
 
         self.filters = {
-            "high_risk": PersonSimpleFilter(
+            "high_risk_person": PersonSimpleFilter(
                 source_manager=self,
                 person_indices=_at_least_one_high_risk(self.person_source),
             ),
-            "high_risk_2": DecoupledSimpleFilter(
+            "high_risk_decoupled": DecoupledSimpleFilter(
                 source_manager=self,
                 person_indices=_at_least_one_high_risk(self.person_source),
                 exam_indices=[
@@ -501,7 +501,7 @@ class SourceManager:
                     if state == 3
                 ],
             ),
-            "high_risk_3": ExamSimpleFilter(
+            "high_risk_exam": ExamSimpleFilter(
                 source_manager=self,
                 exam_indices=[
                     i
