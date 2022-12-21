@@ -8,43 +8,13 @@ repos:
     -   id: check-json
     -   id: check-added-large-files
     -   id: check-yaml
-        args: [--unsafe]
+        args: [--unsafe]  # enable unsafe loading for custom tags in mkdocs.yml
 
 -   repo: https://github.com/PyCQA/flake8
     rev: 5.0.4
     hooks:
     -   id: flake8
-        name: flake8 for matfact
-        stages: [commit]
-        additional_dependencies: [flake8-typing-imports==1.7.0]
-        entry: bash -c 'cd matfact && poetry run flake8'
-
--   repo: https://github.com/PyCQA/flake8
-    rev: 5.0.4
-    hooks:
-    -   id: flake8
-        name: flake8 for hmm_synthetic
-        stages: [commit]
-        additional_dependencies: [flake8-typing-imports==1.7.0]
-        entry: bash -c 'cd hmm_synthetic && poetry run flake8'
-
-
--   repo: https://github.com/pycqa/isort
-    rev: 5.11.2
-    hooks:
-    -   id: isort
-        name: isort for matfact (python)
-        stages: [commit]
-        entry: bash -c 'cd matfact && poetry run isort .'
-
--   repo: https://github.com/pycqa/isort
-    rev: 5.11.2
-    hooks:
-    -   id: isort
-        name: isort for hmm_synthetic (python)
-        stages: [commit]
-        entry: bash -c 'cd hmm_synthetic && poetry run isort .'
-
+        name: flake8
 
 -   repo: https://github.com/psf/black.git
     rev: 22.12.0
@@ -52,10 +22,22 @@ repos:
     -   id: black
         name: black
 
-
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.991
     hooks:
     -   id: mypy
         name: mypy
         exclude: ^.*/examples
+
+-   repo: local
+    hooks:
+    -   id: isort
+        name: isort for matfact (python)
+        stages: [commit]
+        language: system
+        entry: bash -c 'cd matfact && poetry run isort --profile black .'
+    -   id: isort
+        name: isort for hmm_synthetic (python)
+        stages: [commit]
+        language: system
+        entry: bash -c 'cd hmm_synthetic && poetry run isort --profile black .'
