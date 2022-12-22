@@ -33,11 +33,9 @@ repos:
     hooks:
     -   id: isort
         name: isort for matfact (python)
-        stages: [commit]
         language: system
         entry: bash -c 'cd matfact && poetry run isort --profile black .'
     -   id: isort
         name: isort for hmm_synthetic (python)
-        stages: [commit]
         language: system
         entry: bash -c 'cd hmm_synthetic && poetry run isort --profile black .'
