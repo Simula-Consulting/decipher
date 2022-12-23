@@ -24,7 +24,7 @@ where $\sigma$ is the sigmoid function and $\hat{A}$ is estimated by solving the
 $$
 \hat{A} = \arg \max_{\Gamma \in \mathcal{F}_{\tau, \gamma}}\left\{
      \sum_{i=1}^m\sum_{j=1}^n
-     \left[ 
+     \left[
         M_{i, j} \log \sigma(\Gamma_{i, j}) + (1 - M_{i, j}) \log(1 -  \sigma(\Gamma_{i, j}))
      \right]
      \right\} \;,
@@ -34,7 +34,7 @@ under the constraint:
 
 $$
 A \in \mathcal{F}_{\tau, \gamma}:= \left\{
-    \Gamma \in \mathbb{R} ^{m \times n} : 
+    \Gamma \in \mathbb{R} ^{m \times n} :
     \lVert \Gamma \rVert_{*} \leq \tau \sqrt{mn},\; \lVert \Gamma\rVert_{\max} \leq \gamma
 \right\} \; \; ,
 $$
@@ -42,7 +42,7 @@ $$
 where $\tau$ and $\gamma$ are user specified. This is an optimization problem and can be solved using projected gradient descent in the preprocessing step (before training the MatFact model). The only requirement is the binary observation mask $M_{i,j}$ which is known.
 
 ## Implementation
-The optimization problem is solved with `tensorflow`. 
+The optimization problem is solved with `tensorflow`.
 
 ### Constraints
 The projected gradient descent is implemented by imposing a [`tf.keras.constraints.Constraint`](https://www.tensorflow.org/api_docs/python/tf/keras/constraints/Constraint) on our optimisation [`Variable`](https://www.tensorflow.org/api_docs/python/tf/Variable), `A`:
@@ -51,7 +51,7 @@ The projected gradient descent is implemented by imposing a [`tf.keras.constrain
 import tensorflow as tf
 A = tf.Variable(tf.random.uniform(M.shape), constraint=my_constraint(tau, gamma))
 ```
-The constraint is a custom class enforces the two normalisations from above. 
+The constraint is a custom class enforces the two normalisations from above.
 
 ### Solving the Equation
 To maximize the likelihood function, we first define a loss function as the opposite of the likelihood:

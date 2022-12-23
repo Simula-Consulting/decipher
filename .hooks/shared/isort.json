@@ -1,5 +1,0 @@
-{
-    "name": "Isort",
-    "command": "poetry run isort {matchedFiles}",
-    "onlyOn": "**/*.py"
-}

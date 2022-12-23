@@ -2,7 +2,7 @@ site_name: Decipher
 
 theme:
   name: material
-  features: 
+  features:
     - content.code.annotate
 
 extra_css:

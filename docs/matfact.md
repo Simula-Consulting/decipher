@@ -6,10 +6,10 @@ Matrix Factorization with temporal regularization.
     ```python
     from matfact.model import train_and_log
     from matfact.data_generation import Dataset
-    
+
     data = Dataset.generate()
     X_train, X_test, _, _ = data.get_split_X_M()
-    
+
     train_and_log(X_train, X_test)
     ```
 
@@ -35,19 +35,19 @@ During the development of the age dependent thresholds, several issues became ap
     $$
 
 2. How to solve the optimization problem
-   
+
     The issue is the most obvious in constructed test cases.
     For example, consider $\vec{p} = (0.99, 0.01)$ and that the correct class is the latter.
     This means that the correct threshold value is any $\tau_2 \leq 0.01$.
     However, for _any_ value above this, the prediction is wrong, with no gradient to guide the solver.
- 
+
     The solver we use, [differential evolution](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html), works by sampling the solution space with some sampling strategy, compare the score at those samples, and construct a new and improved sample for the next iteration.
     However, if all samples happen to fall in a region where the score function is the same, the algorithm will assume the solution to be optimal, and terminate.
-    In these constructed cases, the solution falls at the end of the domain; 
+    In these constructed cases, the solution falls at the end of the domain;
     $[0, 0.01]$ in the example above.
     The sampling algorithm currently used, [latinhypercube](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.qmc.LatinHypercube.html#scipy.stats.qmc.LatinHypercube), will when generating $n$ points, guarantee that there is at least one within each $1/n$ partition.
     This means that to ensure one point in the solution space above, we need 100 points, which is not feasible.
- 
+
     A solution to this problem is to use another sampling strategy, for example evenly spaced out points, including the end points 0 and 1.
     However, it is not immediately clear how this affects the real higher dimensioned cases;
     it is not a good approach to impede the real cases we want to solve for the case of tests.
@@ -86,7 +86,7 @@ The age segments are separate and do not affect each other, so the solver would 
 
 ::: matfact.model
     options:
-      members: 
+      members:
         - train_and_log
       show_root_heading: true
       separate_signature: true
