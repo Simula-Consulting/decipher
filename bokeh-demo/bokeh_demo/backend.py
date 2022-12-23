@@ -1,6 +1,7 @@
 from __future__ import annotations  # Postponed evaluation of types
 
 import itertools
+import copy
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from typing import Iterable, Sequence, overload
@@ -12,8 +13,11 @@ from bokeh.models import (
     CDSView,
     ColumnDataSource,
     CustomJS,
+    Filter as BokehFilter,
     IndexFilter,
     IntersectionFilter,
+    UnionFilter,
+    SymmetricDifferenceFilter,
 )
 
 from .exam_data import EXAM_RESULT_LOOKUP, ExamResult
@@ -431,6 +435,28 @@ class RangeFilter(Filter):
         return ~filter if self.inverted else filter
 
 
+class BooleanFilter(Filter):
+    def __init__(self, filters: Iterable[Filter], source_manager: SourceManager, bokeh_bool_filter: BokehFilter = UnionFilter, active: bool = False, inverted: bool = False):
+        self.active = active
+        self.inverted = inverted
+        self.source_manager = source_manager
+
+        self.filters = filters
+        self.bokeh_bool = bokeh_bool_filter
+
+    def get_filter(self):
+        if not self.active:
+            return AllIndices()
+        filter = self.bokeh_bool(operands=[filter.get_filter() for filter in self.filters if filter.active] or [IndexFilter([])])
+        return ~filter if self.inverted else filter
+
+    def get_exam_filter(self):
+        if not self.active:
+            return AllIndices()
+        filter = self.bokeh_bool(operands=[filter.get_exam_filter() for filter in self.filters if filter.active] or [IndexFilter([])])
+        return ~filter if self.inverted else filter
+
+
 def _at_least_one_high_risk(person_source):
     """Return people with at least one high risk"""
     return [
@@ -511,6 +537,11 @@ class SourceManager:
             ),
             "vaccine_age": RangeFilter(source_manager=self, field="vaccine_age"),
         }
+
+        # Explicitly make the values a list.
+        # dict.values returns a 'view', which will dynamically update, i.e.
+        # if we do not take the list, union will have itself in its filters.
+        self.filters["union"] = BooleanFilter([copy.copy(filter ) for filter in self.filters.values()], self, bokeh_bool_filter=SymmetricDifferenceFilter)
 
     def update_views(self):
         self.view.filter = IntersectionFilter(

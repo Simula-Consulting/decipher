@@ -9,7 +9,7 @@ import numpy as np
 # identifies it in bokeh.models.widgets.tables and also that it is exported
 # to bokeh.models.widgets. However, for some reason, it is not propagated to
 # bokeh.models.
-from bokeh.layouts import row
+from bokeh.layouts import row, column
 from bokeh.models import (  # type: ignore
     CDSView,
     Circle,
@@ -29,6 +29,7 @@ from bokeh.models.tickers import FixedTicker
 from bokeh.plotting import figure
 
 from .backend import (
+    BooleanFilter,
     DecoupledSimpleFilter,
     ExamSimpleFilter,
     Filter,
@@ -405,25 +406,31 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
 
 class FilterValueUIElement(Enum):
     RangeSlider = auto()
+    """A simple range slider."""
+    BoolCombination = auto()
+    """A composition of all child elements."""
 
 
-def get_filter_element(filter_name: str, source_manager: SourceManager):
-    """Return a filter element corresponding to a filter in a source_manager."""
+def get_filter_element_from_source_manager(filter_name: str, source_manager: SourceManager):
     if filter_name not in source_manager.filters:
         raise ValueError(f"The source manager does not have the filter {filter_name}.")
+    filter = source_manager.filters[filter_name]
+    return get_filter_element(filter, filter_name)
 
+def get_filter_element(filter: Filter, label_text: str = ""):
+    """Return a filter element corresponding to a filter in a source_manager."""
     filter_value_element_mapping = {
         Filter: None,
         DecoupledSimpleFilter: None,
         PersonSimpleFilter: None,
         ExamSimpleFilter: None,
         RangeFilter: FilterValueUIElement.RangeSlider,
+        BooleanFilter: FilterValueUIElement.BoolCombination,
     }
 
     activation_toggle = Switch(active=False)
     inversion_toggle = Switch(active=False)
 
-    filter = source_manager.filters[filter_name]
     activation_toggle.on_change("active", filter.get_set_active_callback())
     inversion_toggle.on_change("active", filter.get_set_inverted_callback())
 
@@ -431,12 +438,14 @@ def get_filter_element(filter_name: str, source_manager: SourceManager):
         case FilterValueUIElement.RangeSlider:
             value_element = RangeSlider(value=(0, 100), start=0, end=100)
             value_element.on_change("value", filter.get_set_value_callback())
+        case FilterValueUIElement.BoolCombination:
+            value_element = column([get_filter_element(element) for element in filter.filters])
         case None:
             value_element = None
         case _:
             raise ValueError()
 
-    label = Paragraph(text=filter_name)
+    label = Paragraph(text=label_text)
 
     included_elements = (
         element

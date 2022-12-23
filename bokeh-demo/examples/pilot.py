@@ -30,7 +30,7 @@ from bokeh_demo.frontend import (
     LexisPlotAge,
     PersonTable,
     TrajectoriesPlot,
-    get_filter_element,
+    get_filter_element_from_source_manager,
 )
 from bokeh_demo.settings import settings
 
@@ -78,13 +78,12 @@ def example_app(source_manager):
     traj = TrajectoriesPlot(source_manager)
     table = PersonTable(source_manager)
     hist = HistogramPlot(source_manager)
-    high_risk_person_group = get_filter_element("high_risk_person", source_manager)
-    high_risk_exam_group = get_filter_element("high_risk_exam", source_manager)
-    high_risk_decoupled_group = get_filter_element(
+    high_risk_person_group = get_filter_element_from_source_manager("high_risk_person", source_manager)
+    high_risk_exam_group = get_filter_element_from_source_manager("high_risk_exam", source_manager)
+    high_risk_decoupled_group = get_filter_element_from_source_manager(
         "high_risk_decoupled", source_manager
     )
-
-    vaccine_group = get_filter_element("vaccine_age", source_manager)
+    vaccine_group = get_filter_element_from_source_manager("vaccine_age", source_manager)
 
     curdoc().add_root(
         column(
@@ -102,6 +101,7 @@ def example_app(source_manager):
                     high_risk_exam_group,
                     high_risk_decoupled_group,
                     vaccine_group,
+                    get_filter_element_from_source_manager("union", source_manager),
                 ),
             ),
         )
