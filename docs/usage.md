@@ -14,7 +14,7 @@ Ideal usage pattern:
     from matfact import MatFact, ModelConfig
 
     # Initialize model and dataset
-    matfact = MatFact(ModelConfig(use_threshold_optimization=True)) 
+    matfact = MatFact(ModelConfig(use_threshold_optimization=True))
     dataset = Dataset.generate()
 
     # Split dataset into train and test
@@ -48,7 +48,7 @@ Ideal usage pattern:
     from matfact import MatFact, ModelConfig
 
     # Initialize model and dataset
-    matfact = MatFact(ModelConfig(use_threshold_optimization=True)) 
+    matfact = MatFact(ModelConfig(use_threshold_optimization=True))
     dataset = Dataset.generate()
 
     # Split dataset into train and test
@@ -56,7 +56,7 @@ Ideal usage pattern:
 
     with MLFlowLogger() as logger:  # (1)
         # Fit
-        matfact.fit(X_train) 
+        matfact.fit(X_train)
 
         # Predict on masked out data
         X_test_masked, t_pred_test, x_true_test = prediction_data(X_test)
@@ -146,7 +146,7 @@ Usage pattern:
     dataset = Dataset.get_from_database()
 
     X = dataset.get_X()
-    
+
     # Predict on masked out data
     X_masked, t_pred, x_true = prediction_data(X)
     x_prediction = matfact.predict(X_masked)

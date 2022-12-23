@@ -19,13 +19,13 @@ def get_docstring_and_content(file):
     if not docstring or docstring not in first_token.string:
         raise Exception("Make sure the examples have a module docstring!")
     docstring_end = first_token.end[0]
-    
+
     return docstring, ''.join(file_content[docstring_end:])
-    
+
 
 for example in chain(*map(lambda path: path.glob("*.py"), example_folders)):
     with open(example) as file:
-        docstring, content = get_docstring_and_content(file) 
+        docstring, content = get_docstring_and_content(file)
     with mkdocs_gen_files.open(f"examples/{example.stem}.md", "w") as f:
         print(f"# {docstring}", file=f)
 

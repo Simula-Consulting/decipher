@@ -3,7 +3,7 @@
 Decipher is a collection of tools produced by Simula Consulting as an end product from the Decipher project.
 
 !!! Warning
-    
+
     Decipher is currently under development.
     Major changes in design and functioality is to be expected!
 
@@ -55,10 +55,10 @@ First, let us mention the data we have available:
 **Data screening results**
 
 :   Discrete time series of measurement results from screening exams.
-    The time series is /very/ sparse, with one measurement about every three years. 
+    The time series is /very/ sparse, with one measurement about every three years.
     The measurement result is one of four severity levels:
 
-    1\. Normal 
+    1\. Normal
 
     2\. Low-risk
 
@@ -83,14 +83,14 @@ First, let us mention the data we have available:
     For this data, we have registered when the test was taken, and its result (if and possibly which virus subtypes were found).
 
     This data has been used in conjuction with the screening data to learn the relative importance of the different virus types as a risk predictor.
- 
+
 **Lifestyle questionnaire**
 :   Questionnaire data on lifestyle, such as number of sexual partners, age at first sexual intercourse, smoking habits, drinking habits, etc.
-    
+
 
 ### The models
 
-The models that have been developed/investigated is 
+The models that have been developed/investigated is
 
 - [MatFact](matfact.md)
 
