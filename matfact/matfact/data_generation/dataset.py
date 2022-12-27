@@ -39,6 +39,7 @@ def produce_dataset(
     observation_probabilities: np.ndarray | None = None,
     theta=2.5,
     seed=42,
+    censor=True,
 ):
     """Generate a synthetic dataset resembling the real screening data.
 
@@ -80,7 +81,7 @@ def produce_dataset(
         seed=seed,
     )
     X = mask * Y
-    X = censoring(X, missing=missing)
+    X = censoring(X, missing=missing) if censor else X
 
     valid_rows = np.sum(X != 0, axis=1) >= minimum_number_of_observations
 
@@ -139,6 +140,7 @@ class Dataset:
         produce_dataset_function=produce_dataset,
         number_of_states=default_number_of_states,
         observation_probabilities=default_observation_probabilities,
+        censor=True,
     ):
         """Generate a Dataset
 
@@ -156,6 +158,7 @@ class Dataset:
             sparsity_level,
             number_of_states=number_of_states,
             observation_probabilities=observation_probabilities,
+            censor=censor,
         )
         number_of_individuals = X.shape[0]
         if number_of_individuals == 0:
