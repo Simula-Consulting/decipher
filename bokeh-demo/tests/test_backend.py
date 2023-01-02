@@ -16,7 +16,7 @@ from bokeh_demo.backend import (
 from bokeh_demo.exam_data import ExamTypes
 from bokeh_demo.faker import get_inverse_mapping
 
-from bokeh.models import IndexFilter, IntersectionFilter
+from bokeh.models import IndexFilter, AllIndices
 
 
 @st.composite
@@ -261,6 +261,9 @@ def test_time_converter(
     (IndexFilter((1, 2)) & ~IndexFilter((2, 4)), 10, {1}),
     (~IndexFilter((2, 4)), 10, {0, 1, 3, 5, 6, 7, 8, 9}),
     (IndexFilter(()) & IndexFilter(()), 10, set()),
+    (AllIndices() & IndexFilter((1, 2)), 10, {1, 2}),
+    (IndexFilter((1,2,7,6)) ^ IndexFilter((2,3,4,7)) ^ IndexFilter((4, 5, 6, 7)), 8, {1, 3, 5, 7}),
+    (IndexFilter((1, 2)) ^ ~IndexFilter((2, 3)), 4, {0, 2}),
 ))
 def test_parse_filter_to_indices(composite_filter, number_of_indices, result_indices):
     """Test the BokehFilter parser."""
