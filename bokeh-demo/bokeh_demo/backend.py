@@ -1,26 +1,22 @@
 from __future__ import annotations  # Postponed evaluation of types
 
-import itertools
-import functools
 import copy
+import functools
+import itertools
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from typing import Iterable, Sequence, overload
-from enum import Enum
 
 import numpy as np
 import numpy.typing as npt
+from bokeh.models import AllIndices, CDSView, ColumnDataSource, CustomJS
+from bokeh.models import Filter as BokehFilter
 from bokeh.models import (
-    AllIndices,
-    CDSView,
-    ColumnDataSource,
-    CustomJS,
-    Filter as BokehFilter,
     IndexFilter,
     IntersectionFilter,
-    UnionFilter,
     InversionFilter,
     SymmetricDifferenceFilter,
+    UnionFilter,
 )
 
 from .exam_data import EXAM_RESULT_LOOKUP, ExamResult
@@ -412,7 +408,7 @@ class RangeFilter(Filter):
         ]
 
     def get_set_value_callback(self):
-        def set_value_callback(attr, old, new: tuple):
+        def set_value_callback(attr, old, new: tuple[float, float]):
             assert len(new) == 2
             self._range = new
             self.selected = self._get_selection_indices()
@@ -439,7 +435,14 @@ class RangeFilter(Filter):
 
 
 class BooleanFilter(Filter):
-    def __init__(self, filters: Iterable[Filter], source_manager: SourceManager, bokeh_bool_filter: BokehFilter = UnionFilter, active: bool = False, inverted: bool = False):
+    def __init__(
+        self,
+        filters: Iterable[Filter],
+        source_manager: SourceManager,
+        bokeh_bool_filter: type[BokehFilter] = UnionFilter,
+        active: bool = False,
+        inverted: bool = False,
+    ):
         self.active = active
         self.inverted = inverted
         self.source_manager = source_manager
@@ -450,13 +453,21 @@ class BooleanFilter(Filter):
     def get_filter(self):
         if not self.active:
             return AllIndices()
-        filter = self.bokeh_bool(operands=[filter.get_filter() for filter in self.filters if filter.active] or [IndexFilter([])])
+        filter = self.bokeh_bool(
+            operands=[filter.get_filter() for filter in self.filters if filter.active]
+            or [IndexFilter([])]
+        )
         return ~filter if self.inverted else filter
 
     def get_exam_filter(self):
         if not self.active:
             return AllIndices()
-        filter = self.bokeh_bool(operands=[filter.get_exam_filter() for filter in self.filters if filter.active] or [IndexFilter([])])
+        filter = self.bokeh_bool(
+            operands=[
+                filter.get_exam_filter() for filter in self.filters if filter.active
+            ]
+            or [IndexFilter([])]
+        )
         return ~filter if self.inverted else filter
 
 
@@ -493,35 +504,55 @@ def parse_filter_to_indices(filter: BokehFilter, number_of_indices: int) -> set[
 
     raise ValueError(f"Parse not implemented for filter type {type(filter)}")
 
+
 @parse_filter_to_indices.register
 def _(filter: IndexFilter, number_of_indices: int) -> set[int]:
-    return set(filter.indices)
+    return set(filter.indices)  # type: ignore  # indices has type Nullable from Bokeh
+
 
 @parse_filter_to_indices.register
 def _(filter: AllIndices, number_of_indices: int) -> set[int]:
     return set(range(number_of_indices))
 
+
 @parse_filter_to_indices.register
 def _(filter: IntersectionFilter, number_of_indices: int) -> set[int]:
     # TODO: possible bug if IntersectionFilter allows empty operands
-    return functools.reduce(set(range(number_of_indices)).intersection,
-        (set(parse_filter_to_indices(operand, number_of_indices)) for operand in filter.operands)
+    return functools.reduce(
+        set(range(number_of_indices)).intersection,
+        (
+            set(parse_filter_to_indices(operand, number_of_indices))
+            for operand in filter.operands  # type: ignore  # operands has type Required(Seq(Int)) from Bokeh
+        ),
     )
+
 
 @parse_filter_to_indices.register
 def _(filter: InversionFilter, number_of_indices: int) -> set[int]:
-    return set(range(number_of_indices)) - parse_filter_to_indices(filter.operand, number_of_indices)
+    return set(range(number_of_indices)) - parse_filter_to_indices(
+        filter.operand, number_of_indices  # type: ignore
+    )
+
 
 @parse_filter_to_indices.register
 def _(filter: UnionFilter, number_of_indices: int) -> set[int]:
-    return functools.reduce(set().union,
-        (set(parse_filter_to_indices(operand, number_of_indices)) for operand in filter.operands)
+    return functools.reduce(
+        set().union,
+        (
+            set(parse_filter_to_indices(operand, number_of_indices))
+            for operand in filter.operands  # type: ignore
+        ),
     )
+
 
 @parse_filter_to_indices.register
 def _(filter: SymmetricDifferenceFilter, number_of_indices: int) -> set[int]:
-    return functools.reduce(lambda x, y: x.symmetric_difference(y),
-        (set(parse_filter_to_indices(operand, number_of_indices)) for operand in filter.operands)
+    return functools.reduce(
+        lambda x, y: x.symmetric_difference(y),
+        (
+            set(parse_filter_to_indices(operand, number_of_indices))
+            for operand in filter.operands  # type: ignore
+        ),
     )
 
 
@@ -592,7 +623,11 @@ class SourceManager:
         # Explicitly make the values a list.
         # dict.values returns a 'view', which will dynamically update, i.e.
         # if we do not take the list, union will have itself in its filters.
-        self.filters["union"] = BooleanFilter([copy.copy(filter ) for filter in self.filters.values()], self, bokeh_bool_filter=SymmetricDifferenceFilter)
+        self.filters["union"] = BooleanFilter(
+            [copy.copy(filter) for filter in self.filters.values()],
+            self,
+            bokeh_bool_filter=SymmetricDifferenceFilter,
+        )
 
     def update_views(self):
         self.view.filter = IntersectionFilter(

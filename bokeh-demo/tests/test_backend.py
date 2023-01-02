@@ -2,21 +2,20 @@ import dataclasses
 import itertools
 import types
 
+import pytest
+from bokeh.models import AllIndices, IndexFilter
 from hypothesis import given, note
 from hypothesis import strategies as st
-import pytest
 
 from bokeh_demo.backend import (
     Person,
     TimeConverter,
-    parse_filter_to_indices,
     _combine_dicts,
     _combine_scatter_dicts,
+    parse_filter_to_indices,
 )
 from bokeh_demo.exam_data import ExamTypes
 from bokeh_demo.faker import get_inverse_mapping
-
-from bokeh.models import IndexFilter, AllIndices
 
 
 @st.composite
@@ -252,22 +251,41 @@ def test_time_converter(
         assert there_and_back == times
 
 
-@pytest.mark.parametrize("composite_filter, number_of_indices, result_indices",
-(
-    (IndexFilter((1, 2)) | IndexFilter((2, 4)), 10, {1, 2, 4}),
-    (IndexFilter((1, 2)) | IndexFilter((2, 4)) | IndexFilter((2, 4)), 10, {1, 2, 4}),
-    (IndexFilter((1, 2)) | IndexFilter((2, 4)) | IndexFilter((2, 9)), 10, {1, 2, 4, 9}),
-    (IndexFilter((1, 2)) & IndexFilter((2, 4)), 10, {2}),
-    (IndexFilter((1, 2)) & ~IndexFilter((2, 4)), 10, {1}),
-    (~IndexFilter((2, 4)), 10, {0, 1, 3, 5, 6, 7, 8, 9}),
-    (IndexFilter(()) & IndexFilter(()), 10, set()),
-    (AllIndices() & IndexFilter((1, 2)), 10, {1, 2}),
-    (IndexFilter((1,2,7,6)) ^ IndexFilter((2,3,4,7)) ^ IndexFilter((4, 5, 6, 7)), 8, {1, 3, 5, 7}),
-    (IndexFilter((1, 2)) ^ ~IndexFilter((2, 3)), 4, {0, 2}),
-))
+@pytest.mark.parametrize(
+    "composite_filter, number_of_indices, result_indices",
+    (
+        (IndexFilter((1, 2)) | IndexFilter((2, 4)), 10, {1, 2, 4}),
+        (
+            IndexFilter((1, 2)) | IndexFilter((2, 4)) | IndexFilter((2, 4)),
+            10,
+            {1, 2, 4},
+        ),
+        (
+            IndexFilter((1, 2)) | IndexFilter((2, 4)) | IndexFilter((2, 9)),
+            10,
+            {1, 2, 4, 9},
+        ),
+        (IndexFilter((1, 2)) & IndexFilter((2, 4)), 10, {2}),
+        (IndexFilter((1, 2)) & ~IndexFilter((2, 4)), 10, {1}),
+        (~IndexFilter((2, 4)), 10, {0, 1, 3, 5, 6, 7, 8, 9}),
+        (IndexFilter(()) & IndexFilter(()), 10, set()),
+        (AllIndices() & IndexFilter((1, 2)), 10, {1, 2}),
+        (
+            IndexFilter((1, 2, 7, 6))
+            ^ IndexFilter((2, 3, 4, 7))
+            ^ IndexFilter((4, 5, 6, 7)),
+            8,
+            {1, 3, 5, 7},
+        ),
+        (IndexFilter((1, 2)) ^ ~IndexFilter((2, 3)), 4, {0, 2}),
+    ),
+)
 def test_parse_filter_to_indices(composite_filter, number_of_indices, result_indices):
     """Test the BokehFilter parser."""
-    assert parse_filter_to_indices(composite_filter, number_of_indices) == result_indices
+    assert (
+        parse_filter_to_indices(composite_filter, number_of_indices) == result_indices
+    )
+
 
 def test_parse_filter_raises():
     with pytest.raises(ValueError, match="Parse not implemented for *"):

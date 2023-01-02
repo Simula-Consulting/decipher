@@ -14,7 +14,6 @@ by the visualization.
 
 import tensorflow as tf
 from bokeh.layouts import column, row
-from bokeh.models import CustomJS, RadioButtonGroup, RangeSlider, Switch, Toggle
 from bokeh.plotting import curdoc
 from matfact.data_generation import Dataset
 from matfact.model.config import ModelConfig
@@ -78,12 +77,18 @@ def example_app(source_manager):
     traj = TrajectoriesPlot(source_manager)
     table = PersonTable(source_manager)
     hist = HistogramPlot(source_manager)
-    high_risk_person_group = get_filter_element_from_source_manager("high_risk_person", source_manager)
-    high_risk_exam_group = get_filter_element_from_source_manager("high_risk_exam", source_manager)
+    high_risk_person_group = get_filter_element_from_source_manager(
+        "high_risk_person", source_manager
+    )
+    high_risk_exam_group = get_filter_element_from_source_manager(
+        "high_risk_exam", source_manager
+    )
     high_risk_decoupled_group = get_filter_element_from_source_manager(
         "high_risk_decoupled", source_manager
     )
-    vaccine_group = get_filter_element_from_source_manager("vaccine_age", source_manager)
+    vaccine_group = get_filter_element_from_source_manager(
+        "vaccine_age", source_manager
+    )
 
     curdoc().add_root(
         column(

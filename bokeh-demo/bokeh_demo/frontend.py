@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Sequence
+from typing import Sequence, cast
 
 import numpy as np
 
@@ -9,9 +9,8 @@ import numpy as np
 # identifies it in bokeh.models.widgets.tables and also that it is exported
 # to bokeh.models.widgets. However, for some reason, it is not propagated to
 # bokeh.models.
-from bokeh.layouts import row, column
+from bokeh.layouts import column, row
 from bokeh.models import (  # type: ignore
-    CDSView,
     Circle,
     CustomJSExpr,
     CustomJSHover,
@@ -411,11 +410,14 @@ class FilterValueUIElement(Enum):
     """A composition of all child elements."""
 
 
-def get_filter_element_from_source_manager(filter_name: str, source_manager: SourceManager):
+def get_filter_element_from_source_manager(
+    filter_name: str, source_manager: SourceManager
+):
     if filter_name not in source_manager.filters:
         raise ValueError(f"The source manager does not have the filter {filter_name}.")
     filter = source_manager.filters[filter_name]
     return get_filter_element(filter, filter_name)
+
 
 def get_filter_element(filter: Filter, label_text: str = ""):
     """Return a filter element corresponding to a filter in a source_manager."""
@@ -439,7 +441,12 @@ def get_filter_element(filter: Filter, label_text: str = ""):
             value_element = RangeSlider(value=(0, 100), start=0, end=100)
             value_element.on_change("value", filter.get_set_value_callback())
         case FilterValueUIElement.BoolCombination:
-            value_element = column([get_filter_element(element) for element in filter.filters])
+            value_element = column(
+                [
+                    get_filter_element(element)
+                    for element in cast(BooleanFilter, filter).filters
+                ]
+            )
         case None:
             value_element = None
         case _:
