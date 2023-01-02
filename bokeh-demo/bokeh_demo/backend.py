@@ -1,10 +1,12 @@
 from __future__ import annotations  # Postponed evaluation of types
 
 import itertools
+import functools
 import copy
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from typing import Iterable, Sequence, overload
+from enum import Enum
 
 import numpy as np
 import numpy.typing as npt
@@ -17,6 +19,7 @@ from bokeh.models import (
     IndexFilter,
     IntersectionFilter,
     UnionFilter,
+    InversionFilter,
     SymmetricDifferenceFilter,
 )
 
@@ -472,6 +475,44 @@ def _has_vaccine(person_source):
         for i, vaccine_age in enumerate(person_source.data["vaccine_age"])
         if vaccine_age
     ]
+
+
+class BokehFilters(Enum):
+    IndexFilter = IndexFilter
+    IntersectionFilter = IntersectionFilter
+    InversionFilter = InversionFilter
+    UnionFilter = UnionFilter
+
+
+def parse_filter_to_indices(filter: BokehFilter, number_of_indices: int) -> set[int]:
+    """Given a BokehFilter, return the resulting index list.
+
+    Example:
+        >>> combined_filter = UnionFilter(IndexFilter(1, 2), IndexFilter(2, 4))
+        >>> parse_filter_to_indices(combined_filter, 10)
+        (1, 2, 4)
+
+        >>> combined_filter = InversionFilter(IndexFilter(1, 2))
+        >>> parse_filter_to_indices(combined_filter, 5)
+        (0, 3, 4)
+    """
+
+    match BokehFilters(type(filter)):
+        case BokehFilters.IndexFilter:
+            return set(filter.indices)
+        case BokehFilters.IntersectionFilter:
+            # TODO: possible bug if IntersectionFilter allows empty operands
+            return functools.reduce(set(range(number_of_indices)).intersection,
+                (set(parse_filter_to_indices(operand, number_of_indices)) for operand in filter.operands)
+            )
+        case BokehFilters.InversionFilter:
+            return set(range(number_of_indices)) - parse_filter_to_indices(filter.operand, number_of_indices)
+        case BokehFilters.UnionFilter:
+            return functools.reduce(set().union,
+                (set(parse_filter_to_indices(operand, number_of_indices)) for operand in filter.operands)
+            )
+        case _:
+            raise ValueError(f"Parse not implemented for filter type {type(filter)}")
 
 
 class SourceManager:
