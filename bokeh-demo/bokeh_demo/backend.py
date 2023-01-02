@@ -338,10 +338,10 @@ class Filter:
         raise NotImplementedError("abstract")
 
     def get_filter(self):
-        pass
+        raise NotImplementedError("abstract")
 
     def get_exam_filter(self):
-        pass
+        raise NotImplementedError("abstract")
 
     @staticmethod
     def _person_to_exam_indices(person_filter_indices, exam_person_index_list):
