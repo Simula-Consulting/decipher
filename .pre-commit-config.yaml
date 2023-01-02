@@ -11,12 +11,32 @@ repos:
 
 -   repo: local
     hooks:
+    # Matfact ##
     -   id: flake8
         name: flake8 for matfact
         language: system
         entry: bash -c 'cd matfact && poetry run flake8'
         types: [python]
         files: ^matfact/
+    -   id: black
+        name: black for matfact
+        language: system
+        entry: bash -c 'cd matfact && poetry run black .'
+        types: [python]
+        files: ^matfact/
+    -   id: mypy
+        name: mypy for matfact
+        language: system
+        entry: bash -c 'cd matfact && poetry run mypy .'
+        types: [python]
+        files: ^matfact/
+    -   id: isort
+        name: isort for matfact (python)
+        language: system
+        entry: bash -c 'cd matfact && poetry run isort --profile black .'
+        types: [python]
+        files: ^matfact/
+    # HMM ##
     -   id: flake8
         name: flake8 for hmm_synthetic
         language: system
@@ -24,38 +44,45 @@ repos:
         types: [python]
         files: ^hmm_synthetic/
     -   id: black
-        name: black for matfact
-        language: system
-        entry: bash -c 'cd matfact && poetry run black .'
-        types: [python]
-        files: ^matfact/
-    -   id: black
         name: black for hmm_synthetic
         language: system
         entry: bash -c 'cd hmm_synthetic && poetry run black .'
         types: [python]
         files: ^hmm_synthetic/
-    -   id: mypy
-        name: mypy for matfact
-        language: system
-        entry: bash -c 'cd matfact && poetry run mypy .'
-        types: [python]
-        files: ^matfact/
-    -   id: mypy
-        name: mypy for hmm_synthetic
-        language: system
-        entry: bash -c 'cd hmm_synthetic && poetry run mypy .'
-        types: [python]
-        files: ^hmm_synthetic/
-    -   id: isort
-        name: isort for matfact (python)
-        language: system
-        entry: bash -c 'cd matfact && poetry run isort --profile black .'
-        types: [python]
-        files: ^matfact/
     -   id: isort
         name: isort for hmm_synthetic (python)
         language: system
         entry: bash -c 'cd hmm_synthetic && poetry run isort --profile black .'
         types: [python]
         files: ^hmm_synthetic/
+    -   id: mypy
+        name: mypy for hmm_synthetic
+        language: system
+        entry: bash -c 'cd hmm_synthetic && poetry run mypy .'
+        types: [python]
+        files: ^hmm_synthetic/
+    # Viz tool ##
+    -   id: flake8
+        name: flake8 for bokeh-demo
+        language: system
+        entry: bash -c 'cd bokeh-demo && poetry run flake8'
+        types: [python]
+        files: ^bokeh-demo/
+    -   id: black
+        name: black for bokeh-demo
+        language: system
+        entry: bash -c 'cd bokeh-demo && poetry run black .'
+        types: [python]
+        files: ^bokeh-demo/
+    -   id: isort
+        name: isort for bokeh-demo (python)
+        language: system
+        entry: bash -c 'cd bokeh-demo && poetry run isort --profile black .'
+        types: [python]
+        files: ^bokeh-demo/
+    -   id: mypy
+        name: mypy for bokeh-demo
+        language: system
+        entry: bash -c 'cd bokeh-demo && poetry run mypy .'
+        types: [python]
+        files: ^bokeh-demo/
