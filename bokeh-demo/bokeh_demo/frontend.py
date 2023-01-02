@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Sequence, cast
+from typing import Iterable, Sequence, cast
 
 import numpy as np
 
@@ -35,6 +35,7 @@ from .backend import (
     PersonSimpleFilter,
     RangeFilter,
     SourceManager,
+    parse_filter_to_indices,
 )
 from .settings import settings
 
@@ -262,13 +263,15 @@ class PersonTable:
 
 
 class LabelSelectedMixin:
+    source_manager: SourceManager
+
     def add_label(self):
         self.label = Label(
             x=10,
             y=410,
             x_units="screen",
             y_units="screen",
-            text=self._get_label_text(),
+            text=self._get_label_text(range(self._number_of_individuals)),
             text_font_size="12px",
             border_line_color="black",
             border_line_alpha=1.0,
@@ -276,6 +279,14 @@ class LabelSelectedMixin:
             background_fill_alpha=1.0,
         )
         self.figure.add_layout(self.label)
+
+    def register_label(self):
+        """Add label to layout and attach callbacks."""
+        self.add_label()
+        self.source_manager.person_source.selected.on_change(
+            "indices", self.get_update_label_callback()
+        )
+        self.source_manager.view.on_change("filter", self.get_update_label_callback())
 
     def _get_age_at_exam(self, selected_indices):
         return (
@@ -298,8 +309,7 @@ class LabelSelectedMixin:
         # Convert to months
         return np.mean(screening_intervals) * 12
 
-    def _get_label_text(self, selected_indices=None):
-        selected_indices = selected_indices or range(self._number_of_individuals)
+    def _get_label_text(self, selected_indices: Sequence[int]):
         n_vaccines = sum(
             self.source_manager.person_source.data["vaccine_age"][i] is not None
             for i in selected_indices
@@ -317,8 +327,14 @@ class LabelSelectedMixin:
 
     def get_update_label_callback(self):
         def update_label_callback(attr, old, new):
-            new = new if len(new) else list(range(self._number_of_individuals))
-            self.label.text = self._get_label_text(new)
+            new = self.source_manager.person_source.selected.indices
+            new = set(new) if len(new) else set(range(self._number_of_individuals))
+            filtered_indices = set(
+                parse_filter_to_indices(
+                    self.source_manager.view.filter, self._number_of_individuals
+                )
+            )
+            self.label.text = self._get_label_text(new & filtered_indices)
 
         return update_label_callback
 
@@ -332,7 +348,7 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
 
         self.figure = figure(tools=self._get_tools())
         self.quad = self.figure.quad(
-            top=self.compute_histogram_data(),
+            top=self.compute_histogram_data(range(self._number_of_individuals)),
             bottom=0,
             left=np.arange(0, 4) + 0.5,
             right=np.arange(1, 5) + 0.5,
@@ -345,12 +361,12 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
         self.source_manager.person_source.selected.on_change(
             "indices", self.get_update_histogram_callback()
         )
+        self.source_manager.view.on_change(
+            "filter", self.get_update_histogram_callback()
+        )
 
         # Add label from LabelSelectedMixin
-        self.add_label()
-        self.source_manager.person_source.selected.on_change(
-            "indices", self.get_update_label_callback()
-        )
+        self.register_label()
 
         self._set_properties()
 
@@ -370,8 +386,7 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
             for option, value in module_options.items():
                 setattr(getattr(self.figure, module), option, value)
 
-    def compute_histogram_data(self, selected_indices=None):
-        selected_indices = selected_indices or range(self._number_of_individuals)
+    def compute_histogram_data(self, selected_indices: Iterable[int]):
         state_occurrences = self._count_state_occurrences(
             [
                 [
@@ -396,9 +411,17 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
 
     def get_update_histogram_callback(self):
         def update_histogram(attr, old, new):
-            new = new if len(new) else list(range(self._number_of_individuals))
+            new = self.source_manager.person_source.selected.indices
+            new = set(new) if len(new) else set(range(self._number_of_individuals))
+            filtered_indices = set(
+                parse_filter_to_indices(
+                    self.source_manager.view.filter, self._number_of_individuals
+                )
+            )
 
-            self.quad.data_source.data["top"] = self.compute_histogram_data(new)
+            self.quad.data_source.data["top"] = self.compute_histogram_data(
+                new & filtered_indices
+            )
 
         return update_histogram
 
