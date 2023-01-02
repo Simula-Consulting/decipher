@@ -15,31 +15,47 @@ repos:
         name: flake8 for matfact
         language: system
         entry: bash -c 'cd matfact && poetry run flake8'
+        types: [python]
+        files: ^matfact/
     -   id: flake8
         name: flake8 for hmm_synthetic
         language: system
         entry: bash -c 'cd hmm_synthetic && poetry run flake8'
+        types: [python]
+        files: ^hmm_synthetic/
     -   id: black
         name: black for matfact
         language: system
         entry: bash -c 'cd matfact && poetry run black .'
+        types: [python]
+        files: ^matfact/
     -   id: black
         name: black for hmm_synthetic
         language: system
         entry: bash -c 'cd hmm_synthetic && poetry run black .'
+        types: [python]
+        files: ^hmm_synthetic/
     -   id: mypy
         name: mypy for matfact
         language: system
         entry: bash -c 'cd matfact && poetry run mypy .'
+        types: [python]
+        files: ^matfact/
     -   id: mypy
         name: mypy for hmm_synthetic
         language: system
         entry: bash -c 'cd hmm_synthetic && poetry run mypy .'
+        types: [python]
+        files: ^hmm_synthetic/
     -   id: isort
         name: isort for matfact (python)
         language: system
         entry: bash -c 'cd matfact && poetry run isort --profile black .'
+        types: [python]
+        files: ^matfact/
     -   id: isort
         name: isort for hmm_synthetic (python)
         language: system
         entry: bash -c 'cd hmm_synthetic && poetry run isort --profile black .'
+        types: [python]
+        files: ^hmm_synthetic/
