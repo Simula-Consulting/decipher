@@ -29,11 +29,11 @@ from bokeh.plotting import figure
 
 from .backend import (
     BooleanFilter,
-    DecoupledSimpleFilter,
     ExamSimpleFilter,
     Filter,
     PersonSimpleFilter,
     RangeFilter,
+    SimpleFilter,
     SourceManager,
     parse_filter_to_indices,
 )
@@ -431,6 +431,8 @@ class FilterValueUIElement(Enum):
     """A simple range slider."""
     BoolCombination = auto()
     """A composition of all child elements."""
+    NoValue = auto()
+    """Filters without any value, only on/off."""
 
 
 def get_filter_element_from_source_manager(
@@ -445,10 +447,10 @@ def get_filter_element_from_source_manager(
 def get_filter_element(filter: Filter, label_text: str = ""):
     """Return a filter element corresponding to a filter in a source_manager."""
     filter_value_element_mapping = {
-        Filter: None,
-        DecoupledSimpleFilter: None,
-        PersonSimpleFilter: None,
-        ExamSimpleFilter: None,
+        Filter: FilterValueUIElement.NoValue,
+        SimpleFilter: FilterValueUIElement.NoValue,
+        PersonSimpleFilter: FilterValueUIElement.NoValue,
+        ExamSimpleFilter: FilterValueUIElement.NoValue,
         RangeFilter: FilterValueUIElement.RangeSlider,
         BooleanFilter: FilterValueUIElement.BoolCombination,
     }
@@ -470,7 +472,7 @@ def get_filter_element(filter: Filter, label_text: str = ""):
                     for element in cast(BooleanFilter, filter).filters
                 ]
             )
-        case None:
+        case FilterValueUIElement.NoValue:
             value_element = None
         case _:
             raise ValueError()

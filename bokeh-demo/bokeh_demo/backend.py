@@ -315,6 +315,17 @@ def link_sources(person_source, exam_source):
 
 @dataclass
 class Filter:
+    """Filter used by SourceManager to handle CDSView filtering.
+
+    Note:
+        This must not be confused by the Filter class from Bokeh.
+        This class wraps around the Bokeh Filter, and ultimately serves Bokeh Filters
+        through `get_filter` and `get_exam_filter`, however, they are not interchangeable.
+
+    !!! tip "See also"
+        See [bokeh_demo.frontend.get_filter_element][] on how callbacks may be used.
+    """
+
     source_manager: SourceManager
     active: bool = False
     inverted: bool = False
@@ -355,7 +366,9 @@ class Filter:
         return list({exam_source_data["person_index"][i] for i in exam_indices})
 
 
-class DecoupledSimpleFilter(Filter):
+class SimpleFilter(Filter):
+    """Simple index based filter."""
+
     def __init__(self, person_indices, exam_indices, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.person_indices = person_indices
@@ -374,7 +387,9 @@ class DecoupledSimpleFilter(Filter):
         return ~self.exam_filter if self.inverted else self.exam_filter
 
 
-class PersonSimpleFilter(DecoupledSimpleFilter):
+class PersonSimpleFilter(SimpleFilter):
+    """Filter using person indices, exam entries for the people selected also shown."""
+
     def __init__(self, person_indices, *args, **kwargs):
         exam_data = kwargs["source_manager"].exam_source.data
         exam_indices = self._person_to_exam_indices(
@@ -383,7 +398,9 @@ class PersonSimpleFilter(DecoupledSimpleFilter):
         super().__init__(person_indices, exam_indices, *args, **kwargs)
 
 
-class ExamSimpleFilter(DecoupledSimpleFilter):
+class ExamSimpleFilter(SimpleFilter):
+    """Filter using exam indices, people of the entries also shown."""
+
     def __init__(self, exam_indices, *args, **kwargs):
         exam_data = kwargs["source_manager"].exam_source.data
         person_indices = self._exam_to_person_indices(exam_indices, exam_data)
@@ -391,6 +408,8 @@ class ExamSimpleFilter(DecoupledSimpleFilter):
 
 
 class RangeFilter(Filter):
+    """Generic range filter, accepting all people with `field` value withing a range."""
+
     _range = (-float("inf"), float("inf"))  # 'Accept all'
 
     def __init__(self, field: str, *args, **kwargs):
@@ -435,6 +454,8 @@ class RangeFilter(Filter):
 
 
 class BooleanFilter(Filter):
+    """Filter combining multiple filters through some logical operation."""
+
     def __init__(
         self,
         filters: Iterable[Filter],
@@ -600,7 +621,7 @@ class SourceManager:
                 source_manager=self,
                 person_indices=_at_least_one_high_risk(self.person_source),
             ),
-            "high_risk_decoupled": DecoupledSimpleFilter(
+            "high_risk_decoupled": SimpleFilter(
                 source_manager=self,
                 person_indices=_at_least_one_high_risk(self.person_source),
                 exam_indices=[
