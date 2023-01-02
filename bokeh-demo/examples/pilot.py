@@ -12,8 +12,11 @@ The `Person` class is responsible for generating the source objects to be used
 by the visualization.
 """
 
+import copy
+
 import tensorflow as tf
 from bokeh.layouts import column, row
+from bokeh.models import SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
 from matfact.data_generation import Dataset
 from matfact.model.config import ModelConfig
@@ -21,7 +24,16 @@ from matfact.model.factorization.convergence import ConvergenceMonitor
 from matfact.model.matfact import MatFact
 from matfact.model.predict.dataset_utils import prediction_data
 
-from bokeh_demo.backend import PredictionData, SourceManager
+from bokeh_demo.backend import (
+    BooleanFilter,
+    ExamSimpleFilter,
+    Filter,
+    PersonSimpleFilter,
+    PredictionData,
+    RangeFilter,
+    SimpleFilter,
+    SourceManager,
+)
 from bokeh_demo.frontend import (
     DeltaScatter,
     HistogramPlot,
@@ -113,10 +125,59 @@ def example_app(source_manager):
     )
 
 
+def _at_least_one_high_risk(person_source):
+    """Return people with at least one high risk"""
+    return [
+        i
+        for i, exam_results in enumerate(person_source.data["exam_results"])
+        if 3 in exam_results
+    ]
+
+
+def _get_filters(source_manager: SourceManager) -> dict[str, Filter]:
+    base_filters = {
+        "high_risk_person": PersonSimpleFilter(
+            source_manager=source_manager,
+            person_indices=_at_least_one_high_risk(source_manager.person_source),
+        ),
+        "high_risk_decoupled": SimpleFilter(
+            source_manager=source_manager,
+            person_indices=_at_least_one_high_risk(source_manager.person_source),
+            exam_indices=[
+                i
+                for i, state in enumerate(source_manager.exam_source.data["state"])
+                if state == 3
+            ],
+        ),
+        "high_risk_exam": ExamSimpleFilter(
+            source_manager=source_manager,
+            exam_indices=[
+                i
+                for i, state in enumerate(source_manager.exam_source.data["state"])
+                if state == 3
+            ],
+        ),
+        "vaccine_age": RangeFilter(source_manager=source_manager, field="vaccine_age"),
+    }
+
+    # Explicitly make the values a list.
+    # dict.values returns a 'view', which will dynamically update, i.e.
+    # if we do not take the list, union will have itself in its filters.
+    base_filters["union"] = BooleanFilter(
+        [copy.copy(filter) for filter in base_filters.values()],
+        source_manager,
+        bokeh_bool_filter=SymmetricDifferenceFilter,
+    )
+
+    return base_filters
+
+
 def main():
     prediction_data = extract_and_predict(dataset)
     people = prediction_data.extract_people()
     source_manager = SourceManager.from_people(people)
+    source_manager.filters = _get_filters(source_manager)
+
     example_app(source_manager)
 
 

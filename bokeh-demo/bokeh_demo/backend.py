@@ -1,6 +1,5 @@
 from __future__ import annotations  # Postponed evaluation of types
 
-import copy
 import functools
 import itertools
 from collections import defaultdict
@@ -492,23 +491,6 @@ class BooleanFilter(Filter):
         return ~filter if self.inverted else filter
 
 
-def _at_least_one_high_risk(person_source):
-    """Return people with at least one high risk"""
-    return [
-        i
-        for i, exam_results in enumerate(person_source.data["exam_results"])
-        if 3 in exam_results
-    ]
-
-
-def _has_vaccine(person_source):
-    return [
-        i
-        for i, vaccine_age in enumerate(person_source.data["vaccine_age"])
-        if vaccine_age
-    ]
-
-
 @functools.singledispatch
 def parse_filter_to_indices(filter: BokehFilter, number_of_indices: int) -> set[int]:
     """Given a BokehFilter, return the resulting index list.
@@ -603,6 +585,8 @@ class SourceManager:
             ),
         )
 
+        self.filters: dict[str, Filter] = {}
+
         self.view = CDSView()
         self.exam_view = CDSView()
         self.combined_view = CDSView(
@@ -615,40 +599,6 @@ class SourceManager:
             )
 
         self.view.on_change("filter", cllback)
-
-        self.filters = {
-            "high_risk_person": PersonSimpleFilter(
-                source_manager=self,
-                person_indices=_at_least_one_high_risk(self.person_source),
-            ),
-            "high_risk_decoupled": SimpleFilter(
-                source_manager=self,
-                person_indices=_at_least_one_high_risk(self.person_source),
-                exam_indices=[
-                    i
-                    for i, state in enumerate(self.exam_source.data["state"])
-                    if state == 3
-                ],
-            ),
-            "high_risk_exam": ExamSimpleFilter(
-                source_manager=self,
-                exam_indices=[
-                    i
-                    for i, state in enumerate(self.exam_source.data["state"])
-                    if state == 3
-                ],
-            ),
-            "vaccine_age": RangeFilter(source_manager=self, field="vaccine_age"),
-        }
-
-        # Explicitly make the values a list.
-        # dict.values returns a 'view', which will dynamically update, i.e.
-        # if we do not take the list, union will have itself in its filters.
-        self.filters["union"] = BooleanFilter(
-            [copy.copy(filter) for filter in self.filters.values()],
-            self,
-            bokeh_bool_filter=SymmetricDifferenceFilter,
-        )
 
     def update_views(self):
         self.view.filter = IntersectionFilter(
