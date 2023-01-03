@@ -17,10 +17,12 @@ from bokeh.models import (  # type: ignore
     DataTable,
     HoverTool,
     Label,
+    LayoutDOM,
     Legend,
     LegendItem,
     Paragraph,
     RangeSlider,
+    Row,
     Switch,
     TableColumn,
 )
@@ -211,7 +213,9 @@ class DeltaScatter(ToolsMixin):
         # TODO: consider guard for overwrite
         source_manager.person_source.data[
             "deltascatter__delta_score_index"
-        ] = get_position_list(source_manager.person_source.data["delta"])
+        ] = get_position_list(
+            cast(Sequence[int], source_manager.person_source.data["delta"])
+        )
 
         self.scatter = self.figure.scatter(
             self._delta_scatter_x_key,
@@ -358,7 +362,8 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
             name="quad",
         )
 
-        self.source_manager.person_source.selected.on_change(
+        # Mistakenly reports no attribute on_change
+        self.source_manager.person_source.selected.on_change(  # type: ignore
             "indices", self.get_update_histogram_callback()
         )
         self.source_manager.view.on_change(
@@ -437,14 +442,14 @@ class FilterValueUIElement(Enum):
 
 def get_filter_element_from_source_manager(
     filter_name: str, source_manager: SourceManager
-):
+) -> LayoutDOM:
     if filter_name not in source_manager.filters:
         raise ValueError(f"The source manager does not have the filter {filter_name}.")
     filter = source_manager.filters[filter_name]
     return get_filter_element(filter, filter_name)
 
 
-def get_filter_element(filter: Filter, label_text: str = ""):
+def get_filter_element(filter: Filter, label_text: str = "") -> LayoutDOM:
     """Return a filter element corresponding to a filter in a source_manager."""
     filter_value_element_mapping = {
         Filter: FilterValueUIElement.NoValue,
@@ -484,4 +489,4 @@ def get_filter_element(filter: Filter, label_text: str = ""):
         for element in (activation_toggle, inversion_toggle, value_element, label)
         if element is not None
     )
-    return row(*included_elements)
+    return cast(Row, row(*included_elements))

@@ -3,8 +3,9 @@ from __future__ import annotations  # Postponed evaluation of types
 import functools
 import itertools
 from collections import defaultdict
+from collections.abc import Callable, Container, Iterable, Sequence
 from dataclasses import asdict, dataclass
-from typing import Iterable, Sequence, overload
+from typing import Any, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -329,58 +330,91 @@ class Filter:
     active: bool = False
     inverted: bool = False
 
-    def get_set_active_callback(self):
-        def set_active(attr, old, new: bool):
+    def get_set_active_callback(self) -> Callable[[str, bool, bool], None]:
+        """Return a callback function for activating the filter."""
+
+        def set_active(attr: str, old: bool, new: bool) -> None:
             self.active = new
             self.source_manager.update_views()
 
         return set_active
 
-    def get_set_inverted_callback(self):
-        def set_inverted(attr, old, new: bool):
+    def get_set_inverted_callback(self) -> Callable[[str, bool, bool], None]:
+        """Return a callback function for inverting the filter."""
+
+        def set_inverted(attr: str, old: bool, new: bool) -> None:
             self.inverted = new
             self.source_manager.update_views()
 
         return set_inverted
 
-    def get_set_value_callback(self):
+    def get_set_value_callback(self) -> Callable[[str, Any, Any], None]:
+        """Return a callback function for setting the value of the filter.
+
+        What the value is depends on the filter. Some filters only have on/off, in
+        which case there is no value, while others have a value, for example a floating
+        point threshold."""
         raise NotImplementedError("abstract")
 
-    def get_filter(self):
+    def get_filter(self) -> BokehFilter:
+        """Get the resulting BokehFilter for the people."""
         raise NotImplementedError("abstract")
 
-    def get_exam_filter(self):
+    def get_exam_filter(self) -> BokehFilter:
+        """Get the resulting BokehFilter for the exams."""
         raise NotImplementedError("abstract")
 
     @staticmethod
-    def _person_to_exam_indices(person_filter_indices, exam_person_index_list):
+    def _person_to_exam_indices(
+        person_indices: Container, exam_to_person_mapping: Iterable
+    ) -> list[int]:
+        """Find all exam indices belonging to the people in person_indices.
+
+        exam_to_person_mapping : a sequence with the person index of each exam, i.e.
+            element number n contains the index of the person belonging to exam n.
+            Typically, this is retrieved from a source as `exam_source.data["person_index"]`
+        """
         return [
             i
-            for i, person_index in enumerate(exam_person_index_list)
-            if person_index in person_filter_indices
+            for i, person_index in enumerate(exam_to_person_mapping)
+            if person_index in person_indices
         ]
 
     @staticmethod
-    def _exam_to_person_indices(exam_indices, exam_source_data):
-        return list({exam_source_data["person_index"][i] for i in exam_indices})
+    def _exam_to_person_indices(
+        exam_indices: Iterable, exam_to_person_mapping: Sequence[int]
+    ) -> list[int]:
+        """Given an iterable of exam indices, return the corresponding person indices.
+
+        exam_to_person_mapping : a sequence with the person index of each exam, i.e.
+            element number n contains the index of the person belonging to exam n.
+            Typically, this is retrieved from a source as `exam_source.data["person_index"]`
+        """
+        return list({exam_to_person_mapping[i] for i in exam_indices})
 
 
 class SimpleFilter(Filter):
     """Simple index based filter."""
 
-    def __init__(self, person_indices, exam_indices, *args, **kwargs):
+    def __init__(
+        self,
+        person_indices: Sequence[int],
+        exam_indices: Sequence[int],
+        *args,
+        **kwargs,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.person_indices = person_indices
         self.exam_indices = exam_indices
         self.person_filter = IndexFilter(self.person_indices)
         self.exam_filter = IndexFilter(self.exam_indices)
 
-    def get_filter(self):
+    def get_filter(self) -> BokehFilter:
         if not self.active:
             return AllIndices()
         return ~self.person_filter if self.inverted else self.person_filter
 
-    def get_exam_filter(self):
+    def get_exam_filter(self) -> BokehFilter:
         if not self.active:
             return AllIndices()
         return ~self.exam_filter if self.inverted else self.exam_filter
@@ -389,34 +423,39 @@ class SimpleFilter(Filter):
 class PersonSimpleFilter(SimpleFilter):
     """Filter using person indices, exam entries for the people selected also shown."""
 
-    def __init__(self, person_indices, *args, **kwargs):
-        exam_data = kwargs["source_manager"].exam_source.data
-        exam_indices = self._person_to_exam_indices(
-            person_indices, exam_data["person_index"]
-        )
+    def __init__(self, person_indices: Sequence[int], *args, **kwargs) -> None:
+        exam_to_person: Sequence[int] = kwargs["source_manager"].exam_source.data[
+            "person_index"
+        ]
+        exam_indices = self._person_to_exam_indices(person_indices, exam_to_person)
         super().__init__(person_indices, exam_indices, *args, **kwargs)
 
 
 class ExamSimpleFilter(SimpleFilter):
     """Filter using exam indices, people of the entries also shown."""
 
-    def __init__(self, exam_indices, *args, **kwargs):
-        exam_data = kwargs["source_manager"].exam_source.data
-        person_indices = self._exam_to_person_indices(exam_indices, exam_data)
+    def __init__(self, exam_indices: Sequence[int], *args, **kwargs) -> None:
+        exam_to_person: Sequence[int] = kwargs["source_manager"].exam_source.data[
+            "person_index"
+        ]
+        person_indices = self._exam_to_person_indices(exam_indices, exam_to_person)
         super().__init__(person_indices, exam_indices, *args, **kwargs)
 
 
 class RangeFilter(Filter):
-    """Generic range filter, accepting all people with `field` value withing a range."""
+    """Generic range filter, accepting all people with `field` value withing a range.
+
+    Warning:
+        The field must contain a numeric value!"""
 
     _range = (-float("inf"), float("inf"))  # 'Accept all'
 
-    def __init__(self, field: str, *args, **kwargs):
+    def __init__(self, field: str, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.field = field
         self.selected = self._get_selection_indices()
 
-    def _get_selection_indices(self):
+    def _get_selection_indices(self) -> list[int]:
         data = self.source_manager.person_source.data[self.field]
         min, max = self._range
         return [
@@ -425,7 +464,9 @@ class RangeFilter(Filter):
             if value is not None and min <= value <= max
         ]
 
-    def get_set_value_callback(self):
+    def get_set_value_callback(
+        self,
+    ) -> Callable[[str, tuple[float, float], tuple[float, float]], None]:
         def set_value_callback(attr, old, new: tuple[float, float]):
             assert len(new) == 2
             self._range = new
@@ -434,14 +475,14 @@ class RangeFilter(Filter):
 
         return set_value_callback
 
-    def get_filter(self):
+    def get_filter(self) -> BokehFilter:
         if not self.active:
             return AllIndices()
         return (
             ~IndexFilter(self.selected) if self.inverted else IndexFilter(self.selected)
         )
 
-    def get_exam_filter(self):
+    def get_exam_filter(self) -> BokehFilter:
         if not self.active:
             return AllIndices()
         filter = IndexFilter(
@@ -470,7 +511,7 @@ class BooleanFilter(Filter):
         self.filters = filters
         self.bokeh_bool = bokeh_bool_filter
 
-    def get_filter(self):
+    def get_filter(self) -> BokehFilter:
         if not self.active:
             return AllIndices()
         filter = self.bokeh_bool(
@@ -479,7 +520,7 @@ class BooleanFilter(Filter):
         )
         return ~filter if self.inverted else filter
 
-    def get_exam_filter(self):
+    def get_exam_filter(self) -> BokehFilter:
         if not self.active:
             return AllIndices()
         filter = self.bokeh_bool(
@@ -560,7 +601,7 @@ def _(filter: SymmetricDifferenceFilter, number_of_indices: int) -> set[int]:
 
 
 class SourceManager:
-    def __init__(self, person_source, exam_source):
+    def __init__(self, person_source: ColumnDataSource, exam_source: ColumnDataSource):
         self.person_source = person_source
         self.exam_source = exam_source
         link_sources(self.person_source, self.exam_source)
@@ -570,7 +611,7 @@ class SourceManager:
         # filters. See #7273 in Bokeh
         # https://github.com/bokeh/bokeh/issues/7273
         # The emit seems to resolve this for us, but it is rather hacky.
-        self.person_source.selected.js_on_change(
+        self.person_source.selected.js_on_change(  # type: ignore  # Wrongly says Readonly selected has no attribute js_on_change
             "indices",
             CustomJS(
                 args={"source": self.person_source, "view": self.only_selected_view},
@@ -590,22 +631,27 @@ class SourceManager:
         self.view = CDSView()
         self.exam_view = CDSView()
         self.combined_view = CDSView(
-            filter=self.view.filter & self.only_selected_view.filter
+            # The view's filters are typed as Instance[Filter] and thus mypy
+            # reports unsupported type for the & operator. However, it is
+            # supported for Filter, which they actually are.
+            filter=self.view.filter
+            & self.only_selected_view.filter  # type: ignore
         )
 
-        def cllback(attr, old, new):
+        def set_combined_filter_callback(attr, old, new) -> None:
             self.combined_view.filter = (
-                self.view.filter & self.only_selected_view.filter
+                self.view.filter & self.only_selected_view.filter  # type: ignore
             )
 
-        self.view.on_change("filter", cllback)
+        self.view.on_change("filter", set_combined_filter_callback)
 
-    def update_views(self):
-        self.view.filter = IntersectionFilter(
+    def update_views(self) -> None:
+        # See comment above on Instance[Filter] type issue
+        self.view.filter = IntersectionFilter(  # type: ignore
             operands=[filter.get_filter() for filter in self.filters.values()]
         )
         # TODO this can be optimized by simply getting the result from the above intersection, right?
-        self.exam_view.filter = IntersectionFilter(
+        self.exam_view.filter = IntersectionFilter(  # type: ignore
             operands=[filter.get_exam_filter() for filter in self.filters.values()]
         )
 
@@ -616,12 +662,12 @@ class SourceManager:
         )
 
     @staticmethod
-    def source_from_people(people: Sequence[Person]):
+    def source_from_people(people: Sequence[Person]) -> ColumnDataSource:
         source_dict = _combine_dicts((person.as_source_dict() for person in people))
         return ColumnDataSource(source_dict)
 
     @staticmethod
-    def scatter_source_from_people(people: Sequence[Person]):
+    def scatter_source_from_people(people: Sequence[Person]) -> ColumnDataSource:
         source_dict = _combine_scatter_dicts(
             [person.as_scatter_source_dict() for person in people]
         )
