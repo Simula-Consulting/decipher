@@ -2,6 +2,7 @@ from __future__ import annotations  # Postponed evaluation of types
 
 import functools
 import itertools
+import operator
 from collections import defaultdict
 from collections.abc import Callable, Container, Iterable, Sequence
 from dataclasses import asdict, dataclass
@@ -566,9 +567,8 @@ def _(filter: AllIndices, number_of_indices: int) -> set[int]:
 
 @parse_filter_to_indices.register
 def _(filter: IntersectionFilter, number_of_indices: int) -> set[int]:
-    # TODO: possible bug if IntersectionFilter allows empty operands
     return functools.reduce(
-        set(range(number_of_indices)).intersection,
+        operator.and_,
         (
             set(parse_filter_to_indices(operand, number_of_indices))
             for operand in filter.operands  # type: ignore  # operands has type Required(Seq(Int)) from Bokeh
@@ -586,7 +586,7 @@ def _(filter: InversionFilter, number_of_indices: int) -> set[int]:
 @parse_filter_to_indices.register
 def _(filter: UnionFilter, number_of_indices: int) -> set[int]:
     return functools.reduce(
-        set().union,
+        operator.or_,
         (
             set(parse_filter_to_indices(operand, number_of_indices))
             for operand in filter.operands  # type: ignore
