@@ -193,7 +193,6 @@ def test_person_source_dict(person: Person):
 def test_person_scatter_source_dict(person: Person):
     """Test that the person scatter source dict contains all it is supposed to"""
     scatter_source_dict = person.as_scatter_source_dict()
-    note(scatter_source_dict)
 
     # Check that values are lists, with elements being int, float, or str
     for value in scatter_source_dict.values():
@@ -281,7 +280,7 @@ def test_time_converter(
     ),
 )
 def test_parse_filter_to_indices(composite_filter, number_of_indices, result_indices):
-    """Test the BokehFilter parser."""
+    """Test the Filter parser."""
     assert (
         parse_filter_to_indices(composite_filter, number_of_indices) == result_indices
     )

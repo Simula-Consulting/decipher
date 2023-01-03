@@ -6,7 +6,7 @@ import operator
 from collections import defaultdict
 from collections.abc import Callable, Container, Iterable, Sequence
 from dataclasses import asdict, dataclass
-from typing import Any, overload
+from typing import Any, cast, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -126,7 +126,7 @@ class Person:
     prediction_time: int
     prediction_probabilities: Sequence[float]
 
-    def as_source_dict(self):
+    def as_source_dict(self) -> dict[str, Any]:
         """Return a dict representation appropriate for a ColumnDataSource."""
         base_dict = asdict(self)
 
@@ -142,7 +142,7 @@ class Person:
         )
 
         # Generate the predicted states
-        predicted_exam_results = self.exam_results.copy()
+        predicted_exam_results = list(self.exam_results)
         predicted_exam_results[self.prediction_time] = self.predicted_exam_result
 
         return (
@@ -183,7 +183,7 @@ class Person:
             "vaccine_line_endpoints_year": endpoints_year_vaccine,
         }
 
-    def as_scatter_source_dict(self):
+    def as_scatter_source_dict(self) -> dict[str, list[Any]]:
         exam_time_age = list(
             time_converter.time_point_to_age(range(len(self.exam_results)))
         )
@@ -293,7 +293,9 @@ def _combine_scatter_dicts(dictionaries: Sequence[dict]) -> dict:
     }
 
 
-def link_sources(person_source, exam_source):
+def link_sources(
+    person_source: ColumnDataSource, exam_source: ColumnDataSource
+) -> None:
     def select_person_callback(attr, old, selected_people):
         all_indices = [
             i
@@ -310,16 +312,16 @@ def link_sources(person_source, exam_source):
         selected_people = list({exam_source.data["person_index"][i] for i in new})
         select_person_callback(None, None, selected_people)
 
-    exam_source.selected.on_change("indices", set_group_selected_callback)
-    person_source.selected.on_change("indices", select_person_callback)
+    exam_source.selected.on_change("indices", set_group_selected_callback)  # type: ignore
+    person_source.selected.on_change("indices", select_person_callback)  # type: ignore
 
 
 @dataclass
-class Filter:
+class BaseFilter:
     """Filter used by SourceManager to handle CDSView filtering.
 
     Note:
-        This must not be confused by the Filter class from Bokeh.
+        This must not be confused by the Filter (imported as BokehFilter) class from Bokeh.
         This class wraps around the Bokeh Filter, and ultimately serves Bokeh Filters
         through `get_filter` and `get_exam_filter`, however, they are not interchangeable.
 
@@ -358,16 +360,16 @@ class Filter:
         raise NotImplementedError("abstract")
 
     def get_filter(self) -> BokehFilter:
-        """Get the resulting BokehFilter for the people."""
+        """Get the resulting Filter for the people."""
         raise NotImplementedError("abstract")
 
     def get_exam_filter(self) -> BokehFilter:
-        """Get the resulting BokehFilter for the exams."""
+        """Get the resulting Filter for the exams."""
         raise NotImplementedError("abstract")
 
     @staticmethod
     def _person_to_exam_indices(
-        person_indices: Container, exam_to_person_mapping: Iterable
+        person_indices: Container[int], exam_to_person_mapping: Iterable[int]
     ) -> list[int]:
         """Find all exam indices belonging to the people in person_indices.
 
@@ -383,7 +385,7 @@ class Filter:
 
     @staticmethod
     def _exam_to_person_indices(
-        exam_indices: Iterable, exam_to_person_mapping: Sequence[int]
+        exam_indices: Iterable[int], exam_to_person_mapping: Sequence[int]
     ) -> list[int]:
         """Given an iterable of exam indices, return the corresponding person indices.
 
@@ -394,17 +396,20 @@ class Filter:
         return list({exam_to_person_mapping[i] for i in exam_indices})
 
 
-class SimpleFilter(Filter):
+class SimpleFilter(BaseFilter):
     """Simple index based filter."""
 
     def __init__(
         self,
         person_indices: Sequence[int],
         exam_indices: Sequence[int],
-        *args,
-        **kwargs,
+        source_manager: SourceManager,
+        active: bool = False,
+        inverted: bool = False,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            source_manager=source_manager, active=active, inverted=inverted
+        )
         self.person_indices = person_indices
         self.exam_indices = exam_indices
         self.person_filter = IndexFilter(self.person_indices)
@@ -424,26 +429,50 @@ class SimpleFilter(Filter):
 class PersonSimpleFilter(SimpleFilter):
     """Filter using person indices, exam entries for the people selected also shown."""
 
-    def __init__(self, person_indices: Sequence[int], *args, **kwargs) -> None:
-        exam_to_person: Sequence[int] = kwargs["source_manager"].exam_source.data[
-            "person_index"
-        ]
+    def __init__(
+        self,
+        person_indices: Sequence[int],
+        source_manager: SourceManager,
+        active: bool = False,
+        inverted: bool = False,
+    ) -> None:
+        exam_to_person = cast(
+            Sequence[int], source_manager.exam_source.data["person_index"]
+        )
         exam_indices = self._person_to_exam_indices(person_indices, exam_to_person)
-        super().__init__(person_indices, exam_indices, *args, **kwargs)
+        super().__init__(
+            person_indices,
+            exam_indices,
+            source_manager=source_manager,
+            active=active,
+            inverted=inverted,
+        )
 
 
 class ExamSimpleFilter(SimpleFilter):
     """Filter using exam indices, people of the entries also shown."""
 
-    def __init__(self, exam_indices: Sequence[int], *args, **kwargs) -> None:
-        exam_to_person: Sequence[int] = kwargs["source_manager"].exam_source.data[
-            "person_index"
-        ]
+    def __init__(
+        self,
+        exam_indices: Sequence[int],
+        source_manager: SourceManager,
+        active: bool = False,
+        inverted: bool = False,
+    ) -> None:
+        exam_to_person = cast(
+            Sequence[int], source_manager.exam_source.data["person_index"]
+        )
         person_indices = self._exam_to_person_indices(exam_indices, exam_to_person)
-        super().__init__(person_indices, exam_indices, *args, **kwargs)
+        super().__init__(
+            person_indices,
+            exam_indices,
+            source_manager=source_manager,
+            active=active,
+            inverted=inverted,
+        )
 
 
-class RangeFilter(Filter):
+class RangeFilter(BaseFilter):
     """Generic range filter, accepting all people with `field` value within a range.
 
     Warning:
@@ -451,8 +480,16 @@ class RangeFilter(Filter):
 
     _range = (-float("inf"), float("inf"))  # 'Accept all'
 
-    def __init__(self, field: str, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        field: str,
+        source_manager: SourceManager,
+        active: bool = False,
+        inverted: bool = False,
+    ) -> None:
+        super().__init__(
+            source_manager=source_manager, active=active, inverted=inverted
+        )
         self.field = field
         self.selected = self._get_selection_indices()
         self.exams_selected = self._person_to_exam_indices(
@@ -471,7 +508,9 @@ class RangeFilter(Filter):
     def get_set_value_callback(
         self,
     ) -> Callable[[str, tuple[float, float], tuple[float, float]], None]:
-        def set_value_callback(attr, old, new: tuple[float, float]):
+        def set_value_callback(
+            attr: str, old: tuple[float, float], new: tuple[float, float]
+        ) -> None:
             assert len(new) == 2
             self._range = new
             self.selected = self._get_selection_indices()
@@ -499,12 +538,12 @@ class RangeFilter(Filter):
         )
 
 
-class BooleanFilter(Filter):
+class BooleanFilter(BaseFilter):
     """Filter combining multiple filters through some logical operation."""
 
     def __init__(
         self,
-        filters: Iterable[Filter],
+        filters: Iterable[BaseFilter],
         source_manager: SourceManager,
         bokeh_bool_filter: type[BokehFilter] = UnionFilter,
         active: bool = False,
@@ -540,7 +579,7 @@ class BooleanFilter(Filter):
 
 @functools.singledispatch
 def parse_filter_to_indices(filter: BokehFilter, number_of_indices: int) -> set[int]:
-    """Given a BokehFilter, return the resulting index list.
+    """Given a Filter, return the resulting index list.
 
     Example:
         >>> combined_filter = UnionFilter(IndexFilter(1, 2), IndexFilter(2, 4))
@@ -635,7 +674,7 @@ class SourceManager:
             ),
         )
 
-        self.filters: dict[str, Filter] = {}
+        self.filters: dict[str, BaseFilter] = {}
         """Filters registered with the source manager.
 
         The manager's views are updated with filters by calling `update_views`."""
@@ -670,7 +709,7 @@ class SourceManager:
         # Thus, we must to this intermediate step, first setting combined_view, then
         # the main view.
         # This is quite fragile.
-        active_person_filters = IntersectionFilter(  # type: ignore
+        active_person_filters = IntersectionFilter(
             operands=[
                 filter.get_filter() for filter in self.filters.values() if filter.active
             ]

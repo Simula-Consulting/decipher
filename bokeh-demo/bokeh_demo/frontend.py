@@ -30,9 +30,9 @@ from bokeh.models.tickers import FixedTicker
 from bokeh.plotting import figure
 
 from .backend import (
+    BaseFilter,
     BooleanFilter,
     ExamSimpleFilter,
-    Filter,
     PersonSimpleFilter,
     RangeFilter,
     SimpleFilter,
@@ -462,7 +462,7 @@ class FilterValueUIElement(Enum):
 
 
 FILTER_TO_FilterValueUIElement_MAPPING = {
-    Filter: FilterValueUIElement.NoValue,
+    BaseFilter: FilterValueUIElement.NoValue,
     SimpleFilter: FilterValueUIElement.NoValue,
     PersonSimpleFilter: FilterValueUIElement.NoValue,
     ExamSimpleFilter: FilterValueUIElement.NoValue,
@@ -480,7 +480,7 @@ def get_filter_element_from_source_manager(
     return get_filter_element(filter, filter_name)
 
 
-def get_filter_element(filter: Filter, label_text: str = "") -> LayoutDOM:
+def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
     """Return a filter element corresponding to a filter in a source_manager."""
 
     activation_toggle = Switch(active=False)

@@ -25,9 +25,9 @@ from matfact.model.matfact import MatFact
 from matfact.model.predict.dataset_utils import prediction_data
 
 from bokeh_demo.backend import (
+    BaseFilter,
     BooleanFilter,
     ExamSimpleFilter,
-    Filter,
     PersonSimpleFilter,
     PredictionData,
     RangeFilter,
@@ -134,7 +134,7 @@ def _at_least_one_high_risk(person_source):
     ]
 
 
-def _get_filters(source_manager: SourceManager) -> dict[str, Filter]:
+def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
     base_filters = {
         "high_risk_person": PersonSimpleFilter(
             source_manager=source_manager,
