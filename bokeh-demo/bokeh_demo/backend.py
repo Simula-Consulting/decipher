@@ -653,20 +653,30 @@ class SourceManager:
         )
         """View for the intersection of filtered and selected people."""
 
-        def set_combined_filter_callback(attr, old, new) -> None:
-            self.combined_view.filter = (
-                self.view.filter & self.only_selected_view.filter  # type: ignore
-            )
-
-        self.view.on_change("filter", set_combined_filter_callback)
-
     def update_views(self) -> None:
         """Set the view's filters to match source_manager's internal filters."""
-        # See comment above on Instance[Filter] type issue
-        self.view.filter = IntersectionFilter(  # type: ignore
+
+        # Ideally, we would set self.view's filter to be an IntersectionFilter,
+        # initially with the operands [AllIndices()]. Then, we would in `update_views`
+        # simply update the operands, but keep the filter object. That way, we would
+        # not have to update combined_views's filter.
+        # However, updating only the operands, does not trigger re-rendering, as
+        # updating attributes of filters is broken.
+        # See https://github.com/bokeh/bokeh/issues/7273.
+        #
+        # It is not possible to first set self.view's filter to the intersection filter,
+        # and then update combined_view, as before we have updated combined_view,
+        # there is an undefined reference to the old view's filter.
+        # Thus, we must to this intermediate step, first setting combined_view, then
+        # the main view.
+        # This is quite fragile.
+        active_person_filters = IntersectionFilter(  # type: ignore
             operands=[filter.get_filter() for filter in self.filters.values()]
         )
-        # TODO this can be optimized by simply getting the result from the above intersection, right?
+        self.combined_view.filter = (
+            active_person_filters & self.only_selected_view.filter  # type: ignore
+        )
+        self.view.filter = active_person_filters  # type: ignore
         self.exam_view.filter = IntersectionFilter(  # type: ignore
             operands=[filter.get_exam_filter() for filter in self.filters.values()]
         )
