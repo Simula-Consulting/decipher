@@ -461,6 +461,16 @@ class FilterValueUIElement(Enum):
     """Filters without any value, only on/off."""
 
 
+FILTER_TO_FilterValueUIElement_MAPPING = {
+    Filter: FilterValueUIElement.NoValue,
+    SimpleFilter: FilterValueUIElement.NoValue,
+    PersonSimpleFilter: FilterValueUIElement.NoValue,
+    ExamSimpleFilter: FilterValueUIElement.NoValue,
+    RangeFilter: FilterValueUIElement.RangeSlider,
+    BooleanFilter: FilterValueUIElement.BoolCombination,
+}
+
+
 def get_filter_element_from_source_manager(
     filter_name: str, source_manager: SourceManager
 ) -> LayoutDOM:
@@ -472,14 +482,6 @@ def get_filter_element_from_source_manager(
 
 def get_filter_element(filter: Filter, label_text: str = "") -> LayoutDOM:
     """Return a filter element corresponding to a filter in a source_manager."""
-    filter_value_element_mapping = {
-        Filter: FilterValueUIElement.NoValue,
-        SimpleFilter: FilterValueUIElement.NoValue,
-        PersonSimpleFilter: FilterValueUIElement.NoValue,
-        ExamSimpleFilter: FilterValueUIElement.NoValue,
-        RangeFilter: FilterValueUIElement.RangeSlider,
-        BooleanFilter: FilterValueUIElement.BoolCombination,
-    }
 
     activation_toggle = Switch(active=False)
     inversion_toggle = Switch(active=False)
@@ -487,7 +489,7 @@ def get_filter_element(filter: Filter, label_text: str = "") -> LayoutDOM:
     activation_toggle.on_change("active", filter.get_set_active_callback())
     inversion_toggle.on_change("active", filter.get_set_inverted_callback())
 
-    match (filter_value_element_mapping[type(filter)]):
+    match (FILTER_TO_FilterValueUIElement_MAPPING[type(filter)]):
         case FilterValueUIElement.RangeSlider:
             value_element = RangeSlider(value=(0, 100), start=0, end=100)
             value_element.on_change("value", filter.get_set_value_callback())
