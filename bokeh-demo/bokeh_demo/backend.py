@@ -454,6 +454,9 @@ class RangeFilter(Filter):
         super().__init__(*args, **kwargs)
         self.field = field
         self.selected = self._get_selection_indices()
+        self.exams_selected = self._person_to_exam_indices(
+            self.selected, self.source_manager.exam_source.data["person_index"]
+        )
 
     def _get_selection_indices(self) -> list[int]:
         data = self.source_manager.person_source.data[self.field]
@@ -471,6 +474,9 @@ class RangeFilter(Filter):
             assert len(new) == 2
             self._range = new
             self.selected = self._get_selection_indices()
+            self.exams_selected = self._person_to_exam_indices(
+                self.selected, self.source_manager.exam_source.data["person_index"]
+            )
             self.source_manager.update_views()
 
         return set_value_callback
@@ -485,12 +491,11 @@ class RangeFilter(Filter):
     def get_exam_filter(self) -> BokehFilter:
         if not self.active:
             return AllIndices()
-        filter = IndexFilter(
-            self._person_to_exam_indices(
-                self.selected, self.source_manager.exam_source.data["person_index"]
-            )
+        return (
+            ~IndexFilter(self.exams_selected)
+            if self.inverted
+            else IndexFilter(self.exams_selected)
         )
-        return ~filter if self.inverted else filter
 
 
 class BooleanFilter(Filter):
