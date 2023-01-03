@@ -443,7 +443,7 @@ class ExamSimpleFilter(SimpleFilter):
 
 
 class RangeFilter(Filter):
-    """Generic range filter, accepting all people with `field` value withing a range.
+    """Generic range filter, accepting all people with `field` value within a range.
 
     Warning:
         The field must contain a numeric value!"""
