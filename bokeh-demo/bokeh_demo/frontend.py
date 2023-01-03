@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Iterable, Sequence, cast
+from typing import Callable, Collection, Generator, Iterable, Sequence, cast
 
 import numpy as np
 
@@ -267,6 +267,7 @@ class PersonTable:
 
 class LabelSelectedMixin:
     source_manager: SourceManager
+    _number_of_individuals: int
 
     def add_label(self):
         self.label = Label(
@@ -283,15 +284,17 @@ class LabelSelectedMixin:
         )
         self.figure.add_layout(self.label)
 
-    def register_label(self):
+    def register_label(self) -> None:
         """Add label to layout and attach callbacks."""
         self.add_label()
-        self.source_manager.person_source.selected.on_change(
+        self.source_manager.person_source.selected.on_change(  # type: ignore
             "indices", self.get_update_label_callback()
         )
         self.source_manager.view.on_change("filter", self.get_update_label_callback())
 
-    def _get_age_at_exam(self, selected_indices):
+    def _get_age_at_exam(
+        self, selected_indices: Iterable[int]
+    ) -> Generator[list[float], None, None]:
         return (
             [
                 age
@@ -305,14 +308,16 @@ class LabelSelectedMixin:
         )
 
     @staticmethod
-    def _compute_average_screening_interval(nested_age_at_exam):
-        screening_intervals = []
+    def _compute_average_screening_interval(
+        nested_age_at_exam: Iterable[Sequence[float]],
+    ) -> float:
+        screening_intervals: list[float] = []
         for x in nested_age_at_exam:
             screening_intervals += np.diff(x).tolist()
         # Convert to months
-        return np.mean(screening_intervals) * 12
+        return cast(float, np.mean(screening_intervals)) * 12
 
-    def _get_label_text(self, selected_indices: Sequence[int]):
+    def _get_label_text(self, selected_indices: Collection[int]) -> str:
         n_vaccines = sum(
             self.source_manager.person_source.data["vaccine_age"][i] is not None
             for i in selected_indices
@@ -328,16 +333,25 @@ class LabelSelectedMixin:
             f" Average screening interval: ~{round(average_screening_interval, 2)} months"  # noqa: E501
         )
 
-    def get_update_label_callback(self):
-        def update_label_callback(attr, old, new):
-            new = self.source_manager.person_source.selected.indices
-            new = set(new) if len(new) else set(range(self._number_of_individuals))
+    def get_update_label_callback(self) -> Callable[..., None]:
+        """Get a callback function for updating the label.
+
+        The label update callback is attached to multiple quantities, so we do not
+        use the supplied old/new values, but use directly the state in source_manager."""
+
+        def update_label_callback(attr, old, new) -> None:
+            # If nothing is selected, interpret it as everything is selected.
+            selected_indices = set(
+                self.source_manager.person_source.selected.indices  # type: ignore
+                or range(self._number_of_individuals)
+            )
             filtered_indices = set(
                 parse_filter_to_indices(
-                    self.source_manager.view.filter, self._number_of_individuals
+                    self.source_manager.view.filter, self._number_of_individuals  # type: ignore
                 )
             )
-            self.label.text = self._get_label_text(new & filtered_indices)
+            filtered_and_selected_indices = selected_indices & filtered_indices
+            self.label.text = self._get_label_text(filtered_and_selected_indices)
 
         return update_label_callback
 
@@ -413,18 +427,26 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
                 out[state] += 1
         return out
 
-    def get_update_histogram_callback(self):
-        def update_histogram(attr, old, new):
-            new = self.source_manager.person_source.selected.indices
-            new = set(new) if len(new) else set(range(self._number_of_individuals))
+    def get_update_histogram_callback(self) -> Callable[..., None]:
+        """Get a callback function for updating the histogram.
+
+        The callback is attached to multiple quantities, so we do not use
+        the supplied old/new values, but use directly the state in source_manager."""
+
+        def update_histogram(attr, old, new) -> None:
+            # If nothing is selected, interpret it as everything is selected.
+            selected_indices = set(
+                self.source_manager.person_source.selected.indices  # type: ignore
+                or range(self._number_of_individuals)
+            )
             filtered_indices = set(
                 parse_filter_to_indices(
-                    self.source_manager.view.filter, self._number_of_individuals
+                    self.source_manager.view.filter, self._number_of_individuals  # type: ignore
                 )
             )
-
+            filtered_and_selected_indices = selected_indices & filtered_indices
             self.quad.data_source.data["top"] = self.compute_histogram_data(
-                new & filtered_indices
+                filtered_and_selected_indices
             )
 
         return update_histogram
