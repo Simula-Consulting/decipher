@@ -671,14 +671,22 @@ class SourceManager:
         # the main view.
         # This is quite fragile.
         active_person_filters = IntersectionFilter(  # type: ignore
-            operands=[filter.get_filter() for filter in self.filters.values()]
+            operands=[
+                filter.get_filter() for filter in self.filters.values() if filter.active
+            ]
+            or [AllIndices()]
         )
         self.combined_view.filter = (
             active_person_filters & self.only_selected_view.filter  # type: ignore
         )
         self.view.filter = active_person_filters  # type: ignore
         self.exam_view.filter = IntersectionFilter(  # type: ignore
-            operands=[filter.get_exam_filter() for filter in self.filters.values()]
+            operands=[
+                filter.get_exam_filter()
+                for filter in self.filters.values()
+                if filter.active
+            ]
+            or [AllIndices()]
         )
 
     @classmethod
