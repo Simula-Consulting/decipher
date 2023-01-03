@@ -607,6 +607,10 @@ class SourceManager:
         link_sources(self.person_source, self.exam_source)
 
         self.only_selected_view = CDSView(filter=IndexFilter())
+        """View for selected people.
+
+        Note:
+            You probably don't want to use this view, but rather `combined_view`."""
         # There is apparently some issues in Bokeh with re-rendering on updating
         # filters. See #7273 in Bokeh
         # https://github.com/bokeh/bokeh/issues/7273
@@ -627,9 +631,14 @@ class SourceManager:
         )
 
         self.filters: dict[str, Filter] = {}
+        """Filters registered with the source manager.
+
+        The manager's views are updated with filters by calling `update_views`."""
 
         self.view = CDSView()
+        """View for filtered people."""
         self.exam_view = CDSView()
+        """View for filtered exams."""
         self.combined_view = CDSView(
             # The view's filters are typed as Instance[Filter] and thus mypy
             # reports unsupported type for the & operator. However, it is
@@ -637,6 +646,7 @@ class SourceManager:
             filter=self.view.filter
             & self.only_selected_view.filter  # type: ignore
         )
+        """View for the intersection of filtered and selected people."""
 
         def set_combined_filter_callback(attr, old, new) -> None:
             self.combined_view.filter = (
@@ -646,6 +656,7 @@ class SourceManager:
         self.view.on_change("filter", set_combined_filter_callback)
 
     def update_views(self) -> None:
+        """Set the view's filters to match source_manager's internal filters."""
         # See comment above on Instance[Filter] type issue
         self.view.filter = IntersectionFilter(  # type: ignore
             operands=[filter.get_filter() for filter in self.filters.values()]
@@ -657,6 +668,7 @@ class SourceManager:
 
     @classmethod
     def from_people(cls, people: Sequence[Person]) -> SourceManager:
+        """Generate a SourceManger from a sequence of `Person`s"""
         return SourceManager(
             cls.source_from_people(people), cls.scatter_source_from_people(people)
         )
