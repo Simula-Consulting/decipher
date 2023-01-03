@@ -24,11 +24,17 @@ class MatFactSettings(BaseModel):
         arbitrary_types_allowed = True  # Allow validation of range
 
 
-class DataGenerationSettings(BaseModel):
+class ObservationMatrixGenerationSettings(BaseModel):
     observation_probabilities: npt.NDArray[np.float_] = np.array(
         [0.01, 0.03, 0.08, 0.12, 0.04]
     )
     minimum_number_of_observations = 3
+    sparsity_level: int = 6
+
+    # Matrix dimensions
+    rank: int = 5
+    n_rows: int = 1000
+    n_columns: int = 50
 
     class Config:
         arbitrary_types_allowed = True  # Allow validation of numpy array
@@ -48,7 +54,7 @@ class ConvergenceMonitorSettings(BaseModel):
 class Settings(BaseSettings):
     paths = PathSettings()
     matfact_defaults = MatFactSettings()
-    data_generation = DataGenerationSettings()
+    matrix_generation = ObservationMatrixGenerationSettings()
     propensity_weights = PropensityWeightSettings()
     convergence = ConvergenceMonitorSettings()
 

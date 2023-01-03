@@ -31,7 +31,7 @@ def produce_dataset(
     memory_length=5,
     missing=0,
     number_of_states=settings.matfact_defaults.number_of_states,
-    observation_probabilities=settings.data_generation.observation_probabilities,
+    observation_probabilities=settings.matrix_generation.observation_probabilities,
     theta=2.5,
     seed=42,
 ):
@@ -76,7 +76,7 @@ def produce_dataset(
 
     valid_rows = (
         np.sum(X != 0, axis=1)
-        >= settings.data_generation.minimum_number_of_observations
+        >= settings.matrix_generation.minimum_number_of_observations
     )
 
     return X[valid_rows].astype(np.float32), M[valid_rows].astype(np.float32), "DGD"
@@ -133,7 +133,7 @@ class Dataset:
         sparsity_level,
         produce_dataset_function=produce_dataset,
         number_of_states=settings.matfact_defaults.number_of_states,
-        observation_probabilities=settings.data_generation.observation_probabilities,
+        observation_probabilities=settings.matrix_generation.observation_probabilities,
     ):
         """Generate a Dataset
 
@@ -186,10 +186,10 @@ class Dataset:
 
 
 def main():
-    rank = 5
-    n_rows = 1000
-    n_columns = 50
-    sparsity_level = 6
+    rank = settings.matrix_generation.rank
+    n_rows = settings.matrix_generation.n_rows
+    n_columns = settings.matrix_generation.n_columns
+    sparsity_level = settings.matrix_generation.sparsity_level
 
     X, M = produce_dataset(N=n_rows, T=n_columns, r=rank, level=sparsity_level)
 
