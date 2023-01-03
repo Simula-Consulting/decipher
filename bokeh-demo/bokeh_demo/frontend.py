@@ -156,7 +156,6 @@ class TrajectoriesPlot(ToolsMixin):
 
     def __init__(self, source_manager: SourceManager):
         self.figure = figure(x_axis_label="Age", tools=self._get_tools())
-        # self.combined_view = CDSView(filter=source_manager.view.filter & source_manager.only_selected_view.filter)
 
         self.exam_plot = self.figure.multi_line(
             "exam_time_age",
