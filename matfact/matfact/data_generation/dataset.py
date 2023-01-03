@@ -7,12 +7,7 @@ import pathlib
 import numpy as np
 from scipy.stats import betabinom
 
-from matfact.settings import (
-    DATASET_PATH,
-    default_number_of_states,
-    default_observation_probabilities,
-    minimum_number_of_observations,
-)
+from matfact.config import settings
 
 from .gaussian_generator import discretise_matrix, float_matrix
 from .masking import simulate_mask
@@ -35,8 +30,8 @@ def produce_dataset(
     level,
     memory_length=5,
     missing=0,
-    number_of_states: int = default_number_of_states,
-    observation_probabilities: np.ndarray | None = None,
+    number_of_states=settings.matfact_defaults.number_of_states,
+    observation_probabilities=settings.data_generation.observation_probabilities,
     theta=2.5,
     seed=42,
 ):
@@ -60,12 +55,9 @@ def produce_dataset(
             The sparse and original complete data matrices
             The name of the generation method
     """
-
     M = float_matrix(N=N, T=T, r=r, number_of_states=number_of_states, seed=seed)
     Y = discretise_matrix(M, number_of_states=number_of_states, theta=theta, seed=seed)
 
-    if observation_probabilities is None:
-        observation_probabilities = default_observation_probabilities
     if number_of_states + 1 != len(observation_probabilities):
         raise ValueError(
             "observation_probabilities must have length one more than the number of states!"  # noqa: E501
@@ -82,7 +74,10 @@ def produce_dataset(
     X = mask * Y
     X = censoring(X, missing=missing)
 
-    valid_rows = np.sum(X != 0, axis=1) >= minimum_number_of_observations
+    valid_rows = (
+        np.sum(X != 0, axis=1)
+        >= settings.data_generation.minimum_number_of_observations
+    )
 
     return X[valid_rows].astype(np.float32), M[valid_rows].astype(np.float32), "DGD"
 
@@ -137,8 +132,8 @@ class Dataset:
         rank,
         sparsity_level,
         produce_dataset_function=produce_dataset,
-        number_of_states=default_number_of_states,
-        observation_probabilities=default_observation_probabilities,
+        number_of_states=settings.matfact_defaults.number_of_states,
+        observation_probabilities=settings.data_generation.observation_probabilities,
     ):
         """Generate a Dataset
 
@@ -206,9 +201,9 @@ def main():
         "generation_method": "DGD",  # Only one method implemented.
     }
 
-    np.save(DATASET_PATH / "X.npy", X)
-    np.save(DATASET_PATH / "M.npy", M)
-    with (DATASET_PATH / "dataset_metadata.json").open("w") as metadata_file:
+    np.save(settings.paths.dataset / "X.npy", X)
+    np.save(settings.paths.dataset / "M.npy", M)
+    with (settings.paths.dataset / "dataset_metadata.json").open("w") as metadata_file:
         metadata_file.write(json.dumps(dataset_metadata))
 
 

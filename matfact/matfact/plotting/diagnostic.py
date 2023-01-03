@@ -7,7 +7,7 @@ import seaborn as sns
 from sklearn.metrics import auc, roc_curve
 from sklearn.preprocessing import label_binarize
 
-from matfact import settings
+from matfact.config import settings
 
 from . import plot_config, plot_utils
 
@@ -157,7 +157,7 @@ def plot_roc_curve(
     x_true,
     p_pred,
     path_to_figure: pathlib.Path,
-    number_of_states=settings.default_number_of_states,
+    number_of_states=settings.matfact_defaults.number_of_states,
     average="micro",
     fname="",
 ):

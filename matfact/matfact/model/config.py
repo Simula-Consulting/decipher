@@ -5,7 +5,7 @@ from typing import Callable
 import numpy as np
 import numpy.typing as npt
 
-from matfact import settings
+from matfact.config import settings
 from matfact.model.factorization.utils import (
     convoluted_differences_matrix,
     initialize_basis,
@@ -65,7 +65,7 @@ class ModelConfig:
     iter_V: int = 2
 
     learning_rate: float = 0.001
-    number_of_states: int = settings.default_number_of_states
+    number_of_states: int = settings.matfact_defaults.number_of_states
 
     difference_matrix_getter: Callable[[int], npt.NDArray] = np.identity
     """Return the difference matrix to use for regularization.

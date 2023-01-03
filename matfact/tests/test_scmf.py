@@ -5,15 +5,15 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays
 
+from matfact.config import settings
 from matfact.model import SCMF
 from matfact.model.config import ModelConfig
 from matfact.model.factorization.factorizers.scmf import (
     _custom_roll,
     _take_per_row_strided,
 )
-from matfact.settings import TEST_PATH
 
-artifact_path = TEST_PATH / "test_artifacts" / "SCMF_test"
+artifact_path = settings.paths.test / "test_artifacts" / "SCMF_test"
 
 
 @given(st.data())
@@ -22,7 +22,7 @@ def test_custom_roll(data):
     array = data.draw(arrays(np.float, array_shapes(min_dims=2, max_dims=2)))
     assume(not np.isnan(array).any())
     # Limit shifts to not be too large (1e4 arbitrarily chosen), as _custom_roll
-    # is suseptible to floating point errors for large shifts.
+    # is susceptible to floating point errors for large shifts.
     # This is not relevant for us, as shifts are never larger than the number
     # of time steps.
     shifts = data.draw(

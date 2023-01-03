@@ -4,11 +4,7 @@ from typing import TYPE_CHECKING, Callable
 import numpy as np
 from tqdm import trange
 
-from matfact.settings import (
-    DEFAULT_EPOCHS_PER_VAL,
-    DEFAULT_NUMBER_OF_EPOCHS,
-    DEFAULT_PATIENCE,
-)
+from matfact.config import settings
 
 if TYPE_CHECKING:
     from matfact.model import BaseMF
@@ -44,17 +40,19 @@ class ConvergenceMonitor:
 
     def __init__(
         self,
-        number_of_epochs: int = DEFAULT_NUMBER_OF_EPOCHS,
-        epochs_per_val: int = DEFAULT_EPOCHS_PER_VAL,
+        number_of_epochs: int | None = None,
+        epochs_per_val: int | None = None,
+        patience: int | None = None,
         tolerance: float = 1e-4,
-        patience: int = DEFAULT_PATIENCE,
         show_progress: bool = True,
     ):
 
-        self.number_of_epochs = number_of_epochs
-        self.epochs_per_val = epochs_per_val
+        self.number_of_epochs = (
+            number_of_epochs or settings.convergence.number_of_epochs
+        )
+        self.epochs_per_val = epochs_per_val or settings.convergence.epochs_per_val
+        self.patience = patience or settings.convergence.patience
         self.tolerance = tolerance
-        self.patience = patience
         self._range = trange if show_progress else range
 
     @staticmethod

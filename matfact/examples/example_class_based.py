@@ -8,7 +8,7 @@ import contextlib
 
 import tensorflow as tf
 
-from matfact import settings
+from matfact.config import settings
 from matfact.data_generation.dataset import Dataset
 from matfact.model.config import ModelConfig
 from matfact.model.matfact import ArgmaxPredictor, MatFact
@@ -22,7 +22,7 @@ with contextlib.suppress(RuntimeError):
 
 
 def main():
-    dataset = Dataset.from_file(settings.DATASET_PATH)
+    dataset = Dataset.from_file(settings.paths.dataset)
 
     X_train, X_test, *_ = dataset.get_split_X_M()
     matfact = MatFact(ModelConfig(), predictor=ArgmaxPredictor())

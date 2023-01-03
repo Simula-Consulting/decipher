@@ -11,7 +11,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 
-from matfact import settings
+from matfact.config import settings
 from matfact.data_generation import Dataset
 from matfact.model import model_factory, prediction_data, reconstruction_mse
 from matfact.plotting import (
@@ -21,7 +21,6 @@ from matfact.plotting import (
     plot_confusion,
     plot_roc_curve,
 )
-from matfact.settings import DATASET_PATH, FIGURE_PATH
 
 
 def experiment(
@@ -30,7 +29,7 @@ def experiment(
     enable_weighting: bool = False,
     enable_convolution: bool = False,
     mlflow_tags: dict | None = None,
-    dataset_path: pathlib.Path = DATASET_PATH,
+    dataset_path: pathlib.Path = settings.paths.dataset,
 ):
     """Execute and log an experiment.
 
@@ -126,20 +125,22 @@ def experiment(
     mlflow.log_metric("norm_difference", np.linalg.norm(results["M"] - M_train))
 
     # Plotting #
-    if settings.create_path_default:
-        FIGURE_PATH.mkdir(parents=True, exist_ok=True)
-    plot_coefs(results["U"], FIGURE_PATH)
-    plot_basis(results["V"], FIGURE_PATH)
-    plot_confusion(x_true, x_pred, FIGURE_PATH)
-    plot_roc_curve(x_true, p_pred, FIGURE_PATH)
-    mlflow.log_artifacts(FIGURE_PATH)
+    if settings.paths.create_default:
+        settings.paths.figure.mkdir(parents=True, exist_ok=True)
+    plot_coefs(results["U"], settings.paths.figure)
+    plot_basis(results["V"], settings.paths.figure)
+    plot_confusion(x_true, x_pred, settings.paths.figure)
+    plot_roc_curve(x_true, p_pred, settings.paths.figure)
+    mlflow.log_artifacts(settings.paths.figure)
 
     mlflow.end_run()
 
 
 def main():
     # Generate some data
-    Dataset.generate(N=1000, T=50, rank=5, sparsity_level=6).save(DATASET_PATH)
+    Dataset.generate(N=1000, T=50, rank=5, sparsity_level=6).save(
+        settings.paths.dataset
+    )
 
     USE_GPU = False
     if not USE_GPU:

@@ -3,7 +3,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays, from_dtype
 
-from matfact import settings
+from matfact.config import settings
 from matfact.data_generation import Dataset
 from matfact.data_generation.gaussian_generator import discretise_matrix, float_matrix
 
@@ -82,9 +82,12 @@ def test_dataset_metadata(tmp_path):
     rank = 5
     sparsity_level = 3
     # Set the number of states to something different from default
-    number_of_states = settings.default_number_of_states + 1
+    number_of_states = settings.matfact_defaults.number_of_states + 1
     observation_probabilities = np.array(
-        (*settings.default_observation_probabilities, 0.4)  # 0.4 chosen arbitrarily
+        (
+            *settings.data_generation.observation_probabilities,
+            0.4,
+        )  # 0.4 chosen arbitrarily
     )
     dataset = Dataset.generate(
         number_of_individuals,
@@ -135,7 +138,7 @@ def test_generate_higher_states(monkeypatch):
     )
     for i in [-1, 0, 1]:
         # Set the number of states to something different from default
-        number_of_states = settings.default_number_of_states + i
+        number_of_states = settings.matfact_defaults.number_of_states + i
         # Disable masking by setting all observation probabilities to one
         observation_probabilities = np.ones(number_of_states + 1)
 
@@ -152,7 +155,7 @@ def test_generate_higher_states(monkeypatch):
         assert states_observed == states_required
 
 
-DGD_artifact_path = settings.TEST_PATH / "test_artifacts" / "DGD_test.npy"
+DGD_artifact_path = settings.paths.test / "test_artifacts" / "DGD_test.npy"
 
 
 def _generate_DGD_data() -> Dataset:
