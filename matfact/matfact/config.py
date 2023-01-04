@@ -40,6 +40,26 @@ class ObservationMatrixGenerationSettings(BaseModel):
         arbitrary_types_allowed = True  # Allow validation of numpy array
 
 
+class GaussianGeneratorSettings(BaseModel):
+    """Values used to generate a screening dataset with a
+    Discrete Gaussian Distribution (DGD).
+
+    Choices result from research and is explained in Mikal Stapnes'
+    Masters thesis (page 21-22).
+    """
+
+    scale_factor: float = 3.0
+    kernel_param: float = 5e-4
+    centre_minmax: tuple[float, float] = (70, 170)
+
+
+class CensoringSettings(BaseModel):
+    """Shape parameters for the beta-binomial used to censor generated data."""
+
+    a: float = 4.57
+    b: float = 5.74
+
+
 class PropensityWeightSettings(BaseModel):
     tau: float = 1.0
     gamma: float = 3.0
@@ -57,6 +77,8 @@ class Settings(BaseSettings):
     matrix_generation = ObservationMatrixGenerationSettings()
     propensity_weights = PropensityWeightSettings()
     convergence = ConvergenceMonitorSettings()
+    gauss_gen = GaussianGeneratorSettings()
+    censoring = CensoringSettings()
 
 
 settings = Settings()

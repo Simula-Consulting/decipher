@@ -16,7 +16,9 @@ from .masking import simulate_mask
 def censoring(X, missing=0):
     "Truncate histories to have patterns similar to the real histories"
 
-    t_cens = betabinom.rvs(n=X.shape[1], a=4.57, b=5.74, size=X.shape[0])
+    t_cens = betabinom.rvs(
+        n=X.shape[1], a=settings.censoring.a, b=settings.censoring.b, size=X.shape[0]
+    )
     for i, t_end in enumerate(t_cens):
         X[i, t_end:] = missing
 

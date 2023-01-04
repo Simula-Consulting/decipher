@@ -85,7 +85,7 @@ def test_dataset_metadata(tmp_path):
     number_of_states = settings.matfact_defaults.number_of_states + 1
     observation_probabilities = np.array(
         (
-            *settings.data_generation.observation_probabilities,
+            *settings.matrix_generation.observation_probabilities,
             0.4,
         )  # 0.4 chosen arbitrarily
     )

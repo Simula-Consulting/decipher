@@ -1,5 +1,7 @@
 import numpy as np
 
+from matfact.config import settings
+
 
 def probability_model(x, theta, dom):
     "The basic probaility model used for data generation"
@@ -31,8 +33,6 @@ def float_matrix(N, T, r, number_of_states: int, seed=42):
 
     Note that due to floating point errors, the generated matrix may have
     values slightly outside of domain. This is acceptable for our use.
-
-    TODO: fix magic numbers
     """
 
     if N < 1 or T < 1:
@@ -42,13 +42,12 @@ def float_matrix(N, T, r, number_of_states: int, seed=42):
 
     rnd = np.random.default_rng(seed=seed)
 
-    centers = np.linspace(70, 170, r)
+    centre_min, centre_max = settings.gauss_gen.centre_minmax
+    centers = np.linspace(centre_min, centre_max, r)
     x = np.linspace(0, T, T)
 
-    V = np.empty(shape=(T, r))
-
-    for i_r in range(r):
-        V[:, i_r] = 1 + 3.0 * np.exp(-5e-4 * (x - centers[i_r]) ** 2)
+    k, theta = settings.gauss_gen.scale_factor, settings.gauss_gen.kernel_param
+    V = 1 + k * np.exp(-theta * (x[:, None] - centers) ** 2)
 
     U = rnd.gamma(shape=1.0, scale=1.0, size=(N, r))
 
