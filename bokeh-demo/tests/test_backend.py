@@ -15,7 +15,7 @@ from bokeh_demo.backend import (
     parse_filter_to_indices,
 )
 from bokeh_demo.exam_data import ExamTypes
-from bokeh_demo.faker import get_inverse_mapping
+from bokeh_demo.faker import coarse_to_exam_result
 
 
 @st.composite
@@ -60,7 +60,7 @@ def test_combine_scatter_dicts(dictionaries: list[dict]) -> None:
         assert value == flattened
 
 
-COARSE_TO_RESULT_MAPPING = get_inverse_mapping()
+COARSE_TO_RESULT_MAPPING = coarse_to_exam_result()
 
 
 def exam_result_strategy(coarse_result: int | None = None):
