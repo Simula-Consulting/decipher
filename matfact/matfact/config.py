@@ -1,8 +1,6 @@
 from pathlib import Path
 
-import numpy as np
-import numpy.typing as npt
-from pydantic import BaseModel, BaseSettings
+from pydantic import BaseModel, BaseSettings, root_validator
 
 
 class PathSettings(BaseModel):
@@ -17,17 +15,22 @@ class PathSettings(BaseModel):
 
 class MatFactSettings(BaseModel):
     number_of_states: int = 4
-    weights: range = range(1, number_of_states + 1)
-    age_segments: tuple = (76, 116)
+    age_segments: tuple[int, int] = (76, 116)
 
-    class Config:
-        arbitrary_types_allowed = True  # Allow validation of range
+    weights: list[float]
+
+    @root_validator
+    def set_default_weights(cls, values):
+        if (
+            values["weights"] is None
+            or len(values["weights"]) != values["number_of_states"]
+        ):
+            values["weights"] = list(range(1, values["number_of_states"] + 1))
+        return values
 
 
 class ObservationMatrixGenerationSettings(BaseModel):
-    observation_probabilities: npt.NDArray[np.float_] = np.array(
-        [0.01, 0.03, 0.08, 0.12, 0.04]
-    )
+    observation_probabilities: list[float] = [0.01, 0.03, 0.08, 0.12, 0.04]
     minimum_number_of_observations = 3
     sparsity_level: int = 6
 
@@ -35,9 +38,6 @@ class ObservationMatrixGenerationSettings(BaseModel):
     rank: int = 5
     n_rows: int = 1000
     n_columns: int = 50
-
-    class Config:
-        arbitrary_types_allowed = True  # Allow validation of numpy array
 
 
 class GaussianGeneratorSettings(BaseModel):
@@ -73,12 +73,15 @@ class ConvergenceMonitorSettings(BaseModel):
 
 class Settings(BaseSettings):
     paths = PathSettings()
-    matfact_defaults = MatFactSettings()
+    matfact_defaults = MatFactSettings(_env_file=".env")
     matrix_generation = ObservationMatrixGenerationSettings()
     propensity_weights = PropensityWeightSettings()
     convergence = ConvergenceMonitorSettings()
     gauss_gen = GaussianGeneratorSettings()
     censoring = CensoringSettings()
 
+    class Config:
+        env_nested_delimiter = "__"
 
-settings = Settings()
+
+settings = Settings(_env_file=".env")

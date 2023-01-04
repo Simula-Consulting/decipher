@@ -3,7 +3,7 @@ import numpy as np
 
 def simulate_mask(D, observation_proba, memory_length, level, seed=42):
     """Simulate a missing data mask."""
-
+    observation_proba = np.array(observation_proba)
     np.random.seed(seed)
     N, T = np.shape(D)
 
