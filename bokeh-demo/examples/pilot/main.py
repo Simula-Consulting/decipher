@@ -19,7 +19,7 @@ from enum import Enum
 
 import tensorflow as tf
 from bokeh.layouts import column, row
-from bokeh.models import SymmetricDifferenceFilter
+from bokeh.models import Div, SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
 from matfact.data_generation import Dataset
 from matfact.model.config import ModelConfig
@@ -108,28 +108,28 @@ def example_app(source_manager):
     )
     category_group = get_filter_element_from_source_manager("category", source_manager)
 
-    curdoc().add_root(
+    curdoc().theme = "dark_minimal"
+    for element in (
+        lp.figure,
+        lpa.figure,
+        traj.figure,
+        table.person_table,
+        hist.figure,
+        delta.figure,
         column(
-            row(
-                lp.figure,
-                lpa.figure,
-                traj.figure,
-                table.person_table,
+            Div(text="<h1>Filter controls</h1>"),
+            row(Div(text="Active"), Div(text="Invert"), Div(text="Value")),
+            high_risk_person_group,
+            high_risk_exam_group,
+            high_risk_decoupled_group,
+            vaccine_group,
+            category_group,
+            get_filter_element_from_source_manager(
+                "symmetric_difference", source_manager
             ),
-            row(
-                hist.figure,
-                delta.figure,
-                column(
-                    high_risk_person_group,
-                    high_risk_exam_group,
-                    high_risk_decoupled_group,
-                    vaccine_group,
-                    category_group,
-                    get_filter_element_from_source_manager("union", source_manager),
-                ),
-            ),
-        )
-    )
+        ),
+    ):
+        curdoc().add_root(element)
 
 
 def _at_least_one_high_risk(person_source):
@@ -171,7 +171,7 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
     # Explicitly make the values a list.
     # dict.values returns a 'view', which will dynamically update, i.e.
     # if we do not take the list, union will have itself in its filters.
-    base_filters["union"] = BooleanFilter(
+    base_filters["symmetric_difference"] = BooleanFilter(
         [copy.copy(filter) for filter in base_filters.values()],
         source_manager,
         bokeh_bool_filter=SymmetricDifferenceFilter,

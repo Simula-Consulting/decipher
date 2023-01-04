@@ -312,10 +312,6 @@ class PersonTable:
                     title="Prediction discrepancy", field="persontable__discrepancy"
                 ),
             ],
-            styles={
-                "border": "1px solid black",
-                "margin-right": "40px",
-            },
         )
 
 
