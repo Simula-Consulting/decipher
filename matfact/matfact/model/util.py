@@ -23,6 +23,7 @@ def model_factory(
     use_convolution: bool = False,
     use_weights: bool = True,
     rank: int = 5,
+    U_l1_reg: bool = False,
     **kwargs,
 ):
     """Initialize and return appropriate model based on arguments.
@@ -50,7 +51,7 @@ def model_factory(
     if len(shift_range):
         return SCMF(X, config)
     if config.weight_matrix_getter.is_identity:
-        return CMF(X, config)
+        return CMF(X, config, U_l1_reg)
     else:
         return WCMF(X, config)
 

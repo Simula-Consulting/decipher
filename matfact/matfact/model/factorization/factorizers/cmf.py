@@ -19,11 +19,7 @@ class CMF(BaseMF):
               shift and weights are ignored in the CMF factorizer.
     """
 
-    def __init__(
-        self,
-        X,
-        config: ModelConfig,
-    ):
+    def __init__(self, X, config: ModelConfig, U_l1_reg: bool = False):
         if not config.weight_matrix_getter.is_identity:
             warn(
                 "CMF given a non-identity weight. This will be ignored."
@@ -34,7 +30,7 @@ class CMF(BaseMF):
                 "CMF given a non-empty shift budget. This will be ignored."
                 "Consider using SCMF."
             )
-
+        self.U_l1_reg = U_l1_reg
         self.X = X
         self.V = config.initial_basic_profiles_getter(X.shape[1], config.rank)
         self.config = config
@@ -75,10 +71,16 @@ class CMF(BaseMF):
         self.V = self.Q2 @ (hatV @ Q1.T)
 
     def _update_U(self):
-
-        self.U = np.transpose(
-            np.linalg.solve(self.V.T @ self.V + self.I_l1, self.V.T @ self.S.T)
-        )
+        if self.U_l1_reg:
+            self.U = np.transpose(
+                np.linalg.solve(
+                    self.V.T @ self.V, self.V.T @ self.S.T - self.config.lambda1
+                )
+            )
+        else:
+            self.U = np.transpose(
+                np.linalg.solve(self.V.T @ self.V + self.I_l1, self.V.T @ self.S.T)
+            )
 
     def _update_S(self):
 

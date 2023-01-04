@@ -18,7 +18,8 @@ class NotFittedException(Exception):
 
 
 def _model_factory(
-    observation_matrix: npt.NDArray[np.int_], config: ModelConfig
+    observation_matrix: npt.NDArray[np.int_],
+    config: ModelConfig,
 ) -> BaseMF:
     if config.shift_budget:
         return SCMF(observation_matrix, config)
