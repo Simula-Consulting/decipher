@@ -1,5 +1,3 @@
-from typing import Sequence
-
 import numpy as np
 import numpy.typing as npt
 import scipy
@@ -12,7 +10,7 @@ from matfact.model.factorization.convergence import ConvergenceMonitorLoss
 
 
 def data_weights(
-    observed_data_matrix: npt.NDArray[np.int_], weights: Sequence[float] | None = None
+    observed_data_matrix: npt.NDArray[np.int_], weights: list[float] | None = None
 ):
     """Construct a weight matrix for observed data.
 
@@ -26,10 +24,10 @@ def data_weights(
         weights = settings.matfact_defaults.weights
 
     assert np.min(observed_data_matrix) >= 0  # Observed data should never be negative
-    if np.max(observed_data_matrix) > len(weights):
+    if np.max(observed_data_matrix) > len(weights):  # type: ignore
         raise ValueError("The observed data have states for which no weight is given.")
     weight_matrix = np.zeros(observed_data_matrix.shape)
-    for i, weight in enumerate(weights):
+    for i, weight in enumerate(weights):  # type: ignore
         state = i + 1  # States are one indexed
         weight_matrix[observed_data_matrix == state] = weight
     return weight_matrix

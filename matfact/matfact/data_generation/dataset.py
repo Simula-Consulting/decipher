@@ -30,11 +30,11 @@ def produce_dataset(
     T,
     r,
     level,
-    memory_length=5,
+    memory_length=settings.matrix_generation.memory_length,
     missing=0,
     number_of_states=settings.matfact_defaults.number_of_states,
     observation_probabilities=settings.matrix_generation.observation_probabilities,
-    theta=2.5,
+    theta=settings.matrix_generation.confidence_parameter,
     seed=42,
 ):
     """Generate a synthetic dataset resembling the real screening data.
