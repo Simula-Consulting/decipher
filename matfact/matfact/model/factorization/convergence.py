@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Callable
 import numpy as np
 from tqdm import trange
 
-from matfact.config import settings
+from matfact.settings import settings
 
 if TYPE_CHECKING:
     from matfact.model import BaseMF

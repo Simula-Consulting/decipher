@@ -8,11 +8,11 @@ import contextlib
 
 import tensorflow as tf
 
-from matfact.config import settings
 from matfact.data_generation.dataset import Dataset
 from matfact.model.config import ModelConfig
 from matfact.model.matfact import ArgmaxPredictor, MatFact
 from matfact.model.predict.dataset_utils import prediction_data
+from matfact.settings import settings
 
 # Disabling the GPU makes everything faster.
 # If tf is already initialized, we cannot modified visible devices, in which

@@ -5,13 +5,13 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays
 
-from matfact.config import settings
 from matfact.model import SCMF
 from matfact.model.config import ModelConfig
 from matfact.model.factorization.factorizers.scmf import (
     _custom_roll,
     _take_per_row_strided,
 )
+from matfact.settings import settings
 
 artifact_path = settings.paths.test / "test_artifacts" / "SCMF_test"
 

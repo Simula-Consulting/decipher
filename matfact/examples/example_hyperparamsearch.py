@@ -10,10 +10,10 @@ from skopt import gp_minimize
 from skopt.space import Real
 from skopt.utils import use_named_args
 
-from matfact.config import settings
 from matfact.data_generation import Dataset
 from matfact.model import train_and_log
 from matfact.model.logging import MLFlowBatchLogger, MLFlowLogger, dummy_logger_context
+from matfact.settings import settings
 
 
 def get_objective(data: Dataset, search_space: list, **hyperparams):

@@ -1,6 +1,6 @@
 import numpy as np
 
-from matfact.config import settings
+from matfact.settings import settings
 
 
 def probability_model(x, theta, dom):

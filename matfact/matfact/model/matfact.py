@@ -3,7 +3,6 @@ from typing import Callable, Protocol, Sequence
 import numpy as np
 import numpy.typing as npt
 
-from matfact.config import settings
 from matfact.model.config import ModelConfig
 from matfact.model.factorization import CMF, SCMF, WCMF, BaseMF
 from matfact.model.predict.classification_tree import (
@@ -11,6 +10,7 @@ from matfact.model.predict.classification_tree import (
     estimate_probability_thresholds,
 )
 from matfact.model.predict.dataset_utils import prediction_data
+from matfact.settings import settings
 
 
 class NotFittedException(Exception):

@@ -7,7 +7,7 @@ import pathlib
 import numpy as np
 from scipy.stats import betabinom
 
-from matfact.config import settings
+from matfact.settings import settings
 
 from .gaussian_generator import discretise_matrix, float_matrix
 from .masking import simulate_mask

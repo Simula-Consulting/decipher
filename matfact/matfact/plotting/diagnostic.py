@@ -7,7 +7,7 @@ import seaborn as sns
 from sklearn.metrics import auc, roc_curve
 from sklearn.preprocessing import label_binarize
 
-from matfact.config import settings
+from matfact.settings import settings
 
 from . import plot_config, plot_utils
 

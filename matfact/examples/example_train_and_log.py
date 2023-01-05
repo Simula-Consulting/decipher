@@ -9,10 +9,10 @@ from itertools import product
 
 import tensorflow as tf
 
-from matfact.config import settings
 from matfact.data_generation import Dataset
 from matfact.model import reconstruction_mse, train_and_log
 from matfact.model.logging import MLFlowLoggerDiagnostic
+from matfact.settings import settings
 
 
 def experiment(

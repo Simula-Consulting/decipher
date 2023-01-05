@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 from test_scmf import _generate_SCMF_logs
 
-from matfact.config import settings
+from matfact.settings import settings
 
 artifact_path = settings.paths.test / "test_artifacts" / "SCMF_test"
 

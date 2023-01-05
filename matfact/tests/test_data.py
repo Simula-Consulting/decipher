@@ -3,9 +3,9 @@ from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays, from_dtype
 
-from matfact.config import settings
 from matfact.data_generation import Dataset
 from matfact.data_generation.gaussian_generator import discretise_matrix, float_matrix
+from matfact.settings import settings
 
 # For very large number of states, the code is very slow. We therefore set some large
 # arbitrary max

@@ -8,7 +8,6 @@ from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays
 
-from matfact.config import settings
 from matfact.model import CMF, SCMF, WCMF, data_weights, prediction_data, train_and_log
 from matfact.model.config import ModelConfig
 from matfact.model.factorization.convergence import ConvergenceMonitor
@@ -21,6 +20,7 @@ from matfact.model.logging import (
     dummy_logger_context,
 )
 from matfact.plotting.diagnostic import _calculate_delta
+from matfact.settings import settings
 
 
 def test_aggregate_fields():

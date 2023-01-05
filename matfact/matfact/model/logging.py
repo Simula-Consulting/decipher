@@ -12,7 +12,6 @@ from typing import Callable, cast
 import mlflow
 import numpy as np
 
-from matfact.config import settings
 from matfact.plotting import (
     plot_basis,
     plot_certainty,
@@ -20,6 +19,7 @@ from matfact.plotting import (
     plot_confusion,
     plot_roc_curve,
 )
+from matfact.settings import settings
 
 # An AggregationFunction takes a field name and list of values for that field, and
 # returns a dictionary of fields aggregated from the values.

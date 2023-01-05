@@ -11,7 +11,6 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 
-from matfact.config import settings
 from matfact.data_generation import Dataset
 from matfact.model import model_factory, prediction_data, reconstruction_mse
 from matfact.plotting import (
@@ -21,6 +20,7 @@ from matfact.plotting import (
     plot_confusion,
     plot_roc_curve,
 )
+from matfact.settings import settings
 
 
 def experiment(

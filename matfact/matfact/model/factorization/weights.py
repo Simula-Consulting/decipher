@@ -5,8 +5,8 @@ import tensorflow as tf
 from tensorflow.keras.constraints import Constraint
 from tensorflow.math import log, reduce_sum, sigmoid
 
-from matfact.config import settings
 from matfact.model.factorization.convergence import ConvergenceMonitorLoss
+from matfact.settings import settings
 
 
 def data_weights(

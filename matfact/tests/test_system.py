@@ -9,9 +9,9 @@ import pytest
 import matfact.model.factorization.factorizers.mfbase
 from examples.example import experiment as experiment1  # type: ignore
 from examples.example_train_and_log import experiment as experiment2  # type: ignore
-from matfact.config import settings
 from matfact.data_generation import Dataset
 from matfact.model.factorization.convergence import ConvergenceMonitor
+from matfact.settings import settings
 
 
 @pytest.mark.skip(

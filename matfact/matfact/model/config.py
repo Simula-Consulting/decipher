@@ -5,12 +5,12 @@ from typing import Callable
 import numpy as np
 import numpy.typing as npt
 
-from matfact.config import settings
 from matfact.model.factorization.utils import (
     convoluted_differences_matrix,
     initialize_basis,
 )
 from matfact.model.factorization.weights import data_weights, propensity_weights
+from matfact.settings import settings
 
 
 class WeightGetter(ABC):

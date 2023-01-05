@@ -4,7 +4,6 @@ import numpy as np
 import numpy.typing as npt
 from sklearn.metrics import matthews_corrcoef
 
-from matfact.config import settings
 from matfact.model import CMF, SCMF, WCMF, BaseMF
 from matfact.model.config import DataWeightGetter, IdentityWeighGetter, ModelConfig
 from matfact.model.factorization.convergence import EpochGenerator
@@ -15,6 +14,7 @@ from matfact.model.predict.classification_tree import (
     estimate_probability_thresholds,
 )
 from matfact.model.predict.dataset_utils import prediction_data
+from matfact.settings import settings
 
 
 def model_factory(
