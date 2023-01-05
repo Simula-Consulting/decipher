@@ -3,7 +3,7 @@ import numpy as np
 from hmm_synthetic.data_generator import simulate_state_histories
 from hmm_synthetic.plotting.history_matrix import plot_history_matrix
 from hmm_synthetic.plotting.history_panel import plot_history_panel
-from hmm_synthetic.settings import FIGURE_PATH
+from hmm_synthetic.settings import settings
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
         n_samples=100, points_per_year=points_per_year, seed=42
     )
 
-    plot_history_matrix(D, path_to_figure=FIGURE_PATH, fname="hmm")
+    plot_history_matrix(D, path_to_figure=settings.paths.figure, fname="hmm")
 
     # Use different random seeds to sample histories for plotting
     rnd = np.random.RandomState(seed=42)
@@ -26,7 +26,7 @@ def main():
     for i, seed in enumerate(seeds):
         plot_history_panel(
             D,
-            path_to_figure=FIGURE_PATH,
+            path_to_figure=settings.paths.figure,
             points_per_year=points_per_year,
             rnd=rnd,
             fname=f"D{i}",
