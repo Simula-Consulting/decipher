@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import BaseModel, BaseSettings, validator
+from pydantic import BaseModel, BaseSettings, root_validator
 
 
 class PathSettings(BaseModel):
@@ -16,13 +16,12 @@ class PathSettings(BaseModel):
 class MatFactSettings(BaseModel):
     number_of_states: int = 4
     age_segments: tuple[int, int] = (76, 116)
+    weights: list[float] = []
 
-    weights: list | None
-
-    @validator("weights")
+    @root_validator
     def set_default_weights(cls, values):
-        if values["weights"] is None:
-            values["weights"] = list(range(1, values["number_of_states"] + 1))
+        if len(values["weights"]) == 0:
+            values["weights"] = range(1, values["number_of_states"] + 1)
         return values
 
 

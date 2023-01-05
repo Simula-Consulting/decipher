@@ -20,8 +20,8 @@ def data_weights(
 
     Raises ValueError if there are observed states for which no weight is given.
     """
-    if weights is None:
-        weights = settings.matfact_defaults.weights
+
+    weights = weights or settings.matfact_defaults.weights
 
     assert np.min(observed_data_matrix) >= 0  # Observed data should never be negative
     if np.max(observed_data_matrix) > len(weights):  # type: ignore
