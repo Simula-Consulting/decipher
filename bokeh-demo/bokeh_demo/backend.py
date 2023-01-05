@@ -630,10 +630,9 @@ class BooleanFilter(BaseFilter):
         active: bool = False,
         inverted: bool = False,
     ):
-        self.active = active
-        self.inverted = inverted
-        self.source_manager = source_manager
-
+        super().__init__(
+            source_manager=source_manager, active=active, inverted=inverted
+        )
         self.filters = filters
         self.bokeh_bool = bokeh_bool_filter
 
