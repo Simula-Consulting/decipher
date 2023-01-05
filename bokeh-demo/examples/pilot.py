@@ -13,6 +13,9 @@ by the visualization.
 """
 
 import copy
+import random
+from dataclasses import dataclass
+from enum import Enum
 
 import tensorflow as tf
 from bokeh.layouts import column, row
@@ -27,7 +30,9 @@ from matfact.model.predict.dataset_utils import prediction_data
 from bokeh_demo.backend import (
     BaseFilter,
     BooleanFilter,
+    CategoricalFilter,
     ExamSimpleFilter,
+    Person,
     PersonSimpleFilter,
     PredictionData,
     RangeFilter,
@@ -101,6 +106,7 @@ def example_app(source_manager):
     vaccine_group = get_filter_element_from_source_manager(
         "vaccine_age", source_manager
     )
+    category_group = get_filter_element_from_source_manager("category", source_manager)
 
     curdoc().add_root(
         column(
@@ -118,6 +124,7 @@ def example_app(source_manager):
                     high_risk_exam_group,
                     high_risk_decoupled_group,
                     vaccine_group,
+                    category_group,
                     get_filter_element_from_source_manager("union", source_manager),
                 ),
             ),
@@ -158,6 +165,7 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
             ],
         ),
         "vaccine_age": RangeFilter(source_manager=source_manager, field="vaccine_age"),
+        "category": CategoricalFilter(source_manager=source_manager, field="home"),
     }
 
     # Explicitly make the values a list.
@@ -172,9 +180,28 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
     return base_filters
 
 
+# We want to demonstrate categorical data, so extend Person with a custom type having
+# the categorical field 'home'.
+# We then fake the homes randomly.
+class HomePlaces(str, Enum):
+    South = "south"
+    North = "north"
+    East = "east"
+    West = "west"
+    Other = "other"
+
+
+@dataclass
+class MyPerson(Person):
+    home: HomePlaces
+
+
 def main():
     prediction_data = extract_and_predict(dataset)
     people = prediction_data.extract_people()
+    for person in people:
+        person.__class__ = MyPerson
+        person.home = random.choice(list(HomePlaces)).value
     source_manager = SourceManager.from_people(people)
     source_manager.filters = _get_filters(source_manager)
 

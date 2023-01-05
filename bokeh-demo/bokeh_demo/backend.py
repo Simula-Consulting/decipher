@@ -6,7 +6,7 @@ import operator
 from collections import defaultdict
 from collections.abc import Callable, Container, Iterable, Sequence
 from dataclasses import asdict, dataclass
-from typing import Any, cast, overload
+from typing import Any, TypeVar, cast, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -513,6 +513,87 @@ class RangeFilter(BaseFilter):
         ) -> None:
             assert len(new) == 2
             self._range = new
+            self.selected = self._get_selection_indices()
+            self.exams_selected = self._person_to_exam_indices(
+                self.selected, self.source_manager.exam_source.data["person_index"]
+            )
+            self.source_manager.update_views()
+
+        return set_value_callback
+
+    def get_filter(self) -> BokehFilter:
+        if not self.active:
+            return AllIndices()
+        return (
+            ~IndexFilter(self.selected) if self.inverted else IndexFilter(self.selected)
+        )
+
+    def get_exam_filter(self) -> BokehFilter:
+        if not self.active:
+            return AllIndices()
+        return (
+            ~IndexFilter(self.exams_selected)
+            if self.inverted
+            else IndexFilter(self.exams_selected)
+        )
+
+
+T = TypeVar("T")
+
+
+def _list_reverse_lookup(input_list: Iterable[T]) -> dict[T, list[int]]:
+    """Given an iterable, return a dict mapping values to indices.
+
+    Example:
+        >>> _list_reverse_lookup((0, 1, 0))
+        {0: [0, 2], 1: [1]}
+        >>> _list_reverse_lookup("haha")
+        {"h": [0, 2], "a": [1, 3]}
+    """
+    mapping = defaultdict(list)
+    for key, value in enumerate(input_list):
+        mapping[value].append(key)
+    return mapping
+
+
+class CategoricalFilter(BaseFilter):
+    """Filter selecting by categorical data."""
+
+    _categories: list = []
+    """The selected categories."""
+
+    def __init__(
+        self,
+        field: str,
+        source_manager: SourceManager,
+        active: bool = False,
+        inverted: bool = False,
+    ) -> None:
+        super().__init__(
+            source_manager=source_manager, active=active, inverted=inverted
+        )
+        self.field = field
+        self.category_to_indices = _list_reverse_lookup(
+            self.source_manager.person_source.data[self.field]
+        )
+
+        self.selected = self._get_selection_indices()
+        self.exams_selected = self._person_to_exam_indices(
+            self.selected, self.source_manager.exam_source.data["person_index"]
+        )
+
+    def _get_selection_indices(self) -> list[int]:
+        return list(
+            itertools.chain.from_iterable(
+                self.category_to_indices[category] for category in self._categories
+            )
+        )
+
+    def get_set_value_callback(
+        self,
+    ) -> Callable[[str, list, list], None]:
+        def set_value_callback(attr: str, old: list, new: list) -> None:
+            self._categories = new
             self.selected = self._get_selection_indices()
             self.exams_selected = self._person_to_exam_indices(
                 self.selected, self.source_manager.exam_source.data["person_index"]

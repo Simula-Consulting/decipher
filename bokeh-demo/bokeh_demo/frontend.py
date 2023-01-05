@@ -20,6 +20,7 @@ from bokeh.models import (  # type: ignore
     LayoutDOM,
     Legend,
     LegendItem,
+    MultiChoice,
     Paragraph,
     RangeSlider,
     Row,
@@ -32,6 +33,7 @@ from bokeh.plotting import figure
 from .backend import (
     BaseFilter,
     BooleanFilter,
+    CategoricalFilter,
     ExamSimpleFilter,
     PersonSimpleFilter,
     RangeFilter,
@@ -455,6 +457,8 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
 class FilterValueUIElement(Enum):
     RangeSlider = auto()
     """A simple range slider."""
+    MultiChoice = auto()
+    """Select multiple from a selection."""
     BoolCombination = auto()
     """A composition of all child elements."""
     NoValue = auto()
@@ -463,6 +467,7 @@ class FilterValueUIElement(Enum):
 
 FILTER_TO_FilterValueUIElement_MAPPING = {
     BaseFilter: FilterValueUIElement.NoValue,
+    CategoricalFilter: FilterValueUIElement.MultiChoice,
     SimpleFilter: FilterValueUIElement.NoValue,
     PersonSimpleFilter: FilterValueUIElement.NoValue,
     ExamSimpleFilter: FilterValueUIElement.NoValue,
@@ -492,6 +497,14 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
     match (FILTER_TO_FilterValueUIElement_MAPPING[type(filter)]):
         case FilterValueUIElement.RangeSlider:
             value_element = RangeSlider(value=(0, 100), start=0, end=100)
+            value_element.on_change("value", filter.get_set_value_callback())
+        case FilterValueUIElement.MultiChoice:
+            # We guarantuee CategoricalFilter inside this match
+            filter = cast(CategoricalFilter, filter)
+            value_element = MultiChoice(
+                value=filter._categories,
+                options=list(filter.category_to_indices.keys()),
+            )
             value_element.on_change("value", filter.get_set_value_callback())
         case FilterValueUIElement.BoolCombination:
             value_element = column(
