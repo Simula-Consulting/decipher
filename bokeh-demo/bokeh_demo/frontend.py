@@ -1,3 +1,4 @@
+import itertools
 from enum import Enum, auto
 from typing import Callable, Collection, Generator, Iterable, Sequence, cast
 
@@ -44,6 +45,22 @@ from .backend import (
 from .settings import settings
 
 
+def pad_range(
+    range: tuple[float, float], padding: float = settings.range_padding
+) -> tuple[float, float]:
+    """Util tool for padding a range.
+
+    Given a range, pad such that the new interval is padding bigger than the original.
+
+    Example:
+        >>> pad_range((0, 1), 0.5)
+        (-0.25, 1.25)
+    """
+    min, max = range
+    diff = max - min
+    return (min - diff * padding / 2, max + diff * padding / 2)
+
+
 class ToolsMixin:
     def _get_tools(self):
         return settings.default_tools + settings.extra_tools
@@ -77,6 +94,12 @@ class LexisPlot(ToolsMixin):
             x_axis_label=self._x_label,
             y_axis_label=self._y_label,
             tools=self._get_tools(),
+            x_range=pad_range(
+                self.get_min_max((self._lexis_line_x_key, self._vaccine_line_x_key))
+            ),
+            y_range=pad_range(
+                self.get_min_max((self._lexis_line_y_key, self._vaccine_line_y_key))
+            ),
         )
         self.life_line = self.figure.multi_line(
             self._lexis_line_x_key,
@@ -133,6 +156,19 @@ class LexisPlot(ToolsMixin):
         # gives a similar effect to having a bigger marker.
         self.scatter.hover_glyph = Circle(x="x", y="y", line_width=10, line_color="red")
 
+    def get_min_max(self, keys: Iterable[str]) -> tuple[int, int] | tuple[float, float]:
+        def flatten(itr: Iterable) -> Iterable:
+            for element in itr:
+                if isinstance(element, Iterable):
+                    yield from flatten(element)
+                else:
+                    yield element
+
+        x_ranges = list(
+            flatten(self.source_manager.person_source.data[key] for key in keys)
+        )
+        return (min(x_ranges), max(x_ranges))
+
 
 class LexisPlotAge(LexisPlot):
     _y_label: str = "Year"
@@ -157,7 +193,19 @@ class TrajectoriesPlot(ToolsMixin):
     _predicted_exam_color: str = "red"
 
     def __init__(self, source_manager: SourceManager):
-        self.figure = figure(x_axis_label="Age", tools=self._get_tools())
+        # Find min/max on x-axis
+        x_axis_data = list(
+            itertools.chain.from_iterable(
+                source_manager.person_source.data["exam_time_age"]
+            )
+        )
+
+        self.figure = figure(
+            x_axis_label="Age",
+            tools=self._get_tools(),
+            x_range=pad_range((min(x_axis_data), max(x_axis_data))),
+            y_range=pad_range((0, len(settings.label_map) - 1)),
+        )
 
         self.exam_plot = self.figure.multi_line(
             "exam_time_age",
@@ -204,10 +252,13 @@ class DeltaScatter(ToolsMixin):
     _delta_scatter_y_key: str = "delta"
 
     def __init__(self, source_manager: SourceManager):
+        number_of_individuals = len(source_manager.person_source.data["index"])
         self.figure = figure(
             x_axis_label="Individual",
             y_axis_label="Delta score (lower better)",
             tools=self._get_tools(),
+            y_range=pad_range((-1, 1)),
+            x_range=pad_range((0, number_of_individuals)),
         )
 
         # Generate a index list based on delta score
