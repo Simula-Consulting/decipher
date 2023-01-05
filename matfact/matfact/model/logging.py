@@ -9,7 +9,7 @@ import re
 from contextlib import nullcontext
 from typing import Callable, cast
 
-import mlflow  # type: ignore
+import mlflow
 import numpy as np
 
 from matfact.config import settings
