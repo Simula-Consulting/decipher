@@ -12,7 +12,7 @@ import tensorflow as tf
 from matfact.data_generation import Dataset
 from matfact.model import reconstruction_mse, train_and_log
 from matfact.model.logging import MLFlowLoggerDiagnostic
-from matfact.settings import DATASET_PATH, FIGURE_PATH
+from matfact.settings import settings
 
 
 def experiment(
@@ -21,7 +21,7 @@ def experiment(
     enable_weighting: bool = False,
     enable_convolution: bool = False,
     mlflow_tags: dict | None = None,
-    dataset_path: pathlib.Path = DATASET_PATH,
+    dataset_path: pathlib.Path = settings.paths.dataset,
 ):
     """Execute and log an experiment.
 
@@ -68,14 +68,18 @@ def experiment(
         use_weights=enable_weighting,
         extra_metrics=extra_metrics,
         use_convolution=enable_convolution,
-        logger_context=MLFlowLoggerDiagnostic(FIGURE_PATH, extra_tags=mlflow_tags),
+        logger_context=MLFlowLoggerDiagnostic(
+            settings.paths.figure, extra_tags=mlflow_tags
+        ),
         **hyperparams
     )
 
 
 def main():
     # Generate some data
-    Dataset.generate(N=1000, T=50, rank=5, sparsity_level=6).save(DATASET_PATH)
+    Dataset.generate(N=1000, T=50, rank=5, sparsity_level=6).save(
+        settings.paths.dataset
+    )
 
     USE_GPU = False
     if not USE_GPU:

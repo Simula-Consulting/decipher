@@ -1,5 +1,3 @@
-from typing import Sequence
-
 import numpy as np
 import numpy.typing as npt
 import scipy
@@ -7,12 +5,12 @@ import tensorflow as tf
 from tensorflow.keras.constraints import Constraint
 from tensorflow.math import log, reduce_sum, sigmoid
 
-from matfact import settings
 from matfact.model.factorization.convergence import ConvergenceMonitorLoss
+from matfact.settings import settings
 
 
 def data_weights(
-    observed_data_matrix: npt.NDArray[np.int_], weights: Sequence[float] | None = None
+    observed_data_matrix: npt.NDArray[np.int_], weights: list[float] | None = None
 ):
     """Construct a weight matrix for observed data.
 
@@ -22,8 +20,8 @@ def data_weights(
 
     Raises ValueError if there are observed states for which no weight is given.
     """
-    if weights is None:
-        weights = settings.default_weights
+
+    weights = weights or settings.matfact_defaults.weights
 
     assert np.min(observed_data_matrix) >= 0  # Observed data should never be negative
     if np.max(observed_data_matrix) > len(weights):
@@ -133,10 +131,11 @@ def propensity_weights(
     observed_data_matrix: npt.NDArray[np.int_],
     learning_rate: float = 0.1,
     max_iter: int = 100,
-    tau: float = settings.DEFAULT_TAU,
-    gamma: float = settings.DEFAULT_GAMMA,
+    tau: float = settings.propensity_weights.tau,
+    gamma: float = settings.propensity_weights.gamma,
 ) -> npt.NDArray[np.float_]:
-    """Construct weight matrix scaled by the inverse propensity score.
+    """
+    Construct weight matrix scaled by the inverse propensity score.
     The propensity scores are calculated from a binary map of the observation matrix.
     """
     M = np.zeros_like(observed_data_matrix)

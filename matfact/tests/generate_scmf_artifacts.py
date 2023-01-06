@@ -4,9 +4,9 @@ import warnings
 import numpy as np
 from test_scmf import _generate_SCMF_logs
 
-from matfact.settings import TEST_PATH
+from matfact.settings import settings
 
-artifact_path = TEST_PATH / "test_artifacts" / "SCMF_test"
+artifact_path = settings.paths.test / "test_artifacts" / "SCMF_test"
 
 if __name__ == "__main__":
     warnings.warn(

@@ -8,7 +8,6 @@ from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays
 
-from matfact import settings
 from matfact.model import CMF, SCMF, WCMF, data_weights, prediction_data, train_and_log
 from matfact.model.config import ModelConfig
 from matfact.model.factorization.convergence import ConvergenceMonitor
@@ -21,6 +20,7 @@ from matfact.model.logging import (
     dummy_logger_context,
 )
 from matfact.plotting.diagnostic import _calculate_delta
+from matfact.settings import settings
 
 
 def test_aggregate_fields():
@@ -261,7 +261,9 @@ def test_model_input_not_changed():
     arrays(
         int,
         array_shapes(min_dims=2, max_dims=2),
-        elements=st.integers(min_value=0, max_value=settings.default_number_of_states),
+        elements=st.integers(
+            min_value=0, max_value=settings.matfact_defaults.number_of_states
+        ),
     )
 )
 def test_prediction_data(X):
@@ -299,9 +301,9 @@ def test_data_weights():
     """Test generation of data weights."""
     data_shape = (4, 3)  # Chosen arbitrarily
     observed_data = np.random.randint(
-        low=0, high=settings.default_number_of_states, size=data_shape
+        low=0, high=settings.matfact_defaults.number_of_states, size=data_shape
     )
-    weight_per_class = range(settings.default_number_of_states)
+    weight_per_class = range(settings.matfact_defaults.number_of_states)
     weights = data_weights(observed_data, weight_per_class)
 
     for i, weight in enumerate(weight_per_class):

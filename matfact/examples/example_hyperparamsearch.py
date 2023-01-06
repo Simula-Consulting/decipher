@@ -13,7 +13,7 @@ from skopt.utils import use_named_args
 from matfact.data_generation import Dataset
 from matfact.model import train_and_log
 from matfact.model.logging import MLFlowBatchLogger, MLFlowLogger, dummy_logger_context
-from matfact.settings import BASE_PATH, DATASET_PATH
+from matfact.settings import settings
 
 
 def get_objective(data: Dataset, search_space: list, **hyperparams):
@@ -79,7 +79,7 @@ def example_hyperparameter_search(objective_getter: Callable = get_objective_CV)
 
     objective_getter: callable returning an objective function."""
     tf.config.set_visible_devices([], "GPU")
-    mlflow.set_tracking_uri(BASE_PATH / "mlruns")
+    mlflow.set_tracking_uri(settings.paths.base / "mlruns")
     space = (
         Real(-5.0, 1, name="lambda1"),
         Real(8, 20, name="lambda2"),
@@ -88,7 +88,7 @@ def example_hyperparameter_search(objective_getter: Callable = get_objective_CV)
 
     # Load data
     try:
-        data = Dataset.from_file(DATASET_PATH)
+        data = Dataset.from_file(settings.paths.dataset)
     except FileNotFoundError:  # No data loaded
         data = Dataset.generate(1000, 40, 5, 5)
 

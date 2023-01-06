@@ -11,7 +11,7 @@ from examples.example import experiment as experiment1  # type: ignore
 from examples.example_train_and_log import experiment as experiment2  # type: ignore
 from matfact.data_generation import Dataset
 from matfact.model.factorization.convergence import ConvergenceMonitor
-from matfact.settings import BASE_PATH
+from matfact.settings import settings
 
 
 @pytest.mark.skip(
@@ -19,7 +19,7 @@ from matfact.settings import BASE_PATH
 )
 def test_all_examples():
     """Run all example scripts."""
-    example_path = BASE_PATH / "examples"
+    example_path = settings.paths.base / "examples"
     for example in example_path.glob("*.py"):
         importlib.import_module(f"examples.{example.stem}", "matfact").main()
 

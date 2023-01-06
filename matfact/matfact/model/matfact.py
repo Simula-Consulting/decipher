@@ -10,7 +10,7 @@ from matfact.model.predict.classification_tree import (
     estimate_probability_thresholds,
 )
 from matfact.model.predict.dataset_utils import prediction_data
-from matfact.settings import DEFAULT_AGE_SEGMENTS
+from matfact.settings import settings
 
 
 class NotFittedException(Exception):
@@ -49,7 +49,9 @@ class ClassificationTreePredictor:
     _classification_tree: ClassificationTree
 
     def __init__(self, segments: Sequence[int] | None = None) -> None:
-        self.segments = DEFAULT_AGE_SEGMENTS if segments is None else segments
+        self.segments = (
+            settings.matfact_defaults.age_segments if segments is None else segments
+        )
 
     def fit(self, matfact: "MatFact", observation_matrix: npt.NDArray[np.int_]) -> None:
         self.matfact = matfact
