@@ -525,12 +525,14 @@ FILTER_TO_FilterValueUIElement_MAPPING = {
 
 
 def get_filter_element_from_source_manager(
-    filter_name: str, source_manager: SourceManager
+    filter_name: str,
+    source_manager: SourceManager,
+    label: str | None = None,
 ) -> LayoutDOM:
     if filter_name not in source_manager.filters:
         raise ValueError(f"The source manager does not have the filter {filter_name}.")
     filter = source_manager.filters[filter_name]
-    return get_filter_element(filter, filter_name)
+    return get_filter_element(filter, label or filter_name)
 
 
 def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:

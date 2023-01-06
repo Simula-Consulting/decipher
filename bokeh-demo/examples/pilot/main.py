@@ -125,7 +125,7 @@ def example_app(source_manager):
             vaccine_group,
             category_group,
             get_filter_element_from_source_manager(
-                "symmetric_difference", source_manager
+                "symmetric_difference", source_manager, label="XOR"
             ),
         ),
     ):
