@@ -1,6 +1,7 @@
 import numpy as np
 
-from .utils import age_group_idx, lambda_sr, p_init_state
+from hmm_synthetic.backend.utils import age_group_idx
+from hmm_synthetic.settings import settings
 
 
 def initial_state(
@@ -12,7 +13,7 @@ def initial_state(
     """Sample a state at first screening."""
 
     if initial_state_probabilities is None:
-        initial_state_probabilities = p_init_state.copy()
+        initial_state_probabilities = settings.static.p_init_states.copy()
     if rnd is None:
         rnd = np.random.default_rng()
 
@@ -28,7 +29,7 @@ def legal_transition_lambdas(current_state: int, time_idx: int) -> np.ndarray:
     """Filter intensities for shifts from the current state."""
 
     # Transition intensities for the given age group.
-    lambdas = np.squeeze(lambda_sr[time_idx])
+    lambdas = np.squeeze(settings.static.lambda_sr[time_idx])
 
     # N0 -> L1/D4.
     if current_state == 1:
