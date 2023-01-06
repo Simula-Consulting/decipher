@@ -8,6 +8,7 @@ from hypothesis import strategies as st
 
 from hmm_synthetic import data_generator
 from hmm_synthetic.backend import sojourn, transition, utils
+from hmm_synthetic.settings import settings
 
 
 # The fixture is static, and to play nicely with
@@ -153,7 +154,7 @@ def test_legal_transition_lambdas() -> None:
     # correspondingly.
     # I.e. transition_rates[0, 2] is the transition_rate for H2->C3 for the first
     # age partition.
-    transition_rates = utils.lambda_sr
+    transition_rates = settings.static.lambda_sr
     transition_list = [
         [0, 5],
         [3, 1, 6],
