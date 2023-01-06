@@ -24,10 +24,10 @@ def data_weights(
     weights = weights or settings.matfact_defaults.weights
 
     assert np.min(observed_data_matrix) >= 0  # Observed data should never be negative
-    if np.max(observed_data_matrix) > len(weights):  # type: ignore
+    if np.max(observed_data_matrix) > len(weights):
         raise ValueError("The observed data have states for which no weight is given.")
     weight_matrix = np.zeros(observed_data_matrix.shape)
-    for i, weight in enumerate(weights):  # type: ignore
+    for i, weight in enumerate(weights):
         state = i + 1  # States are one indexed
         weight_matrix[observed_data_matrix == state] = weight
     return weight_matrix

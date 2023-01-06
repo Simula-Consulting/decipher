@@ -40,18 +40,16 @@ class ConvergenceMonitor:
 
     def __init__(
         self,
-        number_of_epochs: int | None = None,
-        epochs_per_val: int | None = None,
-        patience: int | None = None,
+        number_of_epochs: int = settings.convergence.number_of_epochs,
+        epochs_per_val: int = settings.convergence.epochs_per_val,
+        patience: int = settings.convergence.patience,
         tolerance: float = 1e-4,
         show_progress: bool = True,
     ):
 
-        self.number_of_epochs = (
-            number_of_epochs or settings.convergence.number_of_epochs
-        )
-        self.epochs_per_val = epochs_per_val or settings.convergence.epochs_per_val
-        self.patience = patience or settings.convergence.patience
+        self.number_of_epochs = number_of_epochs
+        self.epochs_per_val = epochs_per_val
+        self.patience = patience
         self.tolerance = tolerance
         self._range = trange if show_progress else range
 
