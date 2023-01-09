@@ -556,10 +556,17 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
             value_element.on_change("value", filter.get_set_value_callback())
         case FilterValueUIElement.BoolCombination:
             value_element = column(
-                [
+                row(
+                    [
+                        Paragraph(text="Active"),
+                        Paragraph(text="Invert"),
+                        Paragraph(text="Value"),
+                    ]
+                ),
+                *(
                     get_filter_element(element)
                     for element in cast(BooleanFilter, filter).filters
-                ]
+                ),
             )
         case FilterValueUIElement.NoValue:
             value_element = None
