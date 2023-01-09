@@ -5,6 +5,7 @@ from enum import Enum
 class ExamTypes(str, Enum):
     Cytology = "cytology"
     Histology = "histology"
+    HistologyTreatment = "histology treatment"
     HPV = "HPV"
 
 
@@ -34,6 +35,13 @@ EXAM_RESULT_LOOKUP = {
         Diagnosis.CytDiagnosis2,
     ],
     ExamTypes.Histology: [
+        Diagnosis.HistDiagnosis0,
+        Diagnosis.HistDiagnosis1,
+        Diagnosis.HistDiagnosis2,
+        Diagnosis.HistDiagnosis3,
+        Diagnosis.HistDiagnosis4,
+    ],
+    ExamTypes.HistologyTreatment: [
         Diagnosis.HistDiagnosis0,
         Diagnosis.HistDiagnosis1,
         Diagnosis.HistDiagnosis2,
