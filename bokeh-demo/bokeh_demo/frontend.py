@@ -252,7 +252,7 @@ class TrajectoriesPlot(ToolsMixin):
         hover_tool = HoverTool(
             tooltips=[
                 ("Id", "$index"),
-                ("Vaccine", "@vaccine_age{0.0}"),
+                ("Vaccine", "@vaccine_age{0.0} (@vaccine_type)"),
                 ("Probabilities", "@prediction_probabilities{custom}"),
             ],
             formatters={"@prediction_probabilities": list_formatter},

@@ -2,6 +2,11 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+class VaccineType(str, Enum):
+    VaccineType1 = "Vaccine type 1"
+    VaccineType2 = "Vaccine type 2"
+
+
 class ExamTypes(str, Enum):
     Cytology = "cytology"
     Histology = "histology"

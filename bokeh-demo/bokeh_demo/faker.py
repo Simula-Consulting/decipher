@@ -3,7 +3,7 @@ from typing import Iterable, Mapping, Sequence, TypeVar, overload
 
 import numpy as np
 
-from .exam_data import EXAM_RESULT_LOOKUP, EXAM_RESULT_MAPPING, ExamResult
+from .exam_data import EXAM_RESULT_LOOKUP, EXAM_RESULT_MAPPING, ExamResult, VaccineType
 
 T = TypeVar("T")
 S = TypeVar("S")
@@ -71,6 +71,10 @@ class Faker:
             if self.rng.random() < vaccine_prob
             else None
         )
+
+    def get_fake_vaccine_type(self) -> VaccineType:
+        # Ugly hack as rng.choice seems to convert the type to a string...
+        return VaccineType(self.rng.choice([v.value for v in VaccineType]))
 
     def get_fake_detailed_result(
         self, coarse_exam_result: Sequence[int]

@@ -19,6 +19,7 @@ from bokeh_demo.exam_data import (
     EXAM_RESULT_MAPPING,
     Diagnosis,
     ExamTypes,
+    VaccineType,
 )
 from bokeh_demo.faker import coarse_to_exam_result
 
@@ -124,12 +125,18 @@ def person_strategy(
         + 1
     )
 
+    vaccine_age = draw(st.one_of(st.integers(min_value=0, max_value=30), st.none()))
+    vaccine_type = draw(
+        st.sampled_from(VaccineType) if vaccine_age is not None else st.none()
+    )
+
     return Person(
         index=0,  # TODO: find out how to do the index
         year_of_birth=draw(st.floats(min_value=1960, max_value=2000)),
-        vaccine_age=draw(st.one_of(st.integers(min_value=0, max_value=30), st.none())),
         exam_results=exam_results,
         detailed_exam_results=detailed_exam_results,
+        vaccine_age=vaccine_age,
+        vaccine_type=vaccine_type,
         predicted_exam_result=predicted_state,
         prediction_time=prediction_time,
         prediction_probabilities=prediction_probabilities,

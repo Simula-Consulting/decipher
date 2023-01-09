@@ -20,7 +20,7 @@ from bokeh.models import (
     UnionFilter,
 )
 
-from .exam_data import ExamResult
+from .exam_data import ExamResult, VaccineType
 from .faker import faker
 from .settings import settings
 
@@ -120,6 +120,7 @@ class Person:
     index: int
     year_of_birth: float  # Float to allow granular date
     vaccine_age: float | None
+    vaccine_type: VaccineType | None
     exam_results: Sequence[int]
     detailed_exam_results: Sequence[ExamResult | None]
     predicted_exam_result: int
@@ -243,12 +244,14 @@ class PredictionData:
 
             year_of_birth = faker.get_fake_year_of_birth(i)
             vaccine_age = faker.get_fake_vaccine_age()
+            vaccine_type = faker.get_fake_vaccine_type() if vaccine_age else None
 
             people.append(
                 Person(
                     index=i,
                     year_of_birth=year_of_birth,
                     vaccine_age=vaccine_age,
+                    vaccine_type=vaccine_type,
                     exam_results=exam_result,
                     detailed_exam_results=detailed_exam_result,
                     predicted_exam_result=prediction_state,
