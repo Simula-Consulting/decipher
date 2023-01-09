@@ -1,4 +1,6 @@
-from typing import Sequence
+import itertools
+from enum import Enum, auto
+from typing import Callable, Collection, Generator, Iterable, Sequence, cast
 
 import numpy as np
 
@@ -8,6 +10,7 @@ import numpy as np
 # identifies it in bokeh.models.widgets.tables and also that it is exported
 # to bokeh.models.widgets. However, for some reason, it is not propagated to
 # bokeh.models.
+from bokeh.layouts import column, row
 from bokeh.models import (  # type: ignore
     Circle,
     CustomJSExpr,
@@ -15,15 +18,48 @@ from bokeh.models import (  # type: ignore
     DataTable,
     HoverTool,
     Label,
+    LayoutDOM,
     Legend,
     LegendItem,
+    MultiChoice,
+    Paragraph,
+    RangeSlider,
+    Row,
+    Switch,
     TableColumn,
 )
 from bokeh.models.tickers import FixedTicker
 from bokeh.plotting import figure
 
-from .backend import SourceManager
+from .backend import (
+    BaseFilter,
+    BooleanFilter,
+    CategoricalFilter,
+    ExamSimpleFilter,
+    PersonSimpleFilter,
+    RangeFilter,
+    SimpleFilter,
+    SourceManager,
+    parse_filter_to_indices,
+)
 from .settings import settings
+
+
+def pad_range(
+    range: tuple[float, float], padding: float | None = None
+) -> tuple[float, float]:
+    """Util tool for padding a range.
+
+    Given a range, pad such that the new interval is 1 + padding bigger than the original.
+
+    Example:
+        >>> pad_range((0, 1), 0.5)
+        (-0.25, 1.25)
+    """
+    padding = padding if padding is not None else settings.range_padding
+    min, max = range
+    diff = max - min
+    return (min - diff * padding / 2, max + diff * padding / 2)
 
 
 class ToolsMixin:
@@ -59,16 +95,24 @@ class LexisPlot(ToolsMixin):
             x_axis_label=self._x_label,
             y_axis_label=self._y_label,
             tools=self._get_tools(),
+            x_range=pad_range(
+                self.get_min_max((self._lexis_line_x_key, self._vaccine_line_x_key))
+            ),
+            y_range=pad_range(
+                self.get_min_max((self._lexis_line_y_key, self._vaccine_line_y_key))
+            ),
         )
         self.life_line = self.figure.multi_line(
             self._lexis_line_x_key,
             self._lexis_line_y_key,
             source=source_manager.person_source,
+            view=source_manager.view,
         )
         self.vaccine_line = self.figure.multi_line(
             self._vaccine_line_x_key,
             self._vaccine_line_y_key,
             source=source_manager.person_source,
+            view=source_manager.view,
             line_width=self._vaccine_line_width,
             color=self._vaccine_line_color,
         )
@@ -90,6 +134,7 @@ class LexisPlot(ToolsMixin):
             self._scatter_x_key,
             self._scatter_y_key,
             source=self.source_manager.exam_source,
+            view=source_manager.exam_view,
             color={
                 "expr": CustomJSExpr(
                     args={"colors": self._marker_colors},
@@ -111,6 +156,19 @@ class LexisPlot(ToolsMixin):
         # We get around this issue by instead having a thick line_width, which
         # gives a similar effect to having a bigger marker.
         self.scatter.hover_glyph = Circle(x="x", y="y", line_width=10, line_color="red")
+
+    def get_min_max(self, keys: Iterable[str]) -> tuple[int, int] | tuple[float, float]:
+        def flatten(itr: Iterable) -> Iterable:
+            for element in itr:
+                if isinstance(element, Iterable):
+                    yield from flatten(element)
+                else:
+                    yield element
+
+        x_ranges = list(
+            flatten(self.source_manager.person_source.data[key] for key in keys)
+        )
+        return (min(x_ranges), max(x_ranges))
 
 
 class LexisPlotAge(LexisPlot):
@@ -136,13 +194,25 @@ class TrajectoriesPlot(ToolsMixin):
     _predicted_exam_color: str = "red"
 
     def __init__(self, source_manager: SourceManager):
-        self.figure = figure(x_axis_label="Age", tools=self._get_tools())
+        # Find min/max on x-axis
+        x_axis_data = list(
+            itertools.chain.from_iterable(
+                source_manager.person_source.data["exam_time_age"]
+            )
+        )
+
+        self.figure = figure(
+            x_axis_label="Age",
+            tools=self._get_tools(),
+            x_range=pad_range((min(x_axis_data), max(x_axis_data))),
+            y_range=pad_range((0, len(settings.label_map) - 1)),
+        )
 
         self.exam_plot = self.figure.multi_line(
             "exam_time_age",
             "exam_results",
             source=source_manager.person_source,
-            view=source_manager.only_selected_view,
+            view=source_manager.combined_view,
             color=self._exam_color,
             legend_label="Actual observation",
         )
@@ -150,7 +220,7 @@ class TrajectoriesPlot(ToolsMixin):
             "exam_time_age",
             "predicted_exam_results",
             source=source_manager.person_source,
-            view=source_manager.only_selected_view,
+            view=source_manager.combined_view,
             color=self._predicted_exam_color,
             legend_label="Predicted observation",
         )
@@ -183,22 +253,28 @@ class DeltaScatter(ToolsMixin):
     _delta_scatter_y_key: str = "delta"
 
     def __init__(self, source_manager: SourceManager):
+        number_of_individuals = len(source_manager.person_source.data["index"])
         self.figure = figure(
             x_axis_label="Individual",
             y_axis_label="Delta score (lower better)",
             tools=self._get_tools(),
+            y_range=pad_range((-1, 1)),
+            x_range=pad_range((0, number_of_individuals)),
         )
 
         # Generate a index list based on delta score
         # TODO: consider guard for overwrite
         source_manager.person_source.data[
             "deltascatter__delta_score_index"
-        ] = get_position_list(source_manager.person_source.data["delta"])
+        ] = get_position_list(
+            cast(Sequence[int], source_manager.person_source.data["delta"])
+        )
 
         self.scatter = self.figure.scatter(
             self._delta_scatter_x_key,
             self._delta_scatter_y_key,
             source=source_manager.person_source,
+            view=source_manager.view,
         )
 
 
@@ -244,13 +320,16 @@ class PersonTable:
 
 
 class LabelSelectedMixin:
+    source_manager: SourceManager
+    _number_of_individuals: int
+
     def add_label(self):
         self.label = Label(
             x=10,
             y=410,
             x_units="screen",
             y_units="screen",
-            text=self._get_label_text(),
+            text=self._get_label_text(range(self._number_of_individuals)),
             text_font_size="12px",
             border_line_color="black",
             border_line_alpha=1.0,
@@ -259,7 +338,17 @@ class LabelSelectedMixin:
         )
         self.figure.add_layout(self.label)
 
-    def _get_age_at_exam(self, selected_indices):
+    def register_label(self) -> None:
+        """Add label to layout and attach callbacks."""
+        self.add_label()
+        self.source_manager.person_source.selected.on_change(  # type: ignore
+            "indices", self.get_update_label_callback()
+        )
+        self.source_manager.view.on_change("filter", self.get_update_label_callback())
+
+    def _get_age_at_exam(
+        self, selected_indices: Iterable[int]
+    ) -> Generator[list[float], None, None]:
         return (
             [
                 age
@@ -273,15 +362,16 @@ class LabelSelectedMixin:
         )
 
     @staticmethod
-    def _compute_average_screening_interval(nested_age_at_exam):
-        screening_intervals = []
+    def _compute_average_screening_interval(
+        nested_age_at_exam: Iterable[Sequence[float]],
+    ) -> float:
+        screening_intervals: list[float] = []
         for x in nested_age_at_exam:
             screening_intervals += np.diff(x).tolist()
         # Convert to months
-        return np.mean(screening_intervals) * 12
+        return cast(float, np.mean(screening_intervals)) * 12
 
-    def _get_label_text(self, selected_indices=None):
-        selected_indices = selected_indices or range(self._number_of_individuals)
+    def _get_label_text(self, selected_indices: Collection[int]) -> str:
         n_vaccines = sum(
             self.source_manager.person_source.data["vaccine_age"][i] is not None
             for i in selected_indices
@@ -297,10 +387,25 @@ class LabelSelectedMixin:
             f" Average screening interval: ~{round(average_screening_interval, 2)} months"  # noqa: E501
         )
 
-    def get_update_label_callback(self):
-        def update_label_callback(attr, old, new):
-            new = new if len(new) else list(range(self._number_of_individuals))
-            self.label.text = self._get_label_text(new)
+    def get_update_label_callback(self) -> Callable[..., None]:
+        """Get a callback function for updating the label.
+
+        The label update callback is attached to multiple quantities, so we do not
+        use the supplied old/new values, but use directly the state in source_manager."""
+
+        def update_label_callback(attr, old, new) -> None:
+            # If nothing is selected, interpret it as everything is selected.
+            selected_indices = set(
+                self.source_manager.person_source.selected.indices  # type: ignore
+                or range(self._number_of_individuals)
+            )
+            filtered_indices = set(
+                parse_filter_to_indices(
+                    self.source_manager.view.filter, self._number_of_individuals  # type: ignore
+                )
+            )
+            filtered_and_selected_indices = selected_indices & filtered_indices
+            self.label.text = self._get_label_text(filtered_and_selected_indices)
 
         return update_label_callback
 
@@ -314,7 +419,7 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
 
         self.figure = figure(tools=self._get_tools())
         self.quad = self.figure.quad(
-            top=self.compute_histogram_data(),
+            top=self.compute_histogram_data(range(self._number_of_individuals)),
             bottom=0,
             left=np.arange(0, 4) + 0.5,
             right=np.arange(1, 5) + 0.5,
@@ -324,15 +429,16 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
             name="quad",
         )
 
-        self.source_manager.person_source.selected.on_change(
+        # Mistakenly reports no attribute on_change
+        self.source_manager.person_source.selected.on_change(  # type: ignore
             "indices", self.get_update_histogram_callback()
+        )
+        self.source_manager.view.on_change(
+            "filter", self.get_update_histogram_callback()
         )
 
         # Add label from LabelSelectedMixin
-        self.add_label()
-        self.source_manager.person_source.selected.on_change(
-            "indices", self.get_update_label_callback()
-        )
+        self.register_label()
 
         self._set_properties()
 
@@ -352,8 +458,7 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
             for option, value in module_options.items():
                 setattr(getattr(self.figure, module), option, value)
 
-    def compute_histogram_data(self, selected_indices=None):
-        selected_indices = selected_indices or range(self._number_of_individuals)
+    def compute_histogram_data(self, selected_indices: Iterable[int]):
         state_occurrences = self._count_state_occurrences(
             [
                 [
@@ -376,10 +481,100 @@ class HistogramPlot(ToolsMixin, LabelSelectedMixin):
                 out[state] += 1
         return out
 
-    def get_update_histogram_callback(self):
-        def update_histogram(attr, old, new):
-            new = new if len(new) else list(range(self._number_of_individuals))
+    def get_update_histogram_callback(self) -> Callable[..., None]:
+        """Get a callback function for updating the histogram.
 
-            self.quad.data_source.data["top"] = self.compute_histogram_data(new)
+        The callback is attached to multiple quantities, so we do not use
+        the supplied old/new values, but use directly the state in source_manager."""
+
+        def update_histogram(attr, old, new) -> None:
+            # If nothing is selected, interpret it as everything is selected.
+            selected_indices = set(
+                self.source_manager.person_source.selected.indices  # type: ignore
+                or range(self._number_of_individuals)
+            )
+            filtered_indices = set(
+                parse_filter_to_indices(
+                    self.source_manager.view.filter, self._number_of_individuals  # type: ignore
+                )
+            )
+            filtered_and_selected_indices = selected_indices & filtered_indices
+            self.quad.data_source.data["top"] = self.compute_histogram_data(
+                filtered_and_selected_indices
+            )
 
         return update_histogram
+
+
+class FilterValueUIElement(Enum):
+    RangeSlider = auto()
+    """A simple range slider."""
+    MultiChoice = auto()
+    """Select multiple from a selection."""
+    BoolCombination = auto()
+    """A composition of all child elements."""
+    NoValue = auto()
+    """Filters without any value, only on/off."""
+
+
+FILTER_TO_FilterValueUIElement_MAPPING = {
+    BaseFilter: FilterValueUIElement.NoValue,
+    CategoricalFilter: FilterValueUIElement.MultiChoice,
+    SimpleFilter: FilterValueUIElement.NoValue,
+    PersonSimpleFilter: FilterValueUIElement.NoValue,
+    ExamSimpleFilter: FilterValueUIElement.NoValue,
+    RangeFilter: FilterValueUIElement.RangeSlider,
+    BooleanFilter: FilterValueUIElement.BoolCombination,
+}
+
+
+def get_filter_element_from_source_manager(
+    filter_name: str, source_manager: SourceManager
+) -> LayoutDOM:
+    if filter_name not in source_manager.filters:
+        raise ValueError(f"The source manager does not have the filter {filter_name}.")
+    filter = source_manager.filters[filter_name]
+    return get_filter_element(filter, filter_name)
+
+
+def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
+    """Return a filter element corresponding to a filter in a source_manager."""
+
+    activation_toggle = Switch(active=False)
+    inversion_toggle = Switch(active=False)
+
+    activation_toggle.on_change("active", filter.get_set_active_callback())
+    inversion_toggle.on_change("active", filter.get_set_inverted_callback())
+
+    match (FILTER_TO_FilterValueUIElement_MAPPING[type(filter)]):
+        case FilterValueUIElement.RangeSlider:
+            value_element = RangeSlider(value=(0, 100), start=0, end=100)
+            value_element.on_change("value", filter.get_set_value_callback())
+        case FilterValueUIElement.MultiChoice:
+            # We guarantuee CategoricalFilter inside this match
+            filter = cast(CategoricalFilter, filter)
+            value_element = MultiChoice(
+                value=filter._categories,
+                options=list(filter.category_to_indices.keys()),
+            )
+            value_element.on_change("value", filter.get_set_value_callback())
+        case FilterValueUIElement.BoolCombination:
+            value_element = column(
+                [
+                    get_filter_element(element)
+                    for element in cast(BooleanFilter, filter).filters
+                ]
+            )
+        case FilterValueUIElement.NoValue:
+            value_element = None
+        case _:
+            raise ValueError()
+
+    label = Paragraph(text=label_text)
+
+    included_elements = (
+        element
+        for element in (activation_toggle, inversion_toggle, value_element, label)
+        if element is not None
+    )
+    return cast(Row, row(*included_elements))

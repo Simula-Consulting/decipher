@@ -12,8 +12,14 @@ The `Person` class is responsible for generating the source objects to be used
 by the visualization.
 """
 
+import copy
+import random
+from dataclasses import dataclass
+from enum import Enum
+
 import tensorflow as tf
 from bokeh.layouts import column, row
+from bokeh.models import SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
 from matfact.data_generation import Dataset
 from matfact.model.config import ModelConfig
@@ -21,7 +27,18 @@ from matfact.model.factorization.convergence import ConvergenceMonitor
 from matfact.model.matfact import MatFact
 from matfact.model.predict.dataset_utils import prediction_data
 
-from bokeh_demo.backend import PredictionData, SourceManager
+from bokeh_demo.backend import (
+    BaseFilter,
+    BooleanFilter,
+    CategoricalFilter,
+    ExamSimpleFilter,
+    Person,
+    PersonSimpleFilter,
+    PredictionData,
+    RangeFilter,
+    SimpleFilter,
+    SourceManager,
+)
 from bokeh_demo.frontend import (
     DeltaScatter,
     HistogramPlot,
@@ -29,6 +46,7 @@ from bokeh_demo.frontend import (
     LexisPlotAge,
     PersonTable,
     TrajectoriesPlot,
+    get_filter_element_from_source_manager,
 )
 from bokeh_demo.settings import settings
 
@@ -76,6 +94,19 @@ def example_app(source_manager):
     traj = TrajectoriesPlot(source_manager)
     table = PersonTable(source_manager)
     hist = HistogramPlot(source_manager)
+    high_risk_person_group = get_filter_element_from_source_manager(
+        "high_risk_person", source_manager
+    )
+    high_risk_exam_group = get_filter_element_from_source_manager(
+        "high_risk_exam", source_manager
+    )
+    high_risk_decoupled_group = get_filter_element_from_source_manager(
+        "high_risk_decoupled", source_manager
+    )
+    vaccine_group = get_filter_element_from_source_manager(
+        "vaccine_age", source_manager
+    )
+    category_group = get_filter_element_from_source_manager("category", source_manager)
 
     curdoc().add_root(
         column(
@@ -88,15 +119,92 @@ def example_app(source_manager):
             row(
                 hist.figure,
                 delta.figure,
+                column(
+                    high_risk_person_group,
+                    high_risk_exam_group,
+                    high_risk_decoupled_group,
+                    vaccine_group,
+                    category_group,
+                    get_filter_element_from_source_manager("union", source_manager),
+                ),
             ),
         )
     )
 
 
+def _at_least_one_high_risk(person_source):
+    """Return people with at least one high risk"""
+    return [
+        i
+        for i, exam_results in enumerate(person_source.data["exam_results"])
+        if 3 in exam_results
+    ]
+
+
+def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
+    base_filters = {
+        "high_risk_person": PersonSimpleFilter(
+            source_manager=source_manager,
+            person_indices=_at_least_one_high_risk(source_manager.person_source),
+        ),
+        "high_risk_decoupled": SimpleFilter(
+            source_manager=source_manager,
+            person_indices=_at_least_one_high_risk(source_manager.person_source),
+            exam_indices=[
+                i
+                for i, state in enumerate(source_manager.exam_source.data["state"])
+                if state == 3
+            ],
+        ),
+        "high_risk_exam": ExamSimpleFilter(
+            source_manager=source_manager,
+            exam_indices=[
+                i
+                for i, state in enumerate(source_manager.exam_source.data["state"])
+                if state == 3
+            ],
+        ),
+        "vaccine_age": RangeFilter(source_manager=source_manager, field="vaccine_age"),
+        "category": CategoricalFilter(source_manager=source_manager, field="home"),
+    }
+
+    # Explicitly make the values a list.
+    # dict.values returns a 'view', which will dynamically update, i.e.
+    # if we do not take the list, union will have itself in its filters.
+    base_filters["union"] = BooleanFilter(
+        [copy.copy(filter) for filter in base_filters.values()],
+        source_manager,
+        bokeh_bool_filter=SymmetricDifferenceFilter,
+    )
+
+    return base_filters
+
+
+# We want to demonstrate categorical data, so extend Person with a custom type having
+# the categorical field 'home'.
+# We then fake the homes randomly.
+class HomePlaces(str, Enum):
+    South = "south"
+    North = "north"
+    East = "east"
+    West = "west"
+    Other = "other"
+
+
+@dataclass
+class MyPerson(Person):
+    home: HomePlaces
+
+
 def main():
     prediction_data = extract_and_predict(dataset)
     people = prediction_data.extract_people()
+    for person in people:
+        person.__class__ = MyPerson
+        person.home = random.choice(list(HomePlaces)).value
     source_manager = SourceManager.from_people(people)
+    source_manager.filters = _get_filters(source_manager)
+
     example_app(source_manager)
 
 

@@ -2,6 +2,8 @@ import dataclasses
 import itertools
 import types
 
+import pytest
+from bokeh.models import AllIndices, IndexFilter
 from hypothesis import given, note
 from hypothesis import strategies as st
 
@@ -10,6 +12,7 @@ from bokeh_demo.backend import (
     TimeConverter,
     _combine_dicts,
     _combine_scatter_dicts,
+    parse_filter_to_indices,
 )
 from bokeh_demo.exam_data import ExamTypes
 from bokeh_demo.faker import get_inverse_mapping
@@ -190,7 +193,6 @@ def test_person_source_dict(person: Person):
 def test_person_scatter_source_dict(person: Person):
     """Test that the person scatter source dict contains all it is supposed to"""
     scatter_source_dict = person.as_scatter_source_dict()
-    note(scatter_source_dict)
 
     # Check that values are lists, with elements being int, float, or str
     for value in scatter_source_dict.values():
@@ -246,3 +248,44 @@ def test_time_converter(
         assert list(there_and_back) == times
     else:
         assert there_and_back == times
+
+
+@pytest.mark.parametrize(
+    "composite_filter, number_of_indices, result_indices",
+    (
+        (IndexFilter((1, 2)) | IndexFilter((2, 4)), 10, {1, 2, 4}),
+        (
+            IndexFilter((1, 2)) | IndexFilter((2, 4)) | IndexFilter((2, 4)),
+            10,
+            {1, 2, 4},
+        ),
+        (
+            IndexFilter((1, 2)) | IndexFilter((2, 4)) | IndexFilter((2, 9)),
+            10,
+            {1, 2, 4, 9},
+        ),
+        (IndexFilter((1, 2)) & IndexFilter((2, 4)), 10, {2}),
+        (IndexFilter((1, 2)) & ~IndexFilter((2, 4)), 10, {1}),
+        (~IndexFilter((2, 4)), 10, {0, 1, 3, 5, 6, 7, 8, 9}),
+        (IndexFilter(()) & IndexFilter(()), 10, set()),
+        (AllIndices() & IndexFilter((1, 2)), 10, {1, 2}),
+        (
+            IndexFilter((1, 2, 7, 6))
+            ^ IndexFilter((2, 3, 4, 7))
+            ^ IndexFilter((4, 5, 6, 7)),
+            8,
+            {1, 3, 5, 7},
+        ),
+        (IndexFilter((1, 2)) ^ ~IndexFilter((2, 3)), 4, {0, 2}),
+    ),
+)
+def test_parse_filter_to_indices(composite_filter, number_of_indices, result_indices):
+    """Test the Filter parser."""
+    assert (
+        parse_filter_to_indices(composite_filter, number_of_indices) == result_indices
+    )
+
+
+def test_parse_filter_raises():
+    with pytest.raises(ValueError, match="Parse not implemented for *"):
+        parse_filter_to_indices({1, 2}, 10)
