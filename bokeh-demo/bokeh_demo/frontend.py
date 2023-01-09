@@ -46,16 +46,17 @@ from .settings import settings
 
 
 def pad_range(
-    range: tuple[float, float], padding: float = settings.range_padding
+    range: tuple[float, float], padding: float | None = None
 ) -> tuple[float, float]:
     """Util tool for padding a range.
 
-    Given a range, pad such that the new interval is padding bigger than the original.
+    Given a range, pad such that the new interval is 1 + padding bigger than the original.
 
     Example:
         >>> pad_range((0, 1), 0.5)
         (-0.25, 1.25)
     """
+    padding = padding if padding is not None else settings.range_padding
     min, max = range
     diff = max - min
     return (min - diff * padding / 2, max + diff * padding / 2)
