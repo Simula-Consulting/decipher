@@ -6,7 +6,8 @@ class ExamTypes(str, Enum):
     Cytology = "cytology"
     Histology = "histology"
     HistologyTreatment = "histology treatment"
-    HPV = "HPV"
+    HPVCobas = "HPV Cobas"
+    HPVGenXpert = "HPV genXpert"
 
 
 class Diagnosis(str, Enum):
@@ -18,8 +19,18 @@ class Diagnosis(str, Enum):
     HistDiagnosis2 = "HistDiagnosis2"
     HistDiagnosis3 = "HistDiagnosis3"
     HistDiagnosis4 = "HistDiagnosis4"
-    HPVNegative = "HPV Negative"
-    HPVPositive = "HPV Positive"
+    # HPV common
+    HPVNegative = "HPV negative"
+    # HPV cobas
+    HPVCobas16 = "HPV 16"
+    HPVCobas18 = "HPV 18"
+    HPVCobasChannel12 = "Cobas Channel 1"
+    """Channel collecting 31, 33, 35, 39, 45, 51, 52, 56, 58, 59, 66, and 68"""
+    # HPV genXpert
+    HPVGenXpert16 = "HPV 16"
+    HPVGenXpert18_45 = "HPV pool 18/45"
+    HPVGenXpertchannel1 = "genXpert channel 1"
+    """Channel collecting 31, 33, 35, 52, 58; 51, 59; 39, 56, 66, 68"""
 
 
 @dataclass
@@ -48,9 +59,17 @@ EXAM_RESULT_LOOKUP = {
         Diagnosis.HistDiagnosis3,
         Diagnosis.HistDiagnosis4,
     ],
-    ExamTypes.HPV: [
+    ExamTypes.HPVCobas: [
         Diagnosis.HPVNegative,
-        Diagnosis.HPVPositive,
+        Diagnosis.HPVCobas16,
+        Diagnosis.HPVCobas18,
+        Diagnosis.HPVCobasChannel12,
+    ],
+    ExamTypes.HPVGenXpert: [
+        Diagnosis.HPVNegative,
+        Diagnosis.HPVGenXpert16,
+        Diagnosis.HPVGenXpert18_45,
+        Diagnosis.HPVGenXpertchannel1,
     ],
 }
 
@@ -65,5 +84,10 @@ EXAM_RESULT_MAPPING = {
     Diagnosis.HistDiagnosis3: 3,
     Diagnosis.HistDiagnosis4: 4,
     Diagnosis.HPVNegative: 1,
-    Diagnosis.HPVPositive: 3,
+    Diagnosis.HPVCobas16: 3,
+    Diagnosis.HPVCobas18: 3,
+    Diagnosis.HPVCobasChannel12: 2,
+    Diagnosis.HPVGenXpert16: 3,
+    Diagnosis.HPVGenXpert18_45: 3,
+    Diagnosis.HPVGenXpertchannel1: 2,
 }

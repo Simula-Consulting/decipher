@@ -14,7 +14,12 @@ from bokeh_demo.backend import (
     _combine_scatter_dicts,
     parse_filter_to_indices,
 )
-from bokeh_demo.exam_data import ExamTypes
+from bokeh_demo.exam_data import (
+    EXAM_RESULT_LOOKUP,
+    EXAM_RESULT_MAPPING,
+    Diagnosis,
+    ExamTypes,
+)
 from bokeh_demo.faker import coarse_to_exam_result
 
 
@@ -289,3 +294,20 @@ def test_parse_filter_to_indices(composite_filter, number_of_indices, result_ind
 def test_parse_filter_raises():
     with pytest.raises(ValueError, match="Parse not implemented for *"):
         parse_filter_to_indices({1, 2}, 10)
+
+
+def test_diagnosis_lookup():
+    """Test that all diagnoses are assigned and mapped."""
+    for exam_type in ExamTypes:
+        assert exam_type in EXAM_RESULT_LOOKUP, f"{exam_type} not mapped to diagnoses."
+
+    diagnoses_with_mapping = list(
+        itertools.chain.from_iterable(EXAM_RESULT_LOOKUP.values())
+    )
+    for diagnosis in Diagnosis:
+        assert (
+            diagnosis in diagnoses_with_mapping
+        ), f"{diagnosis} is not mapped to by any exam type"
+        assert (
+            diagnosis in EXAM_RESULT_MAPPING
+        ), f"{diagnosis} is not mapped to a coarse state"
