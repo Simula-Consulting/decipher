@@ -94,6 +94,8 @@ def example_app(source_manager):
     traj = TrajectoriesPlot(source_manager)
     table = PersonTable(source_manager)
     hist = HistogramPlot(source_manager)
+
+    lp.figure.x_range = lpa.figure.x_range
     high_risk_person_group = get_filter_element_from_source_manager(
         "high_risk_person", source_manager
     )
