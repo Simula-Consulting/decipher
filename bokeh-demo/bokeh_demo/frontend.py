@@ -322,7 +322,7 @@ class LabelSelectedMixin:
     def add_label(self):
         self.label = Label(
             x=10,
-            y=410,
+            y=470,
             x_units="screen",
             y_units="screen",
             text=self._get_label_text(range(self._number_of_individuals)),
