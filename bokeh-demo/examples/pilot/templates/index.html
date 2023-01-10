@@ -1,0 +1,45 @@
+{% extends base %}
+{% from macros import embed %}
+{% block preamble %}
+<script src="https://cdn.tailwindcss.com"></script>
+<style type="text/tailwindcss">
+  .card {
+    color: black;
+    width: 650px;
+    @apply p-6 bg-white border border-gray-200 rounded-lg shadow-md
+  }
+</style>
+<style>
+  body {
+    color: #fff;
+    background: #2F2F2F;
+  }
+</style>
+{% endblock %}
+
+{% block contents %}
+<div>
+	<div id="info-box" class="w-4/5 mx-auto rounded relative m-10 p-9 bg-gray-700">
+		<h1 class="text-3xl">SC visualization demo</h1>
+		<img class="absolute right-2" src="pilot/static/images/SC_logo.png" width="170px" />
+		<div class="mt-1">
+			<p>
+			Welcome to Simula Consulting's interactive visualization demo!
+			</p>
+		</div>
+	</div>
+	<div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5">
+  {%      for doc in docs %}
+  {{        embed(doc) if doc.elementid }}
+  {%-       for root in doc.roots %}
+  <div class="card">
+  {%          block root scoped %}
+  {{            embed(root) }}
+  {%          endblock %}
+  </div>
+  {%        endfor %}
+  {%      endfor %}
+	</div>
+</div>
+
+{% endblock %}

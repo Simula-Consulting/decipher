@@ -84,9 +84,9 @@ class LexisPlot(ToolsMixin):
 
     # TODO: move to config class or settings
     _markers: list[str | None] = [None, "square", "circle", "diamond"]
-    _marker_colors: list[str | None] = [None, "blue", "green", "red"]
+    _marker_colors: list[str | None] = [None, *settings.color_palette]
     _vaccine_line_width: int = 3
-    _vaccine_line_color: str = "tan"
+    _vaccine_line_color: str = "rgba(143, 148, 9, 0.5)"
 
     def __init__(self, source_manager: SourceManager):
         self.source_manager = source_manager
@@ -208,8 +208,8 @@ def get_position_list(array: Sequence) -> Sequence[int]:
 
 
 class TrajectoriesPlot(ToolsMixin):
-    _exam_color: str = "blue"
-    _predicted_exam_color: str = "red"
+    _exam_color: str = settings.color_palette[0]
+    _predicted_exam_color: str = settings.color_palette[2]
 
     def __init__(self, source_manager: SourceManager):
         # Find min/max on x-axis
@@ -330,10 +330,6 @@ class PersonTable:
                     title="Prediction discrepancy", field="persontable__discrepancy"
                 ),
             ],
-            styles={
-                "border": "1px solid black",
-                "margin-right": "40px",
-            },
         )
 
 
@@ -344,7 +340,7 @@ class LabelSelectedMixin:
     def add_label(self):
         self.label = Label(
             x=10,
-            y=410,
+            y=470,
             x_units="screen",
             y_units="screen",
             text=self._get_label_text(range(self._number_of_individuals)),
@@ -547,12 +543,14 @@ FILTER_TO_FilterValueUIElement_MAPPING = {
 
 
 def get_filter_element_from_source_manager(
-    filter_name: str, source_manager: SourceManager
+    filter_name: str,
+    source_manager: SourceManager,
+    label: str | None = None,
 ) -> LayoutDOM:
     if filter_name not in source_manager.filters:
         raise ValueError(f"The source manager does not have the filter {filter_name}.")
     filter = source_manager.filters[filter_name]
-    return get_filter_element(filter, filter_name)
+    return get_filter_element(filter, label or filter_name)
 
 
 def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
@@ -578,10 +576,17 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
             value_element.on_change("value", filter.get_set_value_callback())
         case FilterValueUIElement.BoolCombination:
             value_element = column(
-                [
+                row(
+                    [
+                        Paragraph(text="Active"),
+                        Paragraph(text="Invert"),
+                        Paragraph(text="Value"),
+                    ]
+                ),
+                *(
                     get_filter_element(element)
                     for element in cast(BooleanFilter, filter).filters
-                ]
+                ),
             )
         case FilterValueUIElement.NoValue:
             value_element = None
