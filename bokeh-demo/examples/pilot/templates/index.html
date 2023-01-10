@@ -28,7 +28,7 @@
 			</p>
 		</div>
 	</div>
-	<div class="flex flex-wrap gap-4 w-4/5 mx-auto mt-5">
+	<div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5">
   {%      for doc in docs %}
   {{        embed(doc) if doc.elementid }}
   {%-       for root in doc.roots %}
