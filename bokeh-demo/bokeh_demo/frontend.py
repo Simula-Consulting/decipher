@@ -119,12 +119,31 @@ class LexisPlot(ToolsMixin):
 
         # Legend
         # TODO: Make more general by using mixin
-        # The legend layout code must come before the scatter renderer,
-        # which will add new items to the legend.
+        # Adding legend entries automatically through `legend_group` causes issues
+        # with both the legend and canvas.
+        # See
+        #  - https://github.com/bokeh/bokeh/issues/12718 Canvas issue
+        #  - https://github.com/bokeh/bokeh/issues/8010 Legend color issue
+        # We here implement a workaround, by manually making the legend.
+        # In order to add a new legend item, there must be an associated renderer.
+        # We here create some just for the sake of the legend, and set them to be invisible.
         self.figure.add_layout(
             Legend(
                 items=[
-                    LegendItem(label="Vaccine", renderers=[self.vaccine_line], index=0)
+                    LegendItem(label="Vaccine", renderers=[self.vaccine_line], index=0),
+                    *(
+                        LegendItem(
+                            label=label,
+                            renderers=[
+                                self.figure.circle(
+                                    [0], [0], color=[color], visible=False
+                                )
+                            ],
+                        )
+                        for label, color in zip(
+                            settings.label_map[1:], self._marker_colors[1:]
+                        )
+                    ),
                 ],
                 orientation="horizontal",
             ),
@@ -141,7 +160,6 @@ class LexisPlot(ToolsMixin):
                     code=f"return this.data.{self._marker_color_key}.map(i => colors[i]);",  # noqa: E501
                 )
             },
-            legend_group="state_label",
         )
 
         # Tooltip for detailed exam data
