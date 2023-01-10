@@ -108,7 +108,6 @@ def example_app(source_manager):
     )
     category_group = get_filter_element_from_source_manager("category", source_manager)
 
-    curdoc().theme = "dark_minimal"
     for element in (
         lp.figure,
         lpa.figure,

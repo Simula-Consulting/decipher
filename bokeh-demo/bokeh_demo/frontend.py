@@ -191,7 +191,7 @@ def get_position_list(array: Sequence) -> Sequence[int]:
 
 class TrajectoriesPlot(ToolsMixin):
     _exam_color: str = settings.colors[0]
-    _predicted_exam_color: str = settings.colors[1]
+    _predicted_exam_color: str = settings.colors[2]
 
     def __init__(self, source_manager: SourceManager):
         # Find min/max on x-axis
