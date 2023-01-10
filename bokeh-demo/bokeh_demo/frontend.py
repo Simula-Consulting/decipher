@@ -84,7 +84,7 @@ class LexisPlot(ToolsMixin):
 
     # TODO: move to config class or settings
     _markers: list[str | None] = [None, "square", "circle", "diamond"]
-    _marker_colors: list[str | None] = [None, *settings.colors]
+    _marker_colors: list[str | None] = [None, *settings.color_palette]
     _vaccine_line_width: int = 3
     _vaccine_line_color: str = "rgba(143, 148, 9, 0.5)"
 
@@ -190,8 +190,8 @@ def get_position_list(array: Sequence) -> Sequence[int]:
 
 
 class TrajectoriesPlot(ToolsMixin):
-    _exam_color: str = settings.colors[0]
-    _predicted_exam_color: str = settings.colors[2]
+    _exam_color: str = settings.color_palette[0]
+    _predicted_exam_color: str = settings.color_palette[2]
 
     def __init__(self, source_manager: SourceManager):
         # Find min/max on x-axis
