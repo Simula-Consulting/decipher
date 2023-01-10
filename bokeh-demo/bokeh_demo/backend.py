@@ -20,7 +20,7 @@ from bokeh.models import (
     UnionFilter,
 )
 
-from .exam_data import EXAM_RESULT_LOOKUP, ExamResult
+from .exam_data import ExamResult
 from .faker import faker
 from .settings import settings
 
@@ -212,9 +212,7 @@ class Person:
                 exam.type.value for exam in self.detailed_exam_results if exam
             ],
             "exam_result": [
-                EXAM_RESULT_LOOKUP[exam.type][exam.result]
-                for exam in self.detailed_exam_results
-                if exam
+                exam.result.value for exam in self.detailed_exam_results if exam
             ],
         }
 

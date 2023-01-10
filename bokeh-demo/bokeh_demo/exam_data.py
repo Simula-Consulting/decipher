@@ -8,47 +8,54 @@ class ExamTypes(str, Enum):
     HPV = "HPV"
 
 
+class Diagnosis(str, Enum):
+    CytDiagnosis0 = "CytDiagnosis0"
+    CytDiagnosis1 = "CytDiagnosis1"
+    CytDiagnosis2 = "CytDiagnosis2"
+    HistDiagnosis0 = "HistDiagnosis0"
+    HistDiagnosis1 = "HistDiagnosis1"
+    HistDiagnosis2 = "HistDiagnosis2"
+    HistDiagnosis3 = "HistDiagnosis3"
+    HistDiagnosis4 = "HistDiagnosis4"
+    HPVNegative = "HPV Negative"
+    HPVPositive = "HPV Positive"
+
+
 @dataclass
 class ExamResult:
     type: ExamTypes
-    result: int  # Must be looked up
+    result: Diagnosis
 
 
 EXAM_RESULT_LOOKUP = {
     ExamTypes.Cytology: [
-        "CytDiagnosis0",
-        "CytDiagnosis1",
-        "CytDiagnosis2",
+        Diagnosis.CytDiagnosis0,
+        Diagnosis.CytDiagnosis1,
+        Diagnosis.CytDiagnosis2,
     ],
     ExamTypes.Histology: [
-        "HistDiagnosis0",
-        "HistDiagnosis1",
-        "HistDiagnosis2",
-        "HistDiagnosis3",
-        "HistDiagnosis4",
+        Diagnosis.HistDiagnosis0,
+        Diagnosis.HistDiagnosis1,
+        Diagnosis.HistDiagnosis2,
+        Diagnosis.HistDiagnosis3,
+        Diagnosis.HistDiagnosis4,
     ],
     ExamTypes.HPV: [
-        "HPV Negative",
-        "HPV Positive",
+        Diagnosis.HPVNegative,
+        Diagnosis.HPVPositive,
     ],
 }
 
 # Mapping from diagnosis to coarse state
 EXAM_RESULT_MAPPING = {
-    ExamTypes.Cytology: [
-        1,
-        2,
-        3,
-    ],
-    ExamTypes.Histology: [
-        1,
-        1,
-        2,
-        3,
-        4,
-    ],
-    ExamTypes.HPV: [
-        1,
-        3,
-    ],
+    Diagnosis.CytDiagnosis0: 1,
+    Diagnosis.CytDiagnosis1: 2,
+    Diagnosis.CytDiagnosis2: 3,
+    Diagnosis.HistDiagnosis0: 1,
+    Diagnosis.HistDiagnosis1: 1,
+    Diagnosis.HistDiagnosis2: 2,
+    Diagnosis.HistDiagnosis3: 3,
+    Diagnosis.HistDiagnosis4: 4,
+    Diagnosis.HPVNegative: 1,
+    Diagnosis.HPVPositive: 3,
 }

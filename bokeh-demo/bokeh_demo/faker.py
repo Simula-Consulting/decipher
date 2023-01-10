@@ -1,23 +1,54 @@
 from collections import defaultdict
-from typing import Sequence
+from typing import Iterable, Mapping, Sequence, TypeVar, overload
 
 import numpy as np
 
-from .exam_data import EXAM_RESULT_MAPPING, ExamResult
+from .exam_data import EXAM_RESULT_LOOKUP, EXAM_RESULT_MAPPING, ExamResult
+
+T = TypeVar("T")
+S = TypeVar("S")
 
 
-def get_inverse_mapping() -> dict[int, list[ExamResult]]:
-    possible_diagnosis = defaultdict(list)
-    for type, states in EXAM_RESULT_MAPPING.items():
-        for diagnosis_index, coarse_state in enumerate(states):
-            possible_diagnosis[coarse_state].append(ExamResult(type, diagnosis_index))
-    return dict(possible_diagnosis)  # We want KeyError for unknown states
+@overload
+def _invert_dict(input_dict: Mapping[T, Iterable[S]]) -> dict[S, list[T]]:
+    ...
+
+
+@overload
+def _invert_dict(input_dict: Mapping[T, S]) -> dict[S, list[T]]:
+    ...
+
+
+def _invert_dict(input_dict):
+    """Invert a dict, i.e. give a dict with value as keys and keys as values."""
+    inverted = defaultdict(list)
+    for key, values in input_dict.items():
+        try:
+            for value in values:
+                inverted[value].append(key)
+        except TypeError:  # Not iterable
+            inverted[values].append(key)
+    return dict(inverted)
+
+
+COARSE_STATE_TO_DIAGNOSIS = _invert_dict(EXAM_RESULT_MAPPING)
+
+
+def coarse_to_exam_result() -> dict[int, list[ExamResult]]:
+    """Give a mapping from coarse states to possible ExamResults."""
+    diagnosis_to_exam_types = _invert_dict(EXAM_RESULT_LOOKUP)
+    mapping = defaultdict(list)
+    for state, possible_diagnoses in COARSE_STATE_TO_DIAGNOSIS.items():
+        for diagnosis in possible_diagnoses:
+            for exam_type in diagnosis_to_exam_types[diagnosis]:
+                mapping[state].append(ExamResult(type=exam_type, result=diagnosis))
+    return dict(mapping)
 
 
 class Faker:
     def __init__(self, seed=42):
         self.rng = np.random.default_rng(seed=seed)
-        self.coarse_state_to_exam_result = get_inverse_mapping()
+        self.coarse_state_to_exam_result = coarse_to_exam_result()
 
     def get_fake_year_of_birth(
         self, person_index: int, first_possible: float = 1970, spread: float = 30
