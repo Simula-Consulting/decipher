@@ -40,11 +40,9 @@
 	<div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5">
   {%      for doc in docs %}
   {{        embed(doc) if doc.elementid }}
-  {%-       for root in doc.roots %}
+  {%-       for root in doc.roots if root.name != "filter_control" %}
   <div class="card">
-  {%          block root scoped %}
   {{            embed(root) }}
-  {%          endblock %}
   </div>
   {%        endfor %}
   {%      endfor %}
