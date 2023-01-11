@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 import tensorflow as tf
-from bokeh.layouts import column, row
+from bokeh.layouts import column, grid, row
 from bokeh.models import Div, SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
 from matfact.data_generation import Dataset
@@ -99,18 +99,37 @@ def example_app(source_manager):
 
     lp.figure.x_range = lpa.figure.x_range
     high_risk_person_group = get_filter_element_from_source_manager(
-        "high_risk_person", source_manager
+        "High risk - Person", source_manager
     )
     high_risk_exam_group = get_filter_element_from_source_manager(
-        "high_risk_exam", source_manager
+        "High risk - Exam", source_manager
     )
     high_risk_decoupled_group = get_filter_element_from_source_manager(
-        "high_risk_decoupled", source_manager
+        "High risk - Decoupled", source_manager
     )
     vaccine_group = get_filter_element_from_source_manager(
-        "vaccine_age", source_manager
+        "Vaccine age", source_manager
     )
-    category_group = get_filter_element_from_source_manager("category", source_manager)
+    category_group = get_filter_element_from_source_manager("Region", source_manager)
+
+    filter_grid = grid(
+        column(
+            row(Div(), Div(text="Active"), Div(text="Invert")),
+            high_risk_person_group,
+            high_risk_exam_group,
+            high_risk_decoupled_group,
+            vaccine_group,
+            category_group,
+            # get_filter_element_from_source_manager(
+            #     "symmetric_difference", source_manager, label="XOR"
+            # ),
+        )
+    )
+    # `grid` does not pass kwargs to constructor, so must set attrs here.
+    filter_grid.name = "filter_control"
+    filter_grid.stylesheets = [
+        ":host {grid-template-rows: unset; grid-template-columns: unset;}"
+    ]
 
     for element in (
         lp.figure,
@@ -122,18 +141,7 @@ def example_app(source_manager):
         ),
         hist.figure,
         delta.figure,
-        column(
-            row(Div(text="Active"), Div(text="Invert"), Div(text="Value")),
-            high_risk_person_group,
-            high_risk_exam_group,
-            high_risk_decoupled_group,
-            vaccine_group,
-            category_group,
-            get_filter_element_from_source_manager(
-                "symmetric_difference", source_manager, label="XOR"
-            ),
-            name="filter_control",
-        ),
+        filter_grid,
     ):
         curdoc().add_root(element)
 
@@ -149,11 +157,11 @@ def _at_least_one_high_risk(person_source):
 
 def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
     base_filters = {
-        "high_risk_person": PersonSimpleFilter(
+        "High risk - Person": PersonSimpleFilter(
             source_manager=source_manager,
             person_indices=_at_least_one_high_risk(source_manager.person_source),
         ),
-        "high_risk_decoupled": SimpleFilter(
+        "High risk - Decoupled": SimpleFilter(
             source_manager=source_manager,
             person_indices=_at_least_one_high_risk(source_manager.person_source),
             exam_indices=[
@@ -162,7 +170,7 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
                 if state == 3
             ],
         ),
-        "high_risk_exam": ExamSimpleFilter(
+        "High risk - Exam": ExamSimpleFilter(
             source_manager=source_manager,
             exam_indices=[
                 i
@@ -170,15 +178,15 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
                 if state == 3
             ],
         ),
-        "vaccine_age": RangeFilter(source_manager=source_manager, field="vaccine_age"),
-        "category": CategoricalFilter(source_manager=source_manager, field="home"),
+        "Vaccine age": RangeFilter(source_manager=source_manager, field="vaccine_age"),
+        "Region": CategoricalFilter(source_manager=source_manager, field="home"),
     }
 
     # Explicitly make the values a list.
     # dict.values returns a 'view', which will dynamically update, i.e.
     # if we do not take the list, union will have itself in its filters.
     base_filters["symmetric_difference"] = BooleanFilter(
-        [copy.copy(filter) for filter in base_filters.values()],
+        {name: copy.copy(filter) for name, filter in base_filters.items()},
         source_manager,
         bokeh_bool_filter=SymmetricDifferenceFilter,
     )
