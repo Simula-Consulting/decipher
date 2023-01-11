@@ -424,14 +424,14 @@ class LabelSelectedMixin:
         return update_label_callback
 
 
-class HistogramPlot(ToolsMixin, LabelSelectedMixin):
+class HistogramPlot(LabelSelectedMixin):
     def __init__(self, source_manager: SourceManager):
         self.source_manager = source_manager
         self._number_of_individuals = len(
             self.source_manager.person_source.data["index"]
         )
 
-        self.figure = figure(tools=self._get_tools())
+        self.figure = figure(tools=[])
         self.quad = self.figure.quad(
             top=self.compute_histogram_data(range(self._number_of_individuals)),
             bottom=0,
