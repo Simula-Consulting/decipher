@@ -123,7 +123,6 @@ def example_app(source_manager):
         hist.figure,
         delta.figure,
         column(
-            Div(text="<h1>Filter controls</h1>"),
             row(Div(text="Active"), Div(text="Invert"), Div(text="Value")),
             high_risk_person_group,
             high_risk_exam_group,
@@ -133,6 +132,7 @@ def example_app(source_manager):
             get_filter_element_from_source_manager(
                 "symmetric_difference", source_manager, label="XOR"
             ),
+            name="filter_control",
         ),
     ):
         curdoc().add_root(element)

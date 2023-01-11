@@ -18,6 +18,15 @@
 {% endblock %}
 
 {% block contents %}
+<aside class="transition-[left] z-10 w-120 -left-96 bottom-10 hover:left-0 fixed" aria-label="Sidebar">
+  <div class="px-3 py-4 overflow-y-auto rounded bg-gray-800">
+    <div class="absolute right-5 top-0 w-0 whitespace-nowrap">
+      <h1 class="rotate-90 text-gray-400">Filter Controls</h1>
+    </div>
+     {{ embed(roots.filter_control) }}
+  </div>
+</aside>
+
 <div>
 	<div id="info-box" class="w-4/5 mx-auto rounded relative m-10 p-9 bg-gray-700">
 		<h1 class="text-3xl">SC visualization demo</h1>

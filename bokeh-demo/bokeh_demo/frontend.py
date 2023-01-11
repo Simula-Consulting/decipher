@@ -572,6 +572,9 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
             value_element = MultiChoice(
                 value=filter._categories,
                 options=list(filter.category_to_indices.keys()),
+                stylesheets=[
+                    ".choices__list {background-color: #1f2937;} .is-highlighted {background-color: #374151 !important;}"
+                ],
             )
             value_element.on_change("value", filter.get_set_value_callback())
         case FilterValueUIElement.BoolCombination:
