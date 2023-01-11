@@ -12,6 +12,6 @@
 
 2. To serve the page, run
    ```
-   bokeh serve --show examples/pilot.py
+   bokeh serve --show examples/pilot
    ```
    from a Poetry environment.
