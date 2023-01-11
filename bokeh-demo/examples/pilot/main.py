@@ -93,6 +93,8 @@ def example_app(source_manager):
     delta = DeltaScatter(source_manager)
     traj = TrajectoriesPlot(source_manager)
     table = PersonTable(source_manager)
+    table.person_table.styles = {"border": "1px solid #e6e6e6", "border-radius": "5px"}
+    table.person_table.height = 500
     hist = HistogramPlot(source_manager)
 
     lp.figure.x_range = lpa.figure.x_range
@@ -114,7 +116,10 @@ def example_app(source_manager):
         lp.figure,
         lpa.figure,
         traj.figure,
-        table.person_table,
+        column(
+            Div(text="<h1>Data table</h1>"),
+            table.person_table,
+        ),
         hist.figure,
         delta.figure,
         column(
