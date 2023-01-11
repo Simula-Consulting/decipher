@@ -10,7 +10,7 @@ import numpy as np
 # identifies it in bokeh.models.widgets.tables and also that it is exported
 # to bokeh.models.widgets. However, for some reason, it is not propagated to
 # bokeh.models.
-from bokeh.layouts import column, row
+from bokeh.layouts import column, grid, row
 from bokeh.models import (  # type: ignore
     Circle,
     CustomJSExpr,
@@ -564,7 +564,10 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
 
     match (FILTER_TO_FilterValueUIElement_MAPPING[type(filter)]):
         case FilterValueUIElement.RangeSlider:
-            value_element = RangeSlider(value=(0, 100), start=0, end=100)
+            start, end = filter.source_manager.get_vaccine_range()
+            value_element = RangeSlider(
+                value=(0, 100), start=np.floor(start), end=np.ceil(end), width=None
+            )
             value_element.on_change("value", filter.get_set_value_callback())
         case FilterValueUIElement.MultiChoice:
             # We guarantuee CategoricalFilter inside this match
@@ -578,19 +581,26 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
             )
             value_element.on_change("value", filter.get_set_value_callback())
         case FilterValueUIElement.BoolCombination:
-            value_element = column(
-                row(
-                    [
-                        Paragraph(text="Active"),
-                        Paragraph(text="Invert"),
-                        Paragraph(text="Value"),
-                    ]
-                ),
-                *(
-                    get_filter_element(element)
-                    for element in cast(BooleanFilter, filter).filters
-                ),
+            value_element = grid(
+                column(
+                    row(
+                        [
+                            Paragraph(text="Active"),
+                            Paragraph(text="Invert"),
+                            Paragraph(text="Value"),
+                        ]
+                    ),
+                    *(
+                        get_filter_element(element, label_text=label)
+                        for label, element in cast(
+                            BooleanFilter, filter
+                        ).filters.items()
+                    ),
+                )
             )
+            value_element.stylesheets = [
+                ":host {grid-template-rows: unset; grid-template-columns: unset;}"
+            ]
         case FilterValueUIElement.NoValue:
             value_element = None
         case _:
@@ -598,9 +608,12 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
 
     label = Paragraph(text=label_text)
 
-    included_elements = (
-        element
-        for element in (activation_toggle, inversion_toggle, value_element, label)
-        if element is not None
+    base_row = cast(Row, row([label, activation_toggle, inversion_toggle]))
+    return (
+        column(
+            base_row,
+            value_element,
+        )
+        if value_element
+        else base_row
     )
-    return cast(Row, row(*included_elements))

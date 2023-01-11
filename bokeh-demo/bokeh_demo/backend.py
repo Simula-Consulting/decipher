@@ -625,7 +625,7 @@ class BooleanFilter(BaseFilter):
 
     def __init__(
         self,
-        filters: Iterable[BaseFilter],
+        filters: dict[str, BaseFilter],
         source_manager: SourceManager,
         bokeh_bool_filter: type[BokehFilter] = UnionFilter,
         active: bool = False,
@@ -641,7 +641,9 @@ class BooleanFilter(BaseFilter):
         if not self.active:
             return AllIndices()
         filter = self.bokeh_bool(
-            operands=[filter.get_filter() for filter in self.filters if filter.active]
+            operands=[
+                filter.get_filter() for filter in self.filters.values() if filter.active
+            ]
             or [IndexFilter([])]
         )
         return ~filter if self.inverted else filter
@@ -651,7 +653,9 @@ class BooleanFilter(BaseFilter):
             return AllIndices()
         filter = self.bokeh_bool(
             operands=[
-                filter.get_exam_filter() for filter in self.filters if filter.active
+                filter.get_exam_filter()
+                for filter in self.filters.values()
+                if filter.active
             ]
             or [IndexFilter([])]
         )
@@ -827,3 +831,10 @@ class SourceManager:
             [person.as_scatter_source_dict() for person in people]
         )
         return ColumnDataSource(source_dict)
+
+    def get_vaccine_range(self) -> tuple[float, float]:
+        """Return min and max age of vaccine administration."""
+        vaccine_ages = [
+            age for age in self.person_source.data["vaccine_age"] if age is not None
+        ]
+        return (min(vaccine_ages), max(vaccine_ages))
