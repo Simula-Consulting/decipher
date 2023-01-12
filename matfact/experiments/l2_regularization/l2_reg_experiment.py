@@ -37,7 +37,6 @@ from matfact.plotting import (
     plot_coefs,
     plot_confusion,
 )
-from matfact.settings import DATASET_PATH, RESULT_PATH
 
 from .plot_utils import (
     plot_image_artifact,
@@ -51,6 +50,7 @@ from .plot_utils import (
     NORMAL_LABELS_INT,
     INVERTED_LABELS_INT,
     LABELS_SHORT_STR,
+    RESULTS_PATH,
 )
 from .experiment_utils import invert_dataset, fetch_experiment_logs
 
@@ -197,7 +197,7 @@ def experiment(
     labels=NORMAL_LABELS_INT,
     save_numpy_artifacts=True,
     save_image_artifacts=False,
-    results_path: pathlib.Path = RESULT_PATH,
+    results_path: pathlib.Path = RESULTS_PATH,
     display_labels=LABELS_SHORT_STR,
     model_type=MATFACT_ALS,
     log_matfact_metrics=False,
@@ -288,10 +288,14 @@ def experiment(
 def run_l2_regularization_experiments(
     lambda_values,
     model_type=MATFACT_ALS,
-    result_path=RESULT_PATH,
+    result_path=RESULTS_PATH,
     experiment_name=None,
     lambda_values_l1=None,
     U_l1_regularization=False,
+    N=1000,
+    T=100,
+    rank=5,
+    sparsity=100,
 ):
     if lambda_values_l1 is None:
         lambda_values_l1 = lambda_values
@@ -301,10 +305,9 @@ def run_l2_regularization_experiments(
     if experiment_name is None:
         experiment_name = model_type
     # Generate dataset and invert it
-    Dataset.generate(N=10000, T=100, rank=5, sparsity_level=100, censor=False).save(
-        DATASET_PATH
+    normal_dataset = Dataset.generate(
+        N=N, T=T, rank=rank, sparsity_level=sparsity, censor=False
     )
-    normal_dataset = Dataset.from_file(DATASET_PATH)
     inv_dataset = invert_dataset(normal_dataset)
 
     # Set GPU use parameters
@@ -352,7 +355,7 @@ def run_l2_regularization_experiments(
                     run_id,
                     hyperparams,
                     dataset,
-                    results_path=RESULT_PATH,
+                    results_path=RESULTS_PATH,
                     labels=labels,
                     model_type=model_type,
                     U_l1_regularization=U_l1_regularization,

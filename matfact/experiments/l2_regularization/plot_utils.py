@@ -1,4 +1,5 @@
 import logging
+import pathlib
 
 import matplotlib.pyplot as plt
 import matplotlib.pylab as pl
@@ -7,7 +8,7 @@ import math
 
 from sklearn.metrics import ConfusionMatrixDisplay
 
-from matfact.settings import RESULT_PATH
+RESULTS_PATH = pathlib.Path(__file__).parent / "results"
 
 NORMAL, INVERTED = "normal", "inverted"  # Dataset types
 LAMBDA1, LAMBDA2 = "lambda1", "lambda2"  # U and V regularization parameters
@@ -82,7 +83,7 @@ def plot_metrics(
     metric_name,
     lambda_values,
     fig_name="",
-    fig_path=RESULT_PATH,
+    fig_path=RESULTS_PATH,
     y_limits=(-0.05, 1.05),
     lambda_values_l1=None,
 ):
@@ -213,7 +214,7 @@ def plot_image_artifact(
     lambda_values,
     sample_num=3,
     fig_name="",
-    fig_path=RESULT_PATH,
+    fig_path=RESULTS_PATH,
     lambda_values_l1=None,
 ):
     if lambda_values_l1 is None:
@@ -288,7 +289,7 @@ def plot_numpy_artifact(
     lambda_values,
     sample_num=3,
     fig_name="",
-    fig_path=RESULT_PATH,
+    fig_path=RESULTS_PATH,
     display_labels=LABELS_SHORT_STR,
     lambda_values_l1=None,
 ):
