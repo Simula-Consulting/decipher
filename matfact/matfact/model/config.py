@@ -107,3 +107,9 @@ class ModelConfig:
             )
             + "mf"
         )
+
+    def __post_init__(self) -> None:
+
+        # Assert that shift budget is symmetric and consecutive
+        assert np.all(np.diff(self.shift_budget) == 1)
+        assert self.shift_budget[0] == -self.shift_budget[-1]
