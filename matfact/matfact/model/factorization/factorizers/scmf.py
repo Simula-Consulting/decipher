@@ -264,6 +264,9 @@ class SCMF(BaseMF):
     def loss(self):
         "Compute the loss from the optimization objective"
 
+        # TODD: Probably, there should be something here to make sure we
+        # only include the actual V, U, W, and X in the loss, and not 
+        # the padded elements that are only an implementation trick.
         loss = np.sum(
             np.linalg.norm(
                 self.W_shifted * (self.X_shifted - self.U @ self.V_bc.T), axis=1
