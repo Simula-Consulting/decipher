@@ -36,7 +36,6 @@ from bokeh_demo.backend import (
     PersonSimpleFilter,
     PredictionData,
     RangeFilter,
-    SimpleFilter,
     SourceManager,
 )
 from bokeh_demo.frontend import (
@@ -104,8 +103,8 @@ def example_app(source_manager):
     high_risk_exam_group = get_filter_element_from_source_manager(
         "High risk - Exam", source_manager
     )
-    high_risk_decoupled_group = get_filter_element_from_source_manager(
-        "High risk - Decoupled", source_manager
+    vaccine_type = get_filter_element_from_source_manager(
+        "Vaccine type", source_manager
     )
     vaccine_group = get_filter_element_from_source_manager(
         "Vaccine age", source_manager
@@ -117,8 +116,8 @@ def example_app(source_manager):
             row(Div(), Div(text="Active"), Div(text="Invert")),
             high_risk_person_group,
             high_risk_exam_group,
-            high_risk_decoupled_group,
             vaccine_group,
+            vaccine_type,
             category_group,
             # get_filter_element_from_source_manager(
             #     "symmetric_difference", source_manager, label="XOR"
@@ -161,15 +160,6 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
             source_manager=source_manager,
             person_indices=_at_least_one_high_risk(source_manager.person_source),
         ),
-        "High risk - Decoupled": SimpleFilter(
-            source_manager=source_manager,
-            person_indices=_at_least_one_high_risk(source_manager.person_source),
-            exam_indices=[
-                i
-                for i, state in enumerate(source_manager.exam_source.data["state"])
-                if state == 3
-            ],
-        ),
         "High risk - Exam": ExamSimpleFilter(
             source_manager=source_manager,
             exam_indices=[
@@ -179,6 +169,9 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
             ],
         ),
         "Vaccine age": RangeFilter(source_manager=source_manager, field="vaccine_age"),
+        "Vaccine type": CategoricalFilter(
+            source_manager=source_manager, field="vaccine_type"
+        ),
         "Region": CategoricalFilter(source_manager=source_manager, field="home"),
     }
 

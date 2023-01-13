@@ -574,7 +574,9 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
             filter = cast(CategoricalFilter, filter)
             value_element = MultiChoice(
                 value=filter._categories,
-                options=list(filter.category_to_indices.keys()),
+                options=list(
+                    key for key in filter.category_to_indices.keys() if key is not None
+                ),
                 stylesheets=[
                     ".choices__list {background-color: #1f2937;} .is-highlighted {background-color: #374151 !important;}"
                 ],
