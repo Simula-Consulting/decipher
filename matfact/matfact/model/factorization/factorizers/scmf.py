@@ -106,7 +106,7 @@ class SCMF(BaseMF):
         # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)
         # The number of possible shifts. Used for padding of arrays.
-        self.Ns = len(self.config.shift_budget)
+        self.Ns = (len(self.config.shift_budget) - 1) // 2
 
         # Add time points to cover extended left and right boundaries when shifting.
         self.KD = tf.cast(
@@ -136,8 +136,8 @@ class SCMF(BaseMF):
         self.W_shifted = self.W_bc.copy()
 
         # Placeholders (s x N x T) for all possible candidate shits
-        self.X_shifts = np.empty((self.Ns, *self.X_bc.shape))
-        self.W_shifts = np.empty((self.Ns, *self.W_bc.shape))
+        self.X_shifts = np.empty((1 + 2 * self.Ns, *self.X_bc.shape))
+        self.W_shifts = np.empty((1 + 2 * self.Ns, *self.W_bc.shape))
 
         # Shift Y in opposite direction of V shift.
         for j, s_n in enumerate(self.config.shift_budget):
