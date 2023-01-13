@@ -325,7 +325,7 @@ def plot_numpy_artifact(
             )
             if artifact is BASIS:
                 plot_basis_artifact(ax1, array_path1, title, inverted=False)
-                plot_basis_artifact(ax2, array_path2, title, inverted=False)
+                plot_basis_artifact(ax2, array_path2, title, inverted=True)
             elif artifact is COEFS:
                 plot_coefs_artifact(ax1, array_path1, title, inverted=False)
                 plot_coefs_artifact(ax2, array_path2, title, inverted=True)
