@@ -61,11 +61,11 @@ class WCMF(BaseMF):
         # @tf.function
         def _loss_V():
             frob_tensor = tf.multiply(W, X - (U @ tf.transpose(V)))
-            frob_loss = tf.square(tf.norm(frob_tensor))
+            frob_loss = tf.reduce_sum(frob_tensor**2)
 
-            l2_loss = self.config.lambda2 * tf.square(tf.norm(V - J))
+            l2_loss = self.config.lambda2 * tf.reduce_sum((V - J) ** 2)
 
-            conv_loss = self.config.lambda3 * tf.square(tf.norm(tf.matmul(self.KD, V)))
+            conv_loss = self.config.lambda3 * tf.reduce_sum(tf.matmul(self.KD, V) ** 2)
 
             return frob_loss + l2_loss + conv_loss
 
@@ -101,9 +101,9 @@ class WCMF(BaseMF):
         # @tf.function
         def _loss_U():
             frob_tensor = tf.multiply(W, X - tf.matmul(U, V, transpose_b=True))
-            frob_loss = tf.square(tf.norm(frob_tensor))
+            frob_loss = tf.reduce_sum(frob_tensor**2)
 
-            return frob_loss + self.config.lambda1 * tf.square(tf.norm(U))
+            return frob_loss + self.config.lambda1 * tf.reduce_sum(U**2)
 
         U = tf.Variable(self.U, dtype=tf.float32)
 
