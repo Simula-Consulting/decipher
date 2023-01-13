@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 
+import numpy as np
 import numpy.typing as npt
 
+from matfact.model.config import ModelConfig
 from matfact.model.factorization.convergence import ConvergenceMonitor, EpochGenerator
 from matfact.model.factorization.utils import theta_mle
 from matfact.model.predict.risk_prediction import predict_proba
@@ -10,9 +12,16 @@ from matfact.model.predict.risk_prediction import predict_proba
 class BaseMF(ABC):
     "Base class for matrix factorization algorithms."
 
-    X: npt.NDArray
-    U: npt.NDArray
-    V: npt.NDArray
+    X: npt.NDArray[np.int_]
+    U: npt.NDArray[np.float64]
+    V: npt.NDArray[np.float64]
+    KD: npt.NDArray
+    J: npt.NDArray
+    config: ModelConfig
+
+    @abstractmethod
+    def __init__(self, observation_matrix: npt.NDArray[np.int_], config: ModelConfig):
+        ...
 
     @property
     @abstractmethod
