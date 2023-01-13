@@ -123,13 +123,9 @@ class SCMF(BaseMF):
         self.W_bc = np.hstack(
             [np.zeros((self.N, self.Ns)), self.W, np.zeros((self.N, self.Ns))]
         )
-        self.V_bc = np.vstack(
-            [
-                np.zeros((self.Ns, self.config.rank)),
-                V,
-                np.zeros((self.Ns, self.config.rank)),
-            ]
-        )
+        # Pad V with self.Ns time steps on each side, filling it with the
+        # value closest to the edge.
+        self.V_bc = np.pad(V, ((self.Ns, self.Ns), (0, 0)), "edge")
         # We know V_bc to be two-dimensional, so cast to please mypy.
         J_shape = cast(tuple[int, int], self.V_bc.shape)
         # TODO: do we have to cast this to tf float32?
@@ -138,7 +134,6 @@ class SCMF(BaseMF):
         # Implementation shifts W and Y (not UV.T)
         self.X_shifted = self.X_bc.copy()
         self.W_shifted = self.W_bc.copy()
-        self._fill_boundary_regions_V_bc()
 
         # Placeholders (s x N x T) for all possible candidate shits
         self.X_shifts = np.empty((self.Ns, *self.X_bc.shape))
@@ -176,24 +171,6 @@ class SCMF(BaseMF):
 
         self.X_shifted = _custom_roll(self.X_bc, -1 * self.s)
         self.W_shifted = _custom_roll(self.W_bc, -1 * self.s)
-
-    def _fill_boundary_regions_V_bc(self):
-        """Extrapolate the edge values in V_bc over the extended boundaries"""
-
-        V_filled = np.zeros_like(self.V_bc)
-
-        idx = np.arange(self.T + 2 * self.Ns)
-        for i, v in enumerate(self.V_bc.T):
-
-            v_left = v[idx <= int(self.T / 2)]
-            v_right = v[idx > int(self.T / 2)]
-
-            v_left[v_left == 0] = v_left[np.argmax(v_left != 0)]
-            v_right[v_right == 0] = v_right[np.argmax(np.cumsum(v_right != 0))]
-
-            V_filled[:, i] = np.concatenate([v_left, v_right])
-
-        self.V_bc = V_filled
 
     def _update_V(self):
         V = tf.Variable(self.V_bc, dtype=tf.float32)
