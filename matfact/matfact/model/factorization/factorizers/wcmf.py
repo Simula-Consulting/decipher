@@ -70,7 +70,7 @@ class WCMF(BaseMF):
             return frob_loss + l2_loss + conv_loss
 
         V = tf.Variable(self.V, dtype=tf.float32)
-        J = tf.ones_like(self.V, dtype=tf.float32)
+        J = tf.cast(self.J, dtype=tf.float32)
 
         W = tf.cast(self.W, dtype=tf.float32)
         X = tf.cast(self.X, dtype=tf.float32)
@@ -123,7 +123,7 @@ class WCMF(BaseMF):
 
         loss = np.square(np.linalg.norm(self.W * (self.X - self.U @ self.V.T)))
         loss += self.config.lambda1 * np.square(np.linalg.norm(self.U))
-        loss += self.config.lambda2 * np.square(np.linalg.norm(self.V - 1))
+        loss += self.config.lambda2 * np.square(np.linalg.norm(self.V - self.J))
         loss += self.config.lambda3 * np.square(np.linalg.norm(self.KD @ self.V))
 
         return loss
