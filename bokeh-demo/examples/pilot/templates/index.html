@@ -56,16 +56,16 @@
 </aside>
 
 <div>
-	<div id="info-box" class="w-4/5 mx-auto rounded relative m-10 p-9 bg-gray-700">
-		<h1 class="text-3xl">SC visualization demo</h1>
-		<img class="absolute right-2" src="pilot/static/images/SC_logo.png" width="170px" />
-		<div class="mt-1">
-			<p>
-			Welcome to Simula Consulting's interactive visualization demo!
-			</p>
-		</div>
-	</div>
 	<div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5">
+		<div id="info-box" class="col-span-full rounded relative p-9 bg-gray-700">
+			<h1 class="text-3xl">SC visualization demo</h1>
+			<img class="absolute right-2" src="pilot/static/images/SC_logo.png" width="170px" />
+			<div class="mt-1">
+				<p>
+				Welcome to Simula Consulting's interactive visualization demo!
+				</p>
+			</div>
+		</div>
   {%      for doc in docs %}
   {{        embed(doc) if doc.elementid }}
   {%-       for root in doc.roots if root.name != "filter_control" %}
