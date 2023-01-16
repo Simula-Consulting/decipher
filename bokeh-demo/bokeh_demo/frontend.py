@@ -86,7 +86,7 @@ class LexisPlot(ToolsMixin):
     _markers: list[str | None] = [None, "square", "circle", "diamond"]
     _marker_colors: list[str | None] = [None, *settings.color_palette]
     _vaccine_line_width: int = 3
-    _vaccine_line_color: str = "rgba(143, 148, 9, 0.5)"
+    _vaccine_line_color: str = settings.vaccine_line_color
 
     def __init__(self, source_manager: SourceManager):
         self.source_manager = source_manager
