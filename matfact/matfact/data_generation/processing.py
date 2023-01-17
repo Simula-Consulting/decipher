@@ -27,11 +27,11 @@ class ScreeningDataProcessingPipeline:
         self.dob_map = self._create_dob_map()
         self.n_females = n_females
 
-        self.processed_data = None
-        self.X = None
-        self.row_map = None
+        self.processed_data: pd.DataFrame | None = None
+        self.X: np.ndarray | None = None
+        self.row_map: dict[int, int] | None = None
 
-    def _create_dob_map(self):
+    def _create_dob_map(self) -> dict[int, str]:
         """Method to map PIDs to birthdates.
 
         Only including people with 'B (bosatt)' status.
@@ -42,17 +42,17 @@ class ScreeningDataProcessingPipeline:
             .to_dict()[self.columns.dob.date]
         )
 
-    def _add_dob_column(self, df):
+    def _add_dob_column(self, df: pd.DataFrame) -> pd.DataFrame:
         df[self.columns.dob.date] = df[self.columns.pid].map(self.dob_map)
         return df
 
-    def _convert_to_datetime(self, df, columns):
-        def datetime_conversion(x):
+    def _convert_to_datetime(self, df: pd.DataFrame, columns: list[str]) -> None:
+        def datetime_conversion(x: str) -> pd.Timestamp:
             return pd.to_datetime(x, format="%d.%m.%Y")
 
         df[columns] = df[columns].apply(datetime_conversion)
 
-    def _add_age_column(self, df):
+    def _add_age_column(self, df: pd.DataFrame) -> None:
         time_cols = self.columns.get_date_columns()
         self._convert_to_datetime(df, columns=time_cols)
         for col in (self.columns.cyt.date, self.columns.hist.date):
@@ -60,17 +60,19 @@ class ScreeningDataProcessingPipeline:
                 df[self.columns.cyt.date] - df[self.columns.dob.date]
             ).apply(lambda x: x.days)
 
-    def _add_risk_column(self, df):
+    def _add_risk_column(self, df: pd.DataFrame) -> None:
         for screening in settings.processing.risk_maps.keys():
             df["risk"] = df[screening].map(settings.processing.risk_maps[screening])
 
-    def _gather_information(self, df):
+    def _gather_information(self, df: pd.DataFrame) -> pd.DataFrame:
         df = self._add_dob_column(df)
         self._add_age_column(df)
         self._add_risk_column(df)
         return df
 
-    def _exclude_invalid_data(self, df: pd.DataFrame, min_n_tests: int = 2):
+    def _exclude_invalid_data(
+        self, df: pd.DataFrame, min_n_tests: int = 2
+    ) -> pd.DataFrame:
         new_df = df.dropna()
         person_counts = new_df[self.columns.pid].value_counts()
         rejected_pids = person_counts[person_counts.values < min_n_tests].index
@@ -96,11 +98,11 @@ class ScreeningDataProcessingPipeline:
         df = self._gather_information(df)
         return self._exclude_invalid_data(df)
 
-    def _find_n_bins(self, df):
+    def _find_n_bins(self, df: pd.DataFrame) -> int:
         age_min, age_max = df["age"].min(), df["age"].max()
         avg_days_per_month = 30.437
 
-        def ceildiv(a, b):
+        def ceildiv(a: float, b: float) -> int:
             return int(-(a // -b))
 
         return ceildiv(
@@ -108,20 +110,22 @@ class ScreeningDataProcessingPipeline:
             settings.processing.months_per_timepoint * avg_days_per_month,
         )
 
-    def _assign_age_bins(self, df, n_bins):
+    def _assign_age_bins(self, df: pd.DataFrame, n_bins: int) -> None:
         _, bin_edges = np.histogram(df["age"], bins=n_bins)
         bin_edges[0] -= 1  # to make sure the youngest age is included
         indexes = np.arange(n_bins)
         df["bin"] = pd.cut(df["age"], bins=bin_edges, labels=indexes)
 
-    def _assign_row_index(self, df: pd.DataFrame):
+    def _assign_row_index(self, df: pd.DataFrame) -> dict[int, int]:
         individuals = sorted(df["PID"].unique())
         n_females = len(individuals)
         row_map = dict(zip(individuals, np.arange(n_females)))
         df["row"] = df[self.columns.pid].map(row_map)
         return row_map
 
-    def _create_age_aligned_matrix(self, df: pd.DataFrame):
+    def _create_age_aligned_matrix(
+        self, df: pd.DataFrame
+    ) -> tuple[np.ndarray, dict[int, int]]:
         n_bins = self._find_n_bins(df)
         self._assign_age_bins(df, n_bins)
         row_map = self._assign_row_index(df)
@@ -132,12 +136,12 @@ class ScreeningDataProcessingPipeline:
 
         return X, row_map
 
-    def generate_observation_matrix(self):
+    def generate_observation_matrix(self) -> np.ndarray:
         self.processed_data = self.prepare_data()
         self.X, self.row_map = self._create_age_aligned_matrix(self.processed_data)
         return self.X
 
-    def to_csv(self, location, **kwargs):
+    def to_csv(self, location: str, **kwargs) -> None:
         if self.processed_data is None:
             self.prepare_data()
-        self.processed_data.to_csv(location, **kwargs)
+        self.processed_data.to_csv(location, **kwargs)  # type: ignore
