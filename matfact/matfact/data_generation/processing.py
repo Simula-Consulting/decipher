@@ -24,11 +24,11 @@ class ScreeningDataProcessingPipeline:
 
         self.columns = settings.processing.column_names
 
-        self.dob_map = self._create_dob_map()
         self.n_females = n_females
 
         self.processed_data: pd.DataFrame | None = None
         self.X: np.ndarray | None = None
+        self.dob_map: dict[int, str] | None = None
         self.row_map: dict[int, int] | None = None
 
     def _create_dob_map(self) -> dict[int, str]:
@@ -44,6 +44,7 @@ class ScreeningDataProcessingPipeline:
 
     def _add_dob_column(self, df: pd.DataFrame) -> pd.DataFrame:
         """Method to add date of birth do a dataframe based on a map from person id."""
+        self.dob_map = self._create_dob_map()
         df[self.columns.dob.date] = df[self.columns.pid].map(self.dob_map)
         return df
 
