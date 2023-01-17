@@ -60,7 +60,9 @@ module = [
     "sklearn.model_selection",
     "sklearn.utils",
     #
-    "tqdm"
+    "tqdm",
+    #
+    "pandas.*",
 ]
 ignore_missing_imports = true
 
