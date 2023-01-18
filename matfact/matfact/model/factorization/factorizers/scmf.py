@@ -199,7 +199,7 @@ class SCMF(BaseMF):
 
         for n in range(self.N):
             U[n] = (
-                self.X_shifted[n]
+                (self.X_shifted[n] * self.W_bc[n])
                 @ self.V_bc
                 @ np.linalg.inv(
                     self.V_bc.T @ (np.diag(self.W_shifted[n]) @ self.V_bc) + self.I1
