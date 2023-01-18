@@ -42,7 +42,6 @@ class CMF(BaseMF):
         self.N, self.T = np.shape(self.X)
         self.nz_rows, self.nz_cols = np.nonzero(self.X)
 
-        self.n_iter_ = 0
         KD = self.config.difference_matrix_getter(self.T)
         self.J = self.config.minimal_value_matrix_getter((self.T, self.config.rank))
         self._init_matrices(KD)
@@ -101,5 +100,3 @@ class CMF(BaseMF):
         self._update_U()
         self._update_V()
         self._update_S()
-
-        self.n_iter_ += 1

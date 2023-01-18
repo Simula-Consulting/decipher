@@ -101,8 +101,6 @@ class SCMF(BaseMF):
         self.N, self.T = np.shape(X)
         self.nz_rows, self.nz_cols = np.nonzero(X)
 
-        self.n_iter_ = 0
-
         # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)
         # The number of possible shifts. Used for padding of arrays.
@@ -258,8 +256,6 @@ class SCMF(BaseMF):
         self.U = self._approx_U()
         self._update_V()
         self._update_s()
-
-        self.n_iter_ += 1
 
     def loss(self):
         "Compute the loss from the optimization objective"
