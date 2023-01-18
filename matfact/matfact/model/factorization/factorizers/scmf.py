@@ -98,7 +98,6 @@ class SCMF(BaseMF):
         self.W = self.config.weight_matrix_getter(X)
 
         self.N, self.T = np.shape(X)
-        self.nz_rows, self.nz_cols = np.nonzero(X)
 
         # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)

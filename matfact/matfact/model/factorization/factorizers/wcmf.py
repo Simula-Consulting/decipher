@@ -37,7 +37,6 @@ class WCMF(BaseMF):
         self.W = self.config.weight_matrix_getter(X)
 
         self.N, self.T = np.shape(self.X)
-        self.nz_rows, self.nz_cols = np.nonzero(self.X)
 
         KD = self.config.difference_matrix_getter(self.T)
         self.J = self.config.minimal_value_matrix_getter((self.T, self.config.rank))
