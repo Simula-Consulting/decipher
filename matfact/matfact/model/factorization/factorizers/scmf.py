@@ -144,13 +144,12 @@ class SCMF(BaseMF):
 
     @property
     def X(self):
-        # return self.X_bc[:, self.Ns:-self.Ns]
-        return _take_per_row_strided(self.X_shifted, self.Ns - self.s, n_elem=self.T)
+        return self.X_bc[:, self.Ns : -self.Ns or None]
 
     @property
     def V(self):
         """To be compatible with the expectation of having a V"""
-        return self.V_bc
+        return self.V_bc[self.Ns : -self.Ns or None, :]
 
     @property
     def M(self):
