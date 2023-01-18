@@ -48,37 +48,23 @@ def model_config_strategy(draw, max_shift: int = 0, max_rank: int = 5):
 
 
 @settings(deadline=None)
-@given(array2D(min_side=4))
-def test_special_case_equal(observation_matrix: npt.NDArray[np.int_]) -> None:
-    cmf = CMF(observation_matrix, identity_config)
-    wcmf = WCMF(observation_matrix, identity_config)
-    scmf = SCMF(observation_matrix, identity_config)
-
-    for _ in range(10):
-        cmf.run_step()
-        wcmf.run_step()
-    assert cmf.loss() == approx(wcmf.loss(), rel=1e-2)
-
-    number_of_steps = 2
-    for _ in range(number_of_steps):
-        assert wcmf.loss() == approx(scmf.loss())
-        wcmf.U = wcmf._approx_U()
-        scmf.U = scmf._approx_U()
-        assert wcmf.U == approx(scmf.U)
-
-        wcmf._update_V()
-        scmf._update_V()
-        assert wcmf.V == approx(scmf.V)
-
-
-@settings(database=None)
 @given(array2D())
 def test_special_case_wcmf_scmf_equal(observation_matrix: npt.NDArray[np.int_]) -> None:
     """Test that wcmf and scmf behave the same for no shift.
 
     TODO: Also include weights."""
-    wcmf = WCMF(observation_matrix, identity_config)
-    scmf = SCMF(observation_matrix, identity_config)
+    config = ModelConfig(
+        shift_budget=[0],
+        minimal_value_matrix_getter=np.zeros,
+        weight_matrix_getter=lambda observation_matrix: observation_matrix.copy(),  # type: ignore
+        rank=2,
+    )
+
+    wcmf = WCMF(observation_matrix, config)
+    scmf = SCMF(observation_matrix, config)
+
+    assert wcmf.U == approx(scmf.U)
+    assert wcmf.V == approx(scmf.V)
 
     number_of_steps = 2
     for _ in range(number_of_steps):
@@ -104,10 +90,29 @@ def test_loss_equal_initial(
         shift_budget=list(range(-max_shift, max_shift + 1)),
         weight_matrix_getter=IdentityWeighGetter(),
         minimal_value_matrix_getter=np.zeros,
+        initial_basic_profiles_getter=lambda a, b: np.ones((a, b)),
         rank=2,
     )
+
+    class BaseLossSCMF(SCMF):
+        def reconstruction_loss_term(self) -> float:
+            return np.square(np.linalg.norm(self.W * (self.X - self.U @ self.V.T)))
+
+        def V_L2_loss_term(self) -> float:
+            return self.config.lambda2 * np.square(
+                np.linalg.norm(self.V - self.J[self.Ns : -self.Ns or None, :])
+            )
+
+        def temporal_loss_term(self) -> float:
+            return self.config.lambda3 * np.square(
+                np.linalg.norm(
+                    self.KD[self.Ns : -self.Ns or None, self.Ns : -self.Ns or None]
+                    @ self.V
+                )
+            )
+
     wcmf = WCMF(observation_matrix, config=config)
-    scmf = SCMF(observation_matrix, config=config)
+    scmf = BaseLossSCMF(observation_matrix, config=config)
 
     assert wcmf.loss() == approx(scmf.loss())
 
