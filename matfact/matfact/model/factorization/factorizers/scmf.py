@@ -97,7 +97,6 @@ class SCMF(BaseMF):
         self.config = config
         self.W = self.config.weight_matrix_getter(X)
 
-        V = config.initial_basic_profiles_getter(X.shape[1], config.rank)
         self.N, self.T = np.shape(X)
         self.nz_rows, self.nz_cols = np.nonzero(X)
 
@@ -115,15 +114,13 @@ class SCMF(BaseMF):
         self.I2 = self.config.lambda2 * np.identity(self.config.rank)
 
         # Expand matrices with zeros over the extended left and right boundaries.
-        self.X_bc = np.hstack(
-            [np.zeros((self.N, self.Ns)), X, np.zeros((self.N, self.Ns))]
+        HORIZONTAL_PADDING = ((0, 0), (self.Ns, self.Ns))  # Pad left and right by Ns
+        self.X_bc = np.pad(X, HORIZONTAL_PADDING)
+        self.W_bc = np.pad(self.W, HORIZONTAL_PADDING)
+
+        self.V_bc = config.initial_basic_profiles_getter(
+            X.shape[1] + 2 * self.Ns, config.rank
         )
-        self.W_bc = np.hstack(
-            [np.zeros((self.N, self.Ns)), self.W, np.zeros((self.N, self.Ns))]
-        )
-        # Pad V with self.Ns time steps on each side, filling it with the
-        # value closest to the edge.
-        self.V_bc = np.pad(V, ((self.Ns, self.Ns), (0, 0)), "edge")
         # We know V_bc to be two-dimensional, so cast to please mypy.
         J_shape = cast(tuple[int, int], self.V_bc.shape)
         # TODO: do we have to cast this to tf float32?
