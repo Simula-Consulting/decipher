@@ -99,10 +99,12 @@ class SCMF(BaseMF):
 
         self.N, self.T = np.shape(X)
 
-        # The shift amount per row
         self.s = np.zeros(self.N, dtype=int)
-        # The number of possible shifts. Used for padding of arrays.
+        """The shift amount per row."""
         self.Ns = (len(self.config.shift_budget) - 1) // 2
+        """The number of possible shifts.
+
+        Used for padding of arrays."""
 
         # Add time points to cover extended left and right boundaries when shifting.
         self.KD = tf.cast(
