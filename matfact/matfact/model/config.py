@@ -56,8 +56,11 @@ class ModelConfig:
     shift_budget: list[int] = field(default_factory=lambda: [0])
 
     lambda1: float = 1.0
+    """Coefficient for L2 regularization on U."""
     lambda2: float = 1.0
+    """Coefficient for L2 regularization on V."""
     lambda3: float = 1.0
+    """Coefficient for temporal smoothness regularization."""
 
     rank: int = 5
 
