@@ -25,7 +25,7 @@ class WCMF(BaseMF):
         X,
         config: ModelConfig,
     ):
-        if config.shift_budget:
+        if config.shift_budget != [0]:
             warn(
                 "WCMF given a non-empty shift budget. This will be ignored."
                 "Consider using SCMF."
