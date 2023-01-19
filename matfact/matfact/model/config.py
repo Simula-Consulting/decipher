@@ -53,7 +53,7 @@ class PropensityWeightGetter(WeightGetter):
 class ModelConfig:
     """Configuration class for the MatFact model."""
 
-    shift_budget: list[int] = field(default_factory=list)
+    shift_budget: list[int] = field(default_factory=lambda: [0])
 
     lambda1: float = 1.0
     lambda2: float = 1.0
@@ -111,5 +111,8 @@ class ModelConfig:
     def __post_init__(self) -> None:
 
         # Assert that shift budget is symmetric and consecutive
+        assert (
+            len(self.shift_budget) > 0
+        ), "The minimal shift budget is [0], meaning no shift."
         assert np.all(np.diff(self.shift_budget) == 1)
         assert self.shift_budget[0] == -self.shift_budget[-1]

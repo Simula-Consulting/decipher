@@ -79,7 +79,7 @@ def experiment(
     # Generate the model
     model = model_factory(
         X_train,
-        shift_range=list(range(-12, 13)) if enable_shift else [],
+        shift_range=list(range(-12, 13)) if enable_shift else [0],
         use_convolution=enable_convolution,
         use_weights=enable_weighting,
         **hyperparams,

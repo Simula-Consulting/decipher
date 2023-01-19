@@ -231,7 +231,7 @@ def test_model_input_not_changed():
     sample_size, time_span = 100, 40
     X = np.random.choice(np.arange(5), size=(sample_size, time_span))
     W = data_weights(X)
-    s_budget = list(range(-5, 5))
+    s_budget = list(range(-5, 5 + 1))
 
     X_initial, W_initial = X.copy(), W.copy()
 

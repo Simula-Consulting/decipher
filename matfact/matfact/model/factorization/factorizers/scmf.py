@@ -260,14 +260,9 @@ class SCMF(BaseMF):
         # TODD: Probably, there should be something here to make sure we
         # only include the actual V, U, W, and X in the loss, and not
         # the padded elements that are only an implementation trick.
-        loss = np.sum(
-            np.linalg.norm(
-                self.W_shifted * (self.X_shifted - self.U @ self.V_bc.T), axis=1
-            )
-            ** 2
-        )
-        loss += self.config.lambda1 * np.sum(np.linalg.norm(self.U, axis=1) ** 2)
-        loss += self.config.lambda2 * np.linalg.norm(self.V_bc) ** 2
-        loss += self.config.lambda3 * np.linalg.norm(self.KD @ self.V_bc) ** 2
+        loss = np.sum((self.W_shifted * (self.X_shifted - self.U @ self.V_bc.T)) ** 2)
+        loss += self.config.lambda1 * np.sum(self.U**2)
+        loss += self.config.lambda2 * np.sum((self.V_bc - self.J) ** 2)
+        loss += self.config.lambda3 * np.sum(self.KD @ self.V_bc**2)
 
         return loss

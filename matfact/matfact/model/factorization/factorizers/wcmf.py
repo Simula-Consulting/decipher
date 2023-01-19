@@ -119,10 +119,10 @@ class WCMF(BaseMF):
     def loss(self):
         "Compute the loss from the optimization objective"
 
-        loss = np.square(np.linalg.norm(self.W * (self.X - self.U @ self.V.T)))
-        loss += self.config.lambda1 * np.square(np.linalg.norm(self.U))
-        loss += self.config.lambda2 * np.square(np.linalg.norm(self.V - self.J))
-        loss += self.config.lambda3 * np.square(np.linalg.norm(self.KD @ self.V))
+        loss = np.sum((self.W * (self.X - self.U @ self.V.T)) ** 2)
+        loss += self.config.lambda1 * np.sum(self.U**2)
+        loss += self.config.lambda2 * np.sum((self.V - self.J) ** 2)
+        loss += self.config.lambda3 * np.sum((self.KD @ self.V) ** 2)
 
         return loss
 

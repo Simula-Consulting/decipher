@@ -111,18 +111,19 @@ def test_loss_equal_initial(
         This class uses only the non-padded V to compute the L2 and convolutional loss,
         to be able to meaningfully compare with WCMF."""
 
-        def V_L2_loss_term(self) -> float:
-            return self.config.lambda2 * np.square(
-                np.linalg.norm(self.V - self.J[self.Ns : -self.Ns or None, :])
+        def loss(self):
+            "Compute the loss from the optimization objective"
+            loss = np.sum((self.W * (self.X - self.U @ self.V.T)) ** 2)
+            loss += self.config.lambda1 * np.sum(self.U**2)
+            loss += self.config.lambda2 * np.sum(
+                (self.V - self.J[self.Ns : -self.Ns or None]) ** 2
+            )
+            loss += self.config.lambda3 * np.sum(
+                self.KD[self.Ns : -self.Ns or None, self.Ns : -self.Ns or None]
+                @ self.V**2
             )
 
-        def temporal_loss_term(self) -> float:
-            return self.config.lambda3 * np.square(
-                np.linalg.norm(
-                    self.KD[self.Ns : -self.Ns or None, self.Ns : -self.Ns or None]
-                    @ self.V
-                )
-            )
+            return loss
 
     wcmf = WCMF(observation_matrix, config=config)
     scmf = BaseLossSCMF(observation_matrix, config=config)
