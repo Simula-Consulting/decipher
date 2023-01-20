@@ -52,7 +52,7 @@ class ScreeningDataProcessingPipeline:
         """Method to convert string values to datetimes."""
 
         def datetime_conversion(x: str) -> pd.Timestamp:
-            return pd.to_datetime(x, format="%d.%m.%Y")
+            return pd.to_datetime(x, format=settings.processing.dateformat)
 
         df[columns] = df[columns].apply(datetime_conversion)
 
@@ -67,6 +67,8 @@ class ScreeningDataProcessingPipeline:
 
     def _add_risk_column(self, df: pd.DataFrame) -> None:
         """Method to add a column with diagnosis as risk levels."""
+        # TODO: this is bugged, it overwrites values to NaN
+        # TODO: also include test to ensure this doesn't happen
         for screening in settings.processing.risk_maps.keys():
             df["risk"] = df[screening].map(settings.processing.risk_maps[screening])
 
@@ -82,7 +84,7 @@ class ScreeningDataProcessingPipeline:
     ) -> pd.DataFrame:
         """Method to exlude invalid data by dropping columns with NaN values
         or females with only 1 screening."""
-        new_df = df.dropna()
+        new_df = df.dropna(subset=["age", "risk"])
         person_counts = new_df[self.columns.pid].value_counts()
         rejected_pids = person_counts[person_counts.values < min_n_tests].index
         return new_df[~new_df[self.columns.pid].isin(rejected_pids)]
@@ -118,10 +120,15 @@ class ScreeningDataProcessingPipeline:
             """Function to perform ceiling division, opposite of floor division."""
             return int(-(a // -b))
 
-        return ceildiv(
-            age_max - age_min,
-            settings.processing.months_per_timepoint * avg_days_per_month,
-        )
+        try:
+            return ceildiv(
+                age_max - age_min,
+                settings.processing.months_per_timepoint * avg_days_per_month,
+            )
+        except ValueError:
+            from IPython import embed
+
+            embed()
 
     def _assign_age_bins(self, df: pd.DataFrame, n_bins: int) -> None:
         """Method to assign results into age bins (columns) based on the age at time of screening."""
@@ -156,6 +163,8 @@ class ScreeningDataProcessingPipeline:
     def generate_observation_matrix(self) -> np.ndarray:
         """Method to process the screening data and produce an age-aligned observation matrix."""
         self.processed_data = self.prepare_data()
+        if len(self.processed_data) < 1:
+            return []
         self.X, self.row_map = self._create_age_aligned_matrix(self.processed_data)
         return self.X
 

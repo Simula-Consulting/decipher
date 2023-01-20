@@ -130,6 +130,7 @@ class DataProcessingSettings(BaseModel):
     }
 
     months_per_timepoint: int = 3
+    dateformat = "%d.%m.%Y"
 
     # Personal identifier
     pid = "PID"
