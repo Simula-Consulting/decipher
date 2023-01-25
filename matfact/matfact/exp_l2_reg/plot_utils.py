@@ -8,7 +8,7 @@ import math
 
 from sklearn.metrics import ConfusionMatrixDisplay
 
-RESULTS_PATH = pathlib.Path(__file__).parent / "results"
+RESULTS_PATH = pathlib.Path(__file__).parent.parent / "results"
 
 NORMAL, INVERTED = "normal", "inverted"  # Dataset types
 LAMBDA1, LAMBDA2 = "lambda1", "lambda2"  # U and V regularization parameters
@@ -47,7 +47,7 @@ def plot_metric_against_lambda(
     # Plot metrics (y-axis) with different y-resolutions for
     # selected lambda value against index_lambda (x-axis)
     pp_df = preprocess_dataframe(df, metric, filter_lambda, index_lambda, lambda_value)
-    ax.plot(pp_df.index, pp_df, color=color, label=f"{index_lambda}: {lambda_value}")
+    ax.plot(pp_df.index, pp_df, color=color, label=f"{filter_lambda}: {lambda_value}")
 
 
 def set_axis_params(ax, x_values, x_label, ylim=None, title=None, legend=True):
@@ -76,14 +76,15 @@ def combine_plots(n_lambdas, experiment_name):
     )  # adapt figure size to number of lambdas
     fig, axs = plt.subplots(n_lambdas, n_lambdas, figsize=fig_size)
     fig.suptitle(experiment_name)
+    return fig, axs
 
 
 def plot_metrics(
     df_dict,
     metric_name,
     lambda_values,
-    fig_name="",
     fig_path=RESULTS_PATH,
+    fig_name="",
     y_limits=(-0.05, 1.05),
     lambda_values_l1=None,
 ):
@@ -212,9 +213,10 @@ def plot_image_artifact(
     logs_dict,
     artifact,
     lambda_values,
+    U_l1_rate,
+    fig_path=RESULTS_PATH,
     sample_num=3,
     fig_name="",
-    fig_path=RESULTS_PATH,
     lambda_values_l1=None,
 ):
     if lambda_values_l1 is None:
@@ -237,7 +239,7 @@ def plot_image_artifact(
 
     for i, lambda1 in enumerate(lambda_samples_l1):
         for j, lambda2 in enumerate(lambda_samples):
-            title = f"U{lambda1}_V{lambda2}"
+            title = f"U{lambda1}({U_l1_rate})_V{lambda2}"
             # plot normal artifact
             ax1 = fetch_artifact_ax(axs, i, j, inverted=False)
             image_path1 = fetch_artifact_path(normal_df, lambda1, lambda2, artifact_col)
@@ -287,9 +289,10 @@ def plot_numpy_artifact(
     logs_dict,
     artifact,
     lambda_values,
+    U_l1_rate,
+    fig_path=RESULTS_PATH,
     sample_num=3,
     fig_name="",
-    fig_path=RESULTS_PATH,
     display_labels=LABELS_SHORT_STR,
     lambda_values_l1=None,
 ):
@@ -315,7 +318,7 @@ def plot_numpy_artifact(
 
     for i, lambda1 in enumerate(lambda_samples_l1):
         for j, lambda2 in enumerate(lambda_samples):
-            title = f"U{lambda1}_V{lambda2}"
+            title = f"U{lambda1}({U_l1_rate})_V{lambda2}"
             # plot normal and inverted artifact
             ax1 = fetch_artifact_ax(axs, i, j, inverted=False)
             array_path1 = fetch_artifact_path(normal_df, lambda1, lambda2, artifact_col)

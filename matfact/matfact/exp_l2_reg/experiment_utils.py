@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 from mlflow.entities import ViewType
 
-from matfact.data_generation.dataset import Dataset
+from matfact.data_generation.dataset import Dataset, DGD, HMM
 from .plot_utils import NORMAL, INVERTED
 
 
@@ -22,20 +22,32 @@ def matrix_info(m):
 def log_dataset_info(dataset, inverted=False):
     preffix = INVERTED if inverted else NORMAL
     logging.info(f"{preffix} dataset X histogram: {matrix_info(dataset.X)}")
-    logging.info(f"{preffix}dataset M histogram: {matrix_info(dataset.M)}")
+    logging.info(f"{preffix} dataset M histogram: {matrix_info(dataset.M)}")
+    logging.info(
+        f"{preffix} dataset generation method: {dataset.metadata['generation_method']}"
+    )
 
 
-def invert_domain(X):
+def invert_domain(m):
     # Inverts matrix label distributions
-    return X.max() - (X - X.min())
+    return m.max() - (m - m.min())
+
+
+def invert_domain_excluding_value(m, exclude):
+    # Inverts matrix label distributions excluding a value
+    inv_m = np.zeros(m.shape)
+    inv_m[m != exclude] = invert_domain(m[m != exclude])
+    return inv_m
 
 
 def invert_dataset(dataset):
     # Inverts dataset label distributions
     log_dataset_info(dataset)
-    inv_M = invert_domain(dataset.M.copy())
-    inv_X = dataset.X.copy()
-    inv_X[inv_X > 0] = invert_domain(inv_X[inv_X > 0])
+    if dataset.metadata["generation_method"] == DGD:
+        inv_M = invert_domain(dataset.M.copy())
+    elif dataset.metadata["generation_method"] == HMM:
+        inv_M = invert_domain_excluding_value(dataset.M.copy(), 0)
+    inv_X = invert_domain_excluding_value(dataset.X.copy(), 0)
     inv_metadata = dataset.metadata.copy()
     inv_metadata["observation_probabilities"] = [0.01, 0.04, 0.12, 0.08, 0.03]
     inv_dataset = Dataset(inv_X, inv_M, inv_metadata)

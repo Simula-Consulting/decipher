@@ -19,7 +19,7 @@ class CMF(BaseMF):
               shift and weights are ignored in the CMF factorizer.
     """
 
-    def __init__(self, X, config: ModelConfig, U_l1_reg: bool = False):
+    def __init__(self, X, config: ModelConfig):
         if not config.weight_matrix_getter.is_identity:
             warn(
                 "CMF given a non-identity weight. This will be ignored."
@@ -30,7 +30,6 @@ class CMF(BaseMF):
                 "CMF given a non-empty shift budget. This will be ignored."
                 "Consider using SCMF."
             )
-        self.U_l1_reg = U_l1_reg
         self.X = X
         self.V = config.initial_basic_profiles_getter(X.shape[1], config.rank)
         self.config = config
@@ -42,6 +41,8 @@ class CMF(BaseMF):
         KD = self.config.difference_matrix_getter(self.T)
         self.J = self.config.minimal_value_matrix_getter((self.T, self.config.rank))
         self._init_matrices(KD)
+        # Initialize U
+        self.U = np.zeros((self.N, config.rank))
         self._update_U()
 
     @property
@@ -52,7 +53,8 @@ class CMF(BaseMF):
         self.S = self.X.copy()
         self.mask = (self.X != 0).astype(np.float32)
 
-        self.I_l1 = self.config.lambda1 * np.identity(self.config.rank)
+        self.l1 = self.config.U_l1_rate * self.config.lambda1
+        self.I_l1 = (self.config.lambda1 - self.l1) * np.identity(self.config.rank)
         self.I_l2 = self.config.lambda2 * np.identity(self.config.rank)
 
         self.KD = KD
@@ -60,7 +62,8 @@ class CMF(BaseMF):
         self.L2, self.Q2 = np.linalg.eigh(self.config.lambda3 * self.DTKTKD)
 
     def _update_V(self):
-
+        if np.sum(np.isinf(self.U.T @ self.U)) > 0:
+            print(self.U.T)
         L1, Q1 = np.linalg.eigh(self.U.T @ self.U + self.I_l2)
 
         hatV = (
@@ -71,27 +74,28 @@ class CMF(BaseMF):
         self.V = self.Q2 @ (hatV @ Q1.T)
 
     def _update_U(self):
-        if self.U_l1_reg:
-            self.U = np.transpose(
-                np.linalg.solve(
-                    self.V.T @ self.V, self.V.T @ self.S.T - self.config.lambda1
-                )
+        self.U = np.transpose(
+            np.linalg.solve(
+                self.V.T @ self.V + self.I_l1,
+                self.V.T @ self.S.T - self.l1 * np.sign(self.U.T),
             )
-        else:
-            self.U = np.transpose(
-                np.linalg.solve(self.V.T @ self.V + self.I_l1, self.V.T @ self.S.T)
-            )
+        )
 
     def _update_S(self):
 
         self.S = self.U @ self.V.T
         self.S[self.nz_rows, self.nz_cols] = self.X[self.nz_rows, self.nz_cols]
 
+    def U_reg_loss(self):
+        return (self.config.lambda1 - self.l1) * np.square(
+            np.linalg.norm(self.U)
+        ) + self.l1 * np.linalg.norm(self.U)
+
     def loss(self):
         "Compute the loss from the optimization objective"
 
         loss = np.square(np.linalg.norm(self.mask * (self.X - self.U @ self.V.T)))
-        loss += self.config.lambda1 * np.square(np.linalg.norm(self.U))
+        loss += self.U_reg_loss()
         loss += self.config.lambda2 * np.square(np.linalg.norm(self.V - self.J))
         loss += self.config.lambda3 * np.square(np.linalg.norm(self.KD @ self.V))
 
@@ -99,7 +103,6 @@ class CMF(BaseMF):
 
     def run_step(self):
         "Perform one step of alternating minimization"
-
         self._update_U()
         self._update_V()
         self._update_S()

@@ -26,8 +26,10 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 
+from hmm_synthetic.data_generator import simulate_state_histories
+
 from matfact import settings
-from matfact.data_generation.dataset import Dataset
+from matfact.data_generation.dataset import Dataset, DGD, HMM
 from matfact.model import model_factory, prediction_data
 from matfact.model.factorization.utils import theta_mle
 from matfact.model.predict.risk_prediction import predict_proba
@@ -57,6 +59,7 @@ from .experiment_utils import invert_dataset, fetch_experiment_logs
 # Set logging level
 logging.basicConfig(level=logging.INFO)
 
+# Matrix Factoriztion Methods
 MATFACT_ALS = "matfact_als"
 SKLEARN_NMF = "sklearn_nmf"
 SKLEARN_DL = "sklearn_dl"
@@ -81,16 +84,13 @@ PLOT_NUMPY_ARTIFACTS = [
 ]
 
 
-def matfact_fit_predict(
-    X_train, X_test_masked, t_pred, hyperparams, U_l1_regularization
-):
+def matfact_fit_predict(X_train, X_test_masked, t_pred, hyperparams):
     # Generate the model
     model = model_factory(
         X_train,
         shift_range=[],
         use_convolution=False,
         use_weights=False,
-        U_l1_reg=U_l1_regularization,
         **hyperparams,
     )
     # Train the model (i.e. perform the matrix completion)
@@ -171,12 +171,11 @@ def model_fit_predict(
     t_pred,
     hyperparams,
     model_type=MATFACT_ALS,
-    U_l1_regularization=False,
 ):
     # Predict the risk over the test set
     if "matfact" in model_type:
         p_pred, results = matfact_fit_predict(
-            X_train, X_test_masked, t_pred, hyperparams, U_l1_regularization
+            X_train, X_test_masked, t_pred, hyperparams
         )
     elif "sklearn" in model_type:
         p_pred, results = sklearn_fit_predict(
@@ -201,7 +200,7 @@ def experiment(
     display_labels=LABELS_SHORT_STR,
     model_type=MATFACT_ALS,
     log_matfact_metrics=False,
-    U_l1_regularization=False,
+    U_l1_rate=0,
 ):
     """Execute and log an experiment.
 
@@ -234,7 +233,6 @@ def experiment(
         t_pred,
         hyperparams,
         model_type,
-        U_l1_regularization,
     )
     last_step = results["epochs"][-1]
     client.log_metric(
@@ -245,7 +243,8 @@ def experiment(
     )
     precision_scores = precision_score(x_true, x_pred, labels=labels, average=None)
     recall_scores = recall_score(x_true, x_pred, labels=labels, average=None)
-    for c, precision, recall in zip(labels, precision_scores, recall_scores):
+    log_rec_prec_list = list(zip(labels, precision_scores, recall_scores))
+    for c, precision, recall in log_rec_prec_list[:: len(log_rec_prec_list) - 1]:
         client.log_metric(run_id, f"{c}_precision", precision, step=last_step)
         client.log_metric(run_id, f"{c}_recall", recall, step=last_step)
     if "matfact" in model_type and log_matfact_metrics:
@@ -287,26 +286,43 @@ def experiment(
 
 def run_l2_regularization_experiments(
     lambda_values,
+    results_path,
     model_type=MATFACT_ALS,
-    result_path=RESULTS_PATH,
     experiment_name=None,
     lambda_values_l1=None,
-    U_l1_regularization=False,
+    U_l1_rate=0,
+    data_gen_method=DGD,
     N=1000,
     T=100,
     rank=5,
     sparsity=100,
+    censor=False,
 ):
+    # Initial paramter checks
     if lambda_values_l1 is None:
         lambda_values_l1 = lambda_values
     elif len(lambda_values_l1) != len(lambda_values):
         raise ValueError("lambda_values and lambda_values_l1 must have same length!")
+    if U_l1_rate < 0:
+        U_l1_rate = 0
+    elif U_l1_rate >= 1:
+        U_l1_rate = 0.99
     # Creates dataset and run experiment on it and it's inverted labels version.
-    if experiment_name is None:
-        experiment_name = model_type
+    experiment_name = (
+        f"{experiment_name + '_' if experiment_name is not None else ''}"
+        + f"{f'l1reg{int(U_l1_rate*100)}_' if  U_l1_rate > 0 else 'l2reg_'}"
+        + model_type
+        + "_"
+        + data_gen_method
+    )
     # Generate dataset and invert it
     normal_dataset = Dataset.generate(
-        N=N, T=T, rank=rank, sparsity_level=sparsity, censor=False
+        N=N,
+        T=T,
+        rank=rank,
+        sparsity_level=sparsity,
+        censor=censor,
+        method=data_gen_method,
     )
     inv_dataset = invert_dataset(normal_dataset)
 
@@ -345,6 +361,7 @@ def run_l2_regularization_experiments(
                 # Set base matfact hyperparameters for current run
                 hyperparams = {
                     "rank": 5,
+                    "U_l1_rate": U_l1_rate,
                     "lambda1": lambda1,
                     "lambda2": lambda2,
                     "lambda3": 0,
@@ -355,10 +372,10 @@ def run_l2_regularization_experiments(
                     run_id,
                     hyperparams,
                     dataset,
-                    results_path=RESULTS_PATH,
+                    results_path=results_path,
                     labels=labels,
                     model_type=model_type,
-                    U_l1_regularization=U_l1_regularization,
+                    U_l1_rate=U_l1_rate,
                 )
 
         # Retrieve experiment logs and save metric plots figures
@@ -368,18 +385,19 @@ def run_l2_regularization_experiments(
         experiment_ids.append(experiment_id)
 
     plot_suffix = experiment_name + "_" + "_".join(experiment_ids)
-    exp_result_path = result_path / plot_suffix
+    exp_results_path = results_path / plot_suffix
     if settings.create_path_default:
-        exp_result_path.mkdir(parents=True, exist_ok=True)
+        exp_results_path.mkdir(parents=True, exist_ok=True)
 
     for artifact in PLOT_IMAGE_ARTIFACTS:
         plot_image_artifact(
             run_artifacts,
             artifact,
             lambda_values,
-            3,
-            plot_suffix,
-            exp_result_path,
+            U_l1_rate,
+            fig_path=exp_results_path,
+            sample_num=3,
+            fig_name=plot_suffix,
             lambda_values_l1=lambda_values_l1,
         )
     for artifact in PLOT_NUMPY_ARTIFACTS:
@@ -387,9 +405,10 @@ def run_l2_regularization_experiments(
             run_artifacts,
             artifact,
             lambda_values,
-            3,
-            plot_suffix,
-            exp_result_path,
+            U_l1_rate,
+            fig_path=exp_results_path,
+            sample_num=3,
+            fig_name=plot_suffix,
             lambda_values_l1=lambda_values_l1,
         )
 
@@ -399,8 +418,8 @@ def run_l2_regularization_experiments(
                 run_logs_dfs,
                 metric,
                 lambda_values,
-                plot_suffix + "_samey",
-                exp_result_path,
+                fig_path=exp_results_path,
+                fig_name=plot_suffix + "_samey",
                 lambda_values_l1=lambda_values_l1,
             )
 
@@ -409,9 +428,9 @@ def run_l2_regularization_experiments(
                 run_logs_dfs,
                 metric,
                 lambda_values,
-                plot_suffix,
-                exp_result_path,
-                None,
+                fig_path=exp_results_path,
+                fig_name=plot_suffix,
+                y_limits=None,
                 lambda_values_l1=lambda_values_l1,
             )
 
@@ -420,9 +439,9 @@ def run_l2_regularization_experiments(
                 run_logs_dfs,
                 metric,
                 lambda_values,
-                plot_suffix,
-                exp_result_path,
-                None,
+                fig_path=exp_results_path,
+                fig_name=plot_suffix,
+                y_limits=None,
                 lambda_values_l1=lambda_values_l1,
             )
 

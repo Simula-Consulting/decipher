@@ -61,11 +61,11 @@ def discretise_matrix(M, number_of_states: int, theta, seed=42):
     """Convert a <float> basis to <int>."""
 
     np.random.seed(seed)
-    N, T = M.shape
-    domain = np.arange(1, number_of_states + 1)
 
     X_float_scaled = _scale_to_domain(M, 1, number_of_states)
 
+    N, T = M.shape
+    domain = np.arange(1, number_of_states + 1)
     domain_repeated = np.repeat(domain, N).reshape((N, number_of_states), order="F")
 
     D = np.empty_like(X_float_scaled)

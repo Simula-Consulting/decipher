@@ -2,4 +2,5 @@
 results/
 mlruns/
 images/
+figures/
 *.jpg

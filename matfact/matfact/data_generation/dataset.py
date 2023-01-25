@@ -7,6 +7,8 @@ import pathlib
 import numpy as np
 from scipy.stats import betabinom
 
+from hmm_synthetic.data_generator import simulate_state_histories
+
 from matfact.settings import (
     DATASET_PATH,
     default_number_of_states,
@@ -14,8 +16,48 @@ from matfact.settings import (
     minimum_number_of_observations,
 )
 
-from .gaussian_generator import discretise_matrix, float_matrix
+from .gaussian_generator import (
+    discretise_matrix,
+    float_matrix,
+)
 from .masking import simulate_mask
+
+# Data Generation Methods
+DGD = "DGD"  # Discrete Gaussian Distribution
+HMM = "HMM"  # Hidden Markov Model
+
+
+def time_point_approx(T):
+    # Approximate number of points per year to
+    # obtain T time points with the HMM simulation
+    # Will default to 6 points if 0 => T > 400
+    # Set the number of data points per year (i.e., temporal resolution)
+    # Example: 4 points per year => time between data points is 12 / 4 = 3 months
+    time_points = 6
+    if 300 <= T < 400:
+        time_points = 4
+    elif 200 <= T < 300:
+        time_points = 3
+    elif 100 <= T < 200:
+        time_points = 2
+    elif 0 <= T < 100:
+        time_points = 1
+    return time_points
+
+
+def check_matrix(m, N, T, r):
+    # Check matrix m has appropriate dimensions
+    N_m, T_m = m.shape
+    if N_m != N:
+        N = N_m  # Warn?
+    if T_m != T:
+        T = T_m  # Warn?
+    # Check matrix dimensions fullfill requirements
+    if N < 1 or T < 1:
+        raise ValueError("N and T must be larger than zero.")
+    if r > min(N, T):
+        raise ValueError("Rank r cannot be larger than either N or T.")
+    return N, T
 
 
 def censoring(X, missing=0):
@@ -40,6 +82,7 @@ def produce_dataset(
     theta=2.5,
     seed=42,
     censor=True,
+    method=DGD,
 ):
     """Generate a synthetic dataset resembling the real screening data.
 
@@ -61,9 +104,18 @@ def produce_dataset(
             The sparse and original complete data matrices
             The name of the generation method
     """
-
-    M = float_matrix(N=N, T=T, r=r, number_of_states=number_of_states, seed=seed)
-    Y = discretise_matrix(M, number_of_states=number_of_states, theta=theta, seed=seed)
+    # Simulatestate histories
+    if method == HMM:
+        M = simulate_state_histories(
+            n_samples=N, points_per_year=time_point_approx(T), seed=42
+        )
+        N, T = check_matrix(M, N, T, r)
+        Y = M
+    else:  # if method==DGD:
+        M = float_matrix(N=N, T=T, r=r, number_of_states=number_of_states, seed=seed)
+        Y = discretise_matrix(
+            M, number_of_states=number_of_states, theta=theta, seed=seed
+        )
 
     if observation_probabilities is None:
         observation_probabilities = default_observation_probabilities
@@ -85,7 +137,11 @@ def produce_dataset(
 
     valid_rows = np.sum(X != 0, axis=1) >= minimum_number_of_observations
 
-    return X[valid_rows].astype(np.float32), M[valid_rows].astype(np.float32), "DGD"
+    return (
+        X[valid_rows].astype(np.float32),
+        M[valid_rows].astype(np.float32),
+        method,
+    )
 
 
 class Dataset:
@@ -100,6 +156,8 @@ class Dataset:
         Dataset.from_file(some_path).get_X_M()
         ```
     """
+
+    datagen_method = "UNKNOWN"
 
     def __init__(self, X: np.ndarray, M: np.ndarray, metadata: dict):
         self.X = X
@@ -141,6 +199,7 @@ class Dataset:
         number_of_states=default_number_of_states,
         observation_probabilities=default_observation_probabilities,
         censor=True,
+        method=DGD,
     ):
         """Generate a Dataset
 
@@ -159,6 +218,7 @@ class Dataset:
             number_of_states=number_of_states,
             observation_probabilities=observation_probabilities,
             censor=censor,
+            method=method,
         )
         number_of_individuals = X.shape[0]
         if number_of_individuals == 0:
