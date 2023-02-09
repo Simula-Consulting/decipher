@@ -62,15 +62,19 @@ class ScreeningDataProcessingPipeline:
         self._convert_to_datetime(df, columns=time_cols)
         for col in (self.columns.cyt.date, self.columns.hist.date):
             df.loc[df[col].notna(), "age"] = (
-                df[self.columns.cyt.date] - df[self.columns.dob.date]
+                df[col] - df[self.columns.dob.date]
             ).apply(lambda x: x.days)
 
     def _add_risk_column(self, df: pd.DataFrame) -> None:
         """Method to add a column with diagnosis as risk levels."""
         # TODO: this is bugged, it overwrites values to NaN
         # TODO: also include test to ensure this doesn't happen
+        df["risk"] = ""
+
         for screening in settings.processing.risk_maps.keys():
-            df["risk"] = df[screening].map(settings.processing.risk_maps[screening])
+            df.loc[df[screening].notna(), "risk"] = df[screening].map(
+                settings.processing.risk_maps[screening]
+            )
 
     def _gather_information(self, df: pd.DataFrame) -> pd.DataFrame:
         """Method to prepare the dataframe by gathering all available information."""
@@ -120,15 +124,10 @@ class ScreeningDataProcessingPipeline:
             """Function to perform ceiling division, opposite of floor division."""
             return int(-(a // -b))
 
-        try:
-            return ceildiv(
-                age_max - age_min,
-                settings.processing.months_per_timepoint * avg_days_per_month,
-            )
-        except ValueError:
-            from IPython import embed
-
-            embed()
+        return ceildiv(
+            age_max - age_min,
+            settings.processing.months_per_timepoint * avg_days_per_month,
+        )
 
     def _assign_age_bins(self, df: pd.DataFrame, n_bins: int) -> None:
         """Method to assign results into age bins (columns) based on the age at time of screening."""
@@ -164,7 +163,7 @@ class ScreeningDataProcessingPipeline:
         """Method to process the screening data and produce an age-aligned observation matrix."""
         self.processed_data = self.prepare_data()
         if len(self.processed_data) < 1:
-            return []
+            return np.array([])
         self.X, self.row_map = self._create_age_aligned_matrix(self.processed_data)
         return self.X
 

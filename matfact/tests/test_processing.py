@@ -3,10 +3,9 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
-import pytest
-from hypothesis import given, settings
+from hypothesis import given
 from hypothesis import strategies as st
-from hypothesis.extra.pandas import column, data_frames, range_indexes, series
+from hypothesis.extra.pandas import column, data_frames, range_indexes
 
 from matfact.data_generation.processing import ScreeningDataProcessingPipeline
 from matfact.settings import settings
@@ -33,7 +32,7 @@ def generate_mock_screening_data(draw: Callable) -> pd.DataFrame:
     size = len(mock_screening_data)
     dates = np.array(
         [
-            datetime.strftime(x, format=settings.processing.dateformat)
+            datetime.strftime(x, settings.processing.dateformat)
             for x in draw(
                 st.lists(
                     st.datetimes(
@@ -82,7 +81,7 @@ def generate_mock_dob_data(draw: Callable) -> pd.DataFrame:
         )
     )
     df[settings.processing.dob.date] = df[settings.processing.dob.date].apply(
-        lambda x: datetime.strftime(x, format=settings.processing.dateformat)
+        lambda x: datetime.strftime(x, settings.processing.dateformat)
     )
     df[settings.processing.pid] = list(range(1, len(df) + 1))
     return df
@@ -98,3 +97,5 @@ def test_prepare_data(screening_data, dob_data, n_females) -> None:
         screening_data, dob_data, n_females=n_females
     )
     prepared_data = processor.prepare_data()
+    assert prepared_data["risk"].isna().sum() == 0
+    assert prepared_data["age"].isna().sum() == 0
