@@ -149,6 +149,10 @@ class DataProcessingSettings(BaseModel):
     max_n_females: int | None = None
     row_map_save_location: str | None = None
 
+    # data files
+    raw_screening_data_path: str = "screening_data.csv"
+    raw_dob_data_path: str = "dob_data.csv"
+
 
 class Settings(BaseSettings):
     paths = PathSettings()
@@ -159,9 +163,6 @@ class Settings(BaseSettings):
     gauss_gen = GaussianGeneratorSettings()
     censoring = CensoringSettings()
     processing = DataProcessingSettings()
-
-    raw_screening_data_path: str
-    raw_dob_data_path: str
 
     class Config:
         env_nested_delimiter = "__"

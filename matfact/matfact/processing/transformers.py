@@ -21,7 +21,7 @@ class BirthdateAdder(BaseEstimator, TransformerMixin):
 
     def __init__(
         self,
-        birthday_file: str = settings.raw_dob_data_path,
+        birthday_file: str = settings.processing.raw_dob_data_path,
     ) -> None:
         self.birthday_file = birthday_file
         self.dob_data = pd.read_csv(birthday_file)

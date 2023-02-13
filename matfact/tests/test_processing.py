@@ -15,8 +15,10 @@ from matfact.processing.transformers import (
 from matfact.settings import settings
 
 # Changing default data paths to testing datasets
-settings.raw_screening_data_path = "tests/test_datasets/test_screening_data.csv"
-settings.raw_dob_data_path = "tests/test_datasets/test_dob_data.csv"
+settings.processing.raw_screening_data_path = (
+    "tests/test_datasets/test_screening_data.csv"
+)
+settings.processing.raw_dob_data_path = "tests/test_datasets/test_dob_data.csv"
 
 
 def create_custom_pipeline(*, n_females: int | None = None, min_n_tests: int = 0):
@@ -43,7 +45,7 @@ def create_custom_pipeline(*, n_females: int | None = None, min_n_tests: int = 0
 
 @pytest.fixture
 def screening_data() -> pd.DataFrame:
-    return pd.read_csv(settings.raw_screening_data_path)
+    return pd.read_csv(settings.processing.raw_screening_data_path)
 
 
 def test_processing_pipeline(screening_data: pd.DataFrame) -> None:

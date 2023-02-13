@@ -14,14 +14,14 @@ def get_matrix_dimensions(processing_pipeline: Pipeline):
 
 
 def load_and_process_screening_data(
-    screening_data_path: str = settings.raw_screening_data_path, **kwargs
+    screening_data_path: str = settings.processing.raw_screening_data_path, **kwargs
 ):
     raw_data = pd.read_csv(screening_data_path, **kwargs)
     return matfact_pipeline.fit_transform(raw_data)
 
 
 def generate_observation_matrix(
-    screening_data_path: str = settings.raw_screening_data_path,
+    screening_data_path: str = settings.processing.raw_screening_data_path,
 ):
     """Function to generate a risk observation matrix from a raw screening file."""
     # TODO: Add edge case handling where there are > 1 screening result for a time bin
