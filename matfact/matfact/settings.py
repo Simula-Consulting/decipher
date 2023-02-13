@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, BaseSettings, root_validator
 
@@ -20,7 +20,7 @@ class MatFactSettings(BaseModel):
     age_segments: tuple[int, int] = (76, 116)
     weights: list[float] = []
 
-    @root_validator
+    @root_validator(allow_reuse=True)
     def set_default_weights(cls, values):
         if len(values["weights"]) == 0:
             values["weights"] = range(1, values["number_of_states"] + 1)
@@ -146,8 +146,8 @@ class DataProcessingSettings(BaseModel):
     column_names = ColumnNameCollection(pid=pid, cyt=cyt, hist=hist, dob=dob)
 
     # processing pipeline configuration
-    max_n_females: Optional[int] = None
-    row_map_save_location: Optional[str] = None
+    max_n_females: int | None = None
+    row_map_save_location: str | None = None
 
 
 class Settings(BaseSettings):
