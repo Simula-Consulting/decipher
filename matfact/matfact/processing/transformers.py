@@ -17,12 +17,15 @@ class BirthdateAdder(BaseEstimator, TransformerMixin):
     are not included and will have a None value in the birthdate column.
     """
 
-    def __init__(self, birthday_file: str = settings.raw_dob_data_path) -> None:
-        self.birthday_file = birthday_file
-        self.dob_data = pd.read_csv(self.birthday_file)
-        self.columns = settings.processing.column_names
+    dob_map: dict[int, str] = dict()
 
-        self.dob_map: dict[int, str] = dict()
+    def __init__(
+        self,
+        birthday_file: str = settings.raw_dob_data_path,
+    ) -> None:
+        self.birthday_file = birthday_file
+        self.dob_data = pd.read_csv(birthday_file)
+        self.columns = settings.processing.column_names
 
     def fit(self, X, y=None) -> BirthdateAdder:
         self.dob_map = (
@@ -117,7 +120,8 @@ class InvalidRemover(BaseEstimator, TransformerMixin):
         X = X.dropna(subset=["age", "risk"])
         person_counts = X[self.columns.pid].value_counts()
         rejected_pids = person_counts[person_counts.values < self.min_n_tests].index
-        return X[~X[self.columns.pid].isin(rejected_pids)]
+        out = X[~X[self.columns.pid].isin(rejected_pids)]
+        return out
 
 
 class DataSampler(BaseEstimator, TransformerMixin):
@@ -176,9 +180,12 @@ class AgeBinAssigner(BaseEstimator, TransformerMixin):
             """Function to perform ceiling division, opposite of floor division."""
             return int(-(a // -b))
 
-        self.n_bins = ceildiv(
-            age_max - age_min,
-            settings.processing.months_per_timepoint * avg_days_per_month,
+        self.n_bins = max(
+            ceildiv(
+                age_max - age_min,
+                settings.processing.months_per_timepoint * avg_days_per_month,
+            ),
+            1,
         )
         return self
 
