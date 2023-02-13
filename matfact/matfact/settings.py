@@ -99,6 +99,7 @@ class ColumnNameCollection:
 
 
 class DataProcessingSettings(BaseModel):
+
     risk_maps: dict[str, dict[Any, int]] = {
         "cytMorfologi": {
             "Normal": 1,
@@ -154,6 +155,9 @@ class Settings(BaseSettings):
     gauss_gen = GaussianGeneratorSettings()
     censoring = CensoringSettings()
     processing = DataProcessingSettings()
+
+    raw_screening_data_path: str
+    raw_dob_data_path: str
 
     class Config:
         env_nested_delimiter = "__"
