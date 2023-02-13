@@ -14,18 +14,15 @@ from matfact.processing.transformers import (
 )
 from matfact.settings import settings
 
-# Changing default data paths to testing datasets
-settings.processing.raw_screening_data_path = (
-    "tests/test_datasets/test_screening_data.csv"
-)
-settings.processing.raw_dob_data_path = "tests/test_datasets/test_dob_data.csv"
-
 
 def create_custom_pipeline(*, n_females: int | None = None, min_n_tests: int = 0):
     """Function to return the matfact processing pipeline but with custom arguments for testing."""
     return Pipeline(
         [
-            ("birthdate_adder", BirthdateAdder()),
+            (
+                "birthdate_adder",
+                BirthdateAdder(birthday_file="tests/test_datasets/test_dob_data.csv"),
+            ),
             ("datetime_converter", DatetimeConverter()),
             ("age_adder", AgeAdder()),
             ("risk_adder", RiskAdder()),
@@ -45,7 +42,7 @@ def create_custom_pipeline(*, n_females: int | None = None, min_n_tests: int = 0
 
 @pytest.fixture
 def screening_data() -> pd.DataFrame:
-    return pd.read_csv(settings.processing.raw_screening_data_path)
+    return pd.read_csv("tests/test_datasets/test_screening_data.csv")
 
 
 def test_processing_pipeline(screening_data: pd.DataFrame) -> None:
@@ -66,7 +63,9 @@ def test_processing_pipeline(screening_data: pd.DataFrame) -> None:
 
 
 def test_birthdate_adder(screening_data: pd.DataFrame) -> None:
-    birthdate_adder = BirthdateAdder()
+    birthdate_adder = BirthdateAdder(
+        birthday_file="tests/test_datasets/test_dob_data.csv"
+    )
     df = birthdate_adder.fit_transform(screening_data)
     column_names = settings.processing.column_names
     date_col_name = column_names.dob.date
