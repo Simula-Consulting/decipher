@@ -4,12 +4,13 @@ from matfact.processing.transformers import (
     AgeAdder,
     AgeBinAssigner,
     BirthdateAdder,
+    DataSampler,
     DatetimeConverter,
     InvalidRemover,
     RiskAdder,
     RowAssigner,
-    SampleFemales,
 )
+from matfact.settings import settings
 
 matfact_pipeline = Pipeline(
     [
@@ -18,8 +19,14 @@ matfact_pipeline = Pipeline(
         ("age_adder", AgeAdder()),
         ("risk_adder", RiskAdder()),
         ("invalid_remover", InvalidRemover()),
-        ("female_sampler", SampleFemales(max_n_females=None)),
+        (
+            "data_sampler",
+            DataSampler(max_n_females=settings.processing.max_n_females),
+        ),
         ("age_bin_assigner", AgeBinAssigner()),
-        ("row_assigner", RowAssigner()),
+        (
+            "row_assigner",
+            RowAssigner(save_path=settings.processing.row_map_save_location),
+        ),
     ]
 )

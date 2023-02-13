@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, BaseSettings, root_validator
 
@@ -131,10 +131,10 @@ class DataProcessingSettings(BaseModel):
     }
 
     months_per_timepoint: int = 3
-    dateformat = "%d.%m.%Y"
+    dateformat: str = "%d.%m.%Y"
 
     # Personal identifier
-    pid = "PID"
+    pid: str = "PID"
 
     # Screening data column names
     cyt = ColumnName(name="cytMorfologi", date="cytDate")
@@ -144,6 +144,10 @@ class DataProcessingSettings(BaseModel):
     dob = ColumnName(name="STATUS", date="FOEDT")
 
     column_names = ColumnNameCollection(pid=pid, cyt=cyt, hist=hist, dob=dob)
+
+    # processing pipeline configuration
+    max_n_females: Optional[int] = None
+    row_map_save_location: Optional[str] = None
 
 
 class Settings(BaseSettings):
