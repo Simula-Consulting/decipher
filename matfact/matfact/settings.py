@@ -146,6 +146,7 @@ class DataProcessingSettings(BaseModel):
     column_names = ColumnNameCollection(pid=pid, cyt=cyt, hist=hist, dob=dob)
 
     # processing pipeline configuration
+    min_n_tests: int = 2
     max_n_females: int | None = None
     row_map_save_location: str | None = None
 

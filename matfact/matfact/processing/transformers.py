@@ -21,10 +21,10 @@ class BirthdateAdder(BaseEstimator, TransformerMixin):
 
     def __init__(
         self,
-        birthday_file: str = settings.processing.raw_dob_data_path,
+        birthday_file: str | None = None,
     ) -> None:
-        self.birthday_file = birthday_file
-        self.dob_data = pd.read_csv(birthday_file)
+        self.birthday_file = birthday_file or settings.processing.raw_dob_data_path
+        self.dob_data = pd.read_csv(self.birthday_file)
         self.columns = settings.processing.column_names
 
     def fit(self, X, y=None) -> BirthdateAdder:
@@ -109,8 +109,8 @@ class InvalidRemover(BaseEstimator, TransformerMixin):
     or the person does not currently have a valid status.
     """
 
-    def __init__(self, min_n_tests: int = 2) -> None:
-        self.min_n_tests = min_n_tests
+    def __init__(self, min_n_tests: int | None = None) -> None:
+        self.min_n_tests = min_n_tests or settings.processing.min_n_tests
         self.columns = settings.processing.column_names
 
     def fit(self, X, y=None) -> InvalidRemover:
@@ -132,8 +132,8 @@ class DataSampler(BaseEstimator, TransformerMixin):
     included.
     """
 
-    def __init__(self, max_n_females: int = None):
-        self.max_n_females = max_n_females
+    def __init__(self, max_n_females: int | None = None):
+        self.max_n_females = max_n_females or settings.processing.max_n_females
         self.columns = settings.processing.column_names
 
         self.n_total = None
@@ -206,8 +206,10 @@ class RowAssigner(BaseEstimator, TransformerMixin):
 
     row_map: dict[int, int] = dict()
 
-    def __init__(self, save_path: str = None) -> None:
-        self.save_path = save_path
+    def __init__(self, row_map_save_path: str | None = None) -> None:
+        self.row_map_save_path = (
+            row_map_save_path or settings.processing.row_map_save_location
+        )
         self.pid = settings.processing.column_names.pid
 
     def fit(self, X, y=None) -> RowAssigner:
@@ -215,8 +217,8 @@ class RowAssigner(BaseEstimator, TransformerMixin):
         n_females = len(individuals)
         self.row_map = dict(zip(individuals, np.arange(n_females)))
 
-        if self.save_path is not None:
-            with open(self.save_path, "wb") as f:
+        if self.row_map_save_path is not None:
+            with open(self.row_map_save_path, "wb") as f:
                 pickle.dump(self.row_map, f)
         return self
 

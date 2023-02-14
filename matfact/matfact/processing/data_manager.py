@@ -6,27 +6,38 @@ from matfact.processing.pipelines import matfact_pipeline
 from matfact.settings import settings
 
 
-def get_matrix_dimensions(processing_pipeline: Pipeline):
+def load_and_process_screening_data(
+    screening_data_path: str = settings.processing.raw_screening_data_path, **kwargs
+) -> tuple[pd.DataFrame, Pipeline]:
+    """Function to load and process raw screening data. Returns the a processed dataframe
+    and the corresponding fitted pipeline."""
+    raw_data = pd.read_csv(screening_data_path, **kwargs)
+    pipeline = matfact_pipeline()
+    processed_data = pipeline.fit_transform(raw_data)
+    return processed_data, pipeline
+
+
+def get_matrix_dimensions_from_pipeline(fitted_pipeline: Pipeline) -> tuple[int, int]:
+    """Matrix to return observation matrix dimensions based on the number of rows and columns
+    found by fitting the processing pipeline."""
     return (
-        len(processing_pipeline["row_assigner"].row_map),
-        processing_pipeline["age_bin_assigner"].n_bins,
+        len(fitted_pipeline["row_assigner"].row_map),
+        fitted_pipeline["age_bin_assigner"].n_bins,
     )
 
 
-def load_and_process_screening_data(
-    screening_data_path: str = settings.processing.raw_screening_data_path, **kwargs
-):
-    raw_data = pd.read_csv(screening_data_path, **kwargs)
-    return matfact_pipeline.fit_transform(raw_data)
-
-
 def generate_observation_matrix(
-    screening_data_path: str = settings.processing.raw_screening_data_path,
-):
+    screening_data_path: str | None = None,
+) -> np.ndarray:
     """Function to generate a risk observation matrix from a raw screening file."""
     # TODO: Add edge case handling where there are > 1 screening result for a time bin
-    data = load_and_process_screening_data(screening_data_path=screening_data_path)
-    n_rows, n_cols = get_matrix_dimensions(matfact_pipeline)
+    screening_data_path = (
+        screening_data_path or settings.processing.raw_screening_data_path
+    )
+    data, pipeline = load_and_process_screening_data(
+        screening_data_path=screening_data_path
+    )
+    n_rows, n_cols = get_matrix_dimensions_from_pipeline(pipeline)
 
     observation_matrix = np.zeros([n_rows, n_cols])
     risks = data["risk"].to_numpy()
