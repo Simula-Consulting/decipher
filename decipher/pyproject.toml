@@ -1,0 +1,73 @@
+[tool.poetry]
+name = "decipher"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+numpy = "^1.23.2"
+scipy = "^1.9.1"
+matplotlib = "^3.6.0"
+seaborn = "^0.12.0"
+scikit-learn = "^1.2.0"
+tensorflow = {version="^2.9.2", markers="platform_machine != 'arm64'"}
+tensorflow-macos = {version="2.9.2", markers="platform_machine == 'arm64'"}  # fixed to only working version currently (15.12.2022)
+tensorflow-metal = {version="0.5.1", markers="platform_machine == 'arm64'"}  # fixed to only working version currently (15.12.2022)
+mlflow = "^1.28.0"
+tqdm = "^4.64.1"
+scikit-optimize = "^0.9.0"
+pydantic = {extras = ["dotenv"], version = "^1.10.4"}
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.15.2"
+pytest = "^7.1.3"
+mypy = "^0.982"
+types-tqdm = "^4.64.7"
+black = "^22.10.0"
+isort = "^5.10.1"
+flake8 = "^5.0.4"
+hypothesis = "^6.54.5"
+pre-commit = "^2.20.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+plugins = "numpy.typing.mypy_plugin"
+
+[[tool.mypy.overrides]]
+module = [
+    "matplotlib.*",
+    #
+    "scipy.*",
+    #
+    "mlflow",
+    #
+    "tensorflow.*",
+    #
+    "skopt.*",
+    #
+    "seaborn",
+    #
+    "sklearn.base",
+    "sklearn.metrics",
+    "sklearn.preprocessing",
+    "sklearn.model_selection",
+    "sklearn.utils",
+    #
+    "tqdm"
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::RuntimeWarning",
+    "ignore::PendingDeprecationWarning:",
+]
