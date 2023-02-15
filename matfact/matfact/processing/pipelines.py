@@ -30,5 +30,6 @@ def matfact_pipeline(
             ("data_sampler", DataSampler(max_n_females=max_n_females)),
             ("age_bin_assigner", AgeBinAssigner()),
             ("row_assigner", RowAssigner(row_map_save_path=row_map_save_path)),
-        ]
+        ],
+        verbose=True,
     )

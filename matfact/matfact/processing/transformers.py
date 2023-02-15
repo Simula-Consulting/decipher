@@ -72,7 +72,7 @@ class AgeAdder(BaseEstimator, TransformerMixin):
 
     def transform(self, X) -> pd.DataFrame:
         X = X.copy()
-        X["age"] = ""
+        X["age"] = np.nan
         for col in (self.columns.cyt.date, self.columns.hist.date):
             X.loc[X[col].notna(), "age"] = (X[col] - X[self.columns.dob.date]).apply(
                 lambda x: x.days
@@ -92,7 +92,7 @@ class RiskAdder(BaseEstimator, TransformerMixin):
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
-        X["risk"] = ""
+        X["risk"] = np.nan
 
         for screening in self.risk_maps.keys():
             X.loc[X[screening].notna(), "risk"] = X[screening].map(
