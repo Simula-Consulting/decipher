@@ -58,6 +58,7 @@ class ModelConfig:
     lambda1: float = 1.0
     lambda2: float = 1.0
     lambda3: float = 1.0
+    U_l1_rate: float = 0
 
     rank: int = 5
 
