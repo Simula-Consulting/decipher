@@ -9,6 +9,22 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from matfact.settings import settings
 
 
+class ColumnSelector(BaseEstimator, TransformerMixin):
+    """Returns a subset of a dataframe based on specified column values."""
+
+    def __init__(self, columns: list[str] | None = None) -> None:
+        self.columns = (
+            columns or settings.processing.column_names.get_screening_columns()
+        )
+
+    def fit(self, X, y=None) -> ColumnSelector:
+        return self
+
+    def transform(self, X) -> pd.DataFrame:
+        X = X.copy()
+        return X[self.columns]
+
+
 class BirthdateAdder(BaseEstimator, TransformerMixin):
     """Adds a birthdate column to the screening data by using the PID mapping to another
     file containing the birth registry.

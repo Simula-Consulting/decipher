@@ -4,6 +4,7 @@ from matfact.processing.transformers import (
     AgeAdder,
     AgeBinAssigner,
     BirthdateAdder,
+    ColumnSelector,
     DataSampler,
     DatetimeConverter,
     InvalidRemover,
@@ -14,6 +15,8 @@ from matfact.processing.transformers import (
 
 def matfact_pipeline(
     *,
+    verbose: bool = True,
+    columns: list[str] | None = None,
     birthday_file: str | None = None,
     min_n_tests: int | None = None,
     max_n_females: int | None = None,
@@ -22,6 +25,7 @@ def matfact_pipeline(
     """Returns a sklearn type pipeline for processing the matfact screening data."""
     return Pipeline(
         [
+            ("column_selector", ColumnSelector(columns=columns)),
             ("birthdate_adder", BirthdateAdder(birthday_file=birthday_file)),
             ("datetime_converter", DatetimeConverter()),
             ("age_adder", AgeAdder()),
@@ -31,5 +35,5 @@ def matfact_pipeline(
             ("age_bin_assigner", AgeBinAssigner()),
             ("row_assigner", RowAssigner(row_map_save_path=row_map_save_path)),
         ],
-        verbose=True,
+        verbose=verbose,
     )

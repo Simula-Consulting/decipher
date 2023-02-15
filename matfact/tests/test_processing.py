@@ -5,16 +5,7 @@ from sklearn.pipeline import Pipeline
 
 from matfact.processing.data_manager import generate_observation_matrix
 from matfact.processing.pipelines import matfact_pipeline
-from matfact.processing.transformers import (
-    AgeAdder,
-    AgeBinAssigner,
-    BirthdateAdder,
-    DataSampler,
-    DatetimeConverter,
-    InvalidRemover,
-    RiskAdder,
-    RowAssigner,
-)
+from matfact.processing.transformers import BirthdateAdder
 from matfact.settings import settings
 
 settings.processing.raw_dob_data_path = "tests/test_datasets/test_dob_data.csv"
@@ -23,34 +14,9 @@ settings.processing.raw_screening_data_path = (
 )
 
 
-def create_custom_pipeline(*, n_females: int | None = None, min_n_tests: int = 0):
-    """Function to return the matfact processing pipeline but with custom arguments for testing."""
-    return Pipeline(
-        [
-            (
-                "birthdate_adder",
-                BirthdateAdder(birthday_file="tests/test_datasets/test_dob_data.csv"),
-            ),
-            ("datetime_converter", DatetimeConverter()),
-            ("age_adder", AgeAdder()),
-            ("risk_adder", RiskAdder()),
-            ("invalid_remover", InvalidRemover(min_n_tests=min_n_tests)),
-            (
-                "data_sampler",
-                DataSampler(max_n_females=n_females),
-            ),
-            ("age_bin_assigner", AgeBinAssigner()),
-            (
-                "row_assigner",
-                RowAssigner(),
-            ),
-        ]
-    )
-
-
 @pytest.fixture
 def testing_pipeline() -> Pipeline:
-    return matfact_pipeline(min_n_tests=0)
+    return matfact_pipeline(min_n_tests=0, verbose=False)
 
 
 @pytest.fixture
