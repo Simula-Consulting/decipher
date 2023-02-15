@@ -10,10 +10,15 @@ from scipy.stats import betabinom
 from matfact.settings import settings
 
 from .gaussian_generator import discretise_matrix, float_matrix
-from .masking import simulate_mask
+from .utils import (
+    invert_matrix_domain,
+    invert_matrix_domain_excluding_value,
+    invert_observation_probabilities,
+    simulate_mask,
+)
 
 
-def censoring(X, missing=0):
+def censoring(X: np.ndarray, missing=0) -> np.ndarray:
     "Truncate histories to have patterns similar to the real histories"
 
     t_cens = betabinom.rvs(
@@ -185,6 +190,23 @@ class Dataset:
 
         Convenience method used in for example logging"""
         return {prefix + key: value for key, value in self.metadata.items()}
+
+
+def invert_dataset(dataset: Dataset) -> Dataset:
+    # Inverts dataset label distributions
+    if dataset.metadata["generation_method"] == "DGD":
+        inv_M = invert_matrix_domain(dataset.M.copy())
+    # Not yet implemented in this branch:
+    # elif dataset.metadata["generation_method"] == HMM:
+    #     inv_M = invert_domain_excluding_value(dataset.M.copy(), 0)
+    inv_X = invert_matrix_domain_excluding_value(dataset.X.copy(), 0)
+    inv_metadata = dataset.metadata.copy()
+    obs_prob = dataset.metadata["observation_probabilities"]
+    inv_metadata["observation_probabilities"] = invert_observation_probabilities(
+        obs_prob
+    )
+    inv_dataset = Dataset(inv_X, inv_M, inv_metadata)
+    return inv_dataset
 
 
 def main():
