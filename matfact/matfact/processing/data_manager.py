@@ -35,7 +35,8 @@ def generate_observation_matrix(
         screening_data_path or settings.processing.raw_screening_data_path
     )
     data, pipeline = load_and_process_screening_data(
-        screening_data_path=screening_data_path
+        screening_data_path=screening_data_path,
+        usecols=settings.processing.column_names.get_screening_columns(),
     )
     n_rows, n_cols = get_matrix_dimensions_from_pipeline(pipeline)
 
