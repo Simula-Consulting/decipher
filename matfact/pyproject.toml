@@ -47,6 +47,7 @@ module = [
     "scipy.*",
     #
     "mlflow",
+    "mlflow.entities",
     #
     "tensorflow.*",
     #
@@ -55,12 +56,15 @@ module = [
     "seaborn",
     #
     "sklearn.base",
+    "sklearn.decomposition",
     "sklearn.metrics",
     "sklearn.preprocessing",
     "sklearn.model_selection",
     "sklearn.utils",
     #
-    "tqdm"
+    "tqdm",
+    #
+    "pandas"
 ]
 ignore_missing_imports = true
 
