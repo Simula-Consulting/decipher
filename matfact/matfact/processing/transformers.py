@@ -94,9 +94,9 @@ class RiskAdder(BaseEstimator, TransformerMixin):
         X = X.copy()
         X["risk"] = np.nan
 
-        for screening in self.risk_maps.keys():
-            X.loc[X[screening].notna(), "risk"] = X[screening].map(
-                self.risk_maps[screening]
+        for screening_type in self.risk_maps.keys():
+            X.loc[X[screening_type].notna(), "risk"] = X[screening_type].map(
+                self.risk_maps[screening_type]
             )
         return X
 
@@ -117,11 +117,12 @@ class InvalidRemover(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        X = X.copy()
         X = X.dropna(subset=["age", "risk"])
         person_counts = X[self.columns.pid].value_counts()
         rejected_pids = person_counts[person_counts.values < self.min_n_tests].index
-        out = X[~X[self.columns.pid].isin(rejected_pids)]
-        return out
+        X = X[~X[self.columns.pid].isin(rejected_pids)]
+        return X
 
 
 class DataSampler(BaseEstimator, TransformerMixin):
@@ -224,6 +225,5 @@ class RowAssigner(BaseEstimator, TransformerMixin):
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
-
         X["row"] = X[self.pid].map(self.row_map)
         return X
