@@ -42,6 +42,7 @@ plugins = "numpy.typing.mypy_plugin"
 
 [[tool.mypy.overrides]]
 module = [
+    "matfact.*",
     "matplotlib.*",
     #
     "scipy.*",
@@ -54,13 +55,11 @@ module = [
     #
     "seaborn",
     #
-    "sklearn.base",
-    "sklearn.metrics",
-    "sklearn.preprocessing",
-    "sklearn.model_selection",
-    "sklearn.utils",
+    "sklearn.*",
     #
-    "tqdm"
+    "tqdm",
+    #
+    "pandas.*",
 ]
 ignore_missing_imports = true
 
