@@ -13,19 +13,14 @@ by the visualization.
 """
 
 import copy
+import pickle
 import random
 from dataclasses import dataclass
 from enum import Enum
 
-import tensorflow as tf
 from bokeh.layouts import column, grid, row
 from bokeh.models import Div, SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
-from matfact.data_generation import Dataset
-from matfact.model.config import ModelConfig
-from matfact.model.factorization.convergence import ConvergenceMonitor
-from matfact.model.matfact import MatFact
-from matfact.model.predict.dataset_utils import prediction_data
 
 from bokeh_demo.backend import (
     BaseFilter,
@@ -34,7 +29,6 @@ from bokeh_demo.backend import (
     ExamSimpleFilter,
     Person,
     PersonSimpleFilter,
-    PredictionData,
     RangeFilter,
     SourceManager,
 )
@@ -47,43 +41,6 @@ from bokeh_demo.frontend import (
     TrajectoriesPlot,
     get_filter_element_from_source_manager,
 )
-from bokeh_demo.settings import settings
-
-tf.config.set_visible_devices([], "GPU")
-
-
-# Import data
-dataset = Dataset.from_file(settings.dataset_path)
-
-
-def extract_and_predict(
-    dataset: Dataset, model: MatFact | None = None
-) -> PredictionData:
-    model = model or MatFact(
-        ModelConfig(
-            epoch_generator=ConvergenceMonitor(
-                number_of_epochs=settings.number_of_epochs
-            ),
-        )
-    )
-
-    X_train, X_test, _, _ = dataset.get_split_X_M()
-    X_test_masked, t_pred_test, x_true_test = prediction_data(X_test)
-
-    model.fit(X_train)
-    predicted_probabilities = model.predict_probabilities(X_test, t_pred_test)
-    # Could alternatively do matfact._predictor(predicted_probabilites) ...
-    predicted_states = model.predict(X_test, t_pred_test)
-
-    return PredictionData(
-        X_train=X_train,
-        X_test=X_test,
-        X_test_masked=X_test_masked,
-        time_of_prediction=t_pred_test,
-        true_state_at_prediction=x_true_test,
-        predicted_probabilities=predicted_probabilities,
-        predicted_states=predicted_states,
-    )
 
 
 def example_app(source_manager):
@@ -204,7 +161,7 @@ class MyPerson(Person):
 
 
 def main():
-    prediction_data = extract_and_predict(dataset)
+    prediction_data = pickle.load(open("prediction_data.pkl", "rb"))
     people = prediction_data.extract_people()
     for person in people:
         person.__class__ = MyPerson
