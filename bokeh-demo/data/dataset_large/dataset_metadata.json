@@ -1,0 +1,1 @@
+{"rank": 5, "sparsity_level": 2, "N": 1000, "T": 200, "generation_method": "DGD", "number_of_states": 4, "observation_probabilities": [0.01, 0.03, 0.08, 0.12, 0.04]}

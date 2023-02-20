@@ -155,7 +155,7 @@ class MatFact:
     def fit(self, observation_matrix: npt.NDArray[np.int_]) -> "MatFact":
         """Fit the model."""
         self._factorizer = self._model_factory(observation_matrix, self.config)
-        self._factorizer.matrix_completion()
+        self._factorizer.matrix_completion(epoch_generator=self.config.epoch_generator)
         self._predictor.fit(self, observation_matrix)
         return self
 
