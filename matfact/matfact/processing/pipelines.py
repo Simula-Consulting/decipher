@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from sklearn.pipeline import Pipeline
 
 from matfact.processing.transformers import (
@@ -15,10 +17,10 @@ from matfact.processing.transformers import (
 def matfact_pipeline(
     *,
     verbose: bool = True,
-    birthday_file: str | None = None,
+    birthday_file: Path | None = None,
     min_n_tests: int | None = None,
     max_n_females: int | None = None,
-    row_map_save_path: str | None = None,
+    row_map_save_path: Path | None = None,
 ):
     """Returns a sklearn type pipeline for processing the matfact screening data."""
     return Pipeline(

@@ -151,8 +151,8 @@ class DataProcessingSettings(BaseModel):
     row_map_save_location: str | None = None
 
     # data files
-    raw_screening_data_path: str = "screening_data.csv"
-    raw_dob_data_path: str = "dob_data.csv"
+    raw_screening_data_path: Path = Path("screening_data.csv")
+    raw_dob_data_path: Path = Path("dob_data.csv")
 
 
 class Settings(BaseSettings):

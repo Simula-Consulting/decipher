@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pickle
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -21,7 +22,7 @@ class BirthdateAdder(BaseEstimator, TransformerMixin):
 
     def __init__(
         self,
-        birthday_file: str | None = None,
+        birthday_file: Path | None = None,
     ) -> None:
         self.birthday_file = birthday_file or settings.processing.raw_dob_data_path
         self.dob_data = pd.read_csv(self.birthday_file)
@@ -207,7 +208,7 @@ class RowAssigner(BaseEstimator, TransformerMixin):
 
     row_map: dict[int, int] = dict()
 
-    def __init__(self, row_map_save_path: str | None = None) -> None:
+    def __init__(self, row_map_save_path: Path | None = None) -> None:
         self.row_map_save_path = (
             row_map_save_path or settings.processing.row_map_save_location
         )

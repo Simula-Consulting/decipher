@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,8 +10,8 @@ from matfact.processing.pipelines import matfact_pipeline
 from matfact.processing.transformers import BirthdateAdder
 from matfact.settings import settings
 
-settings.processing.raw_dob_data_path = "tests/test_datasets/test_dob_data.csv"
-settings.processing.raw_screening_data_path = (
+settings.processing.raw_dob_data_path = Path("tests/test_datasets/test_dob_data.csv")
+settings.processing.raw_screening_data_path = Path(
     "tests/test_datasets/test_screening_data.csv"
 )
 

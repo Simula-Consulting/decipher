@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
@@ -7,7 +9,7 @@ from matfact.settings import settings
 
 
 def load_and_process_screening_data(
-    screening_data_path: str = settings.processing.raw_screening_data_path, **kwargs
+    screening_data_path: Path = settings.processing.raw_screening_data_path, **kwargs
 ) -> tuple[pd.DataFrame, Pipeline]:
     """Function to load and process raw screening data. Returns the processed dataframe
     and the corresponding fitted pipeline.
@@ -29,7 +31,7 @@ def get_matrix_dimensions_from_pipeline(fitted_pipeline: Pipeline) -> tuple[int,
 
 
 def generate_observation_matrix(
-    screening_data_path: str | None = None,
+    screening_data_path: Path | None = None,
 ) -> np.ndarray:
     """Function to generate a risk observation matrix from a raw screening file."""
     # TODO: Add edge case handling where there are > 1 screening result for a time bin
