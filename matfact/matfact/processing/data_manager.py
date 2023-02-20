@@ -9,8 +9,10 @@ from matfact.settings import settings
 def load_and_process_screening_data(
     screening_data_path: str = settings.processing.raw_screening_data_path, **kwargs
 ) -> tuple[pd.DataFrame, Pipeline]:
-    """Function to load and process raw screening data. Returns the a processed dataframe
-    and the corresponding fitted pipeline."""
+    """Function to load and process raw screening data. Returns the processed dataframe
+    and the corresponding fitted pipeline.
+
+    `kwargs` are passed to `pd.read_csv`"""
     raw_data = pd.read_csv(screening_data_path, **kwargs)
     pipeline = matfact_pipeline()
     processed_data = pipeline.fit_transform(raw_data)
@@ -18,8 +20,8 @@ def load_and_process_screening_data(
 
 
 def get_matrix_dimensions_from_pipeline(fitted_pipeline: Pipeline) -> tuple[int, int]:
-    """Matrix to return observation matrix dimensions based on the number of rows and columns
-    found by fitting the processing pipeline."""
+    """Function to return the required dimensions for the observation matrix,
+    based on a fitted pipeline."""
     return (
         len(fitted_pipeline["row_assigner"].row_map),
         fitted_pipeline["age_bin_assigner"].n_bins,
