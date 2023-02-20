@@ -17,10 +17,14 @@ import pickle
 import random
 from dataclasses import dataclass
 from enum import Enum
+import pandas
 
 from bokeh.layouts import column, grid, row
 from bokeh.models import Div, SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
+
+from matfact.processing.data_manager import load_and_process_screening_data
+from matfact.settings import settings
 
 from bokeh_demo.backend import (
     BaseFilter,
@@ -160,8 +164,18 @@ class MyPerson(Person):
     home: HomePlaces
 
 
+def pd_to_person(ds: pandas.Series) -> Person:
+    return Person(
+        index=ds.row,
+        year_of_birth=getattr(ds, settings.processing.dob.date),
+        exam_results=
+    )
+
+
+
 def main():
     prediction_data = pickle.load(open("prediction_data.pkl", "rb"))
+    screening_data, matfact_pipeline = load_and_process_screening_data()
     people = prediction_data.extract_people()
     for person in people:
         person.__class__ = MyPerson
