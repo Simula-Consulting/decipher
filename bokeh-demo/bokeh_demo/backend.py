@@ -837,4 +837,4 @@ class SourceManager:
         vaccine_ages = [
             age for age in self.person_source.data["vaccine_age"] if age is not None
         ]
-        return (min(vaccine_ages), max(vaccine_ages))
+        return (min(vaccine_ages), max(vaccine_ages)) if vaccine_ages else (20, 30)

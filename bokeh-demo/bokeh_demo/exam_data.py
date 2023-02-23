@@ -24,6 +24,16 @@ class Diagnosis(str, Enum):
     HistDiagnosis2 = "HistDiagnosis2"
     HistDiagnosis3 = "HistDiagnosis3"
     HistDiagnosis4 = "HistDiagnosis4"
+    #
+    AGUS = 'AGUS'
+    LSIL = 'LSIL'
+    HSIL = 'HSIL'
+    ASC_H = 'ASC-H'
+    NORMAL = 'Normal'
+    ADC = 'ADC'
+    SCC = 'SCC'
+    ACIS = 'ACIS'
+    ASC_US ='ASC-US'
     # HPV common
     HPVNegative = "HPV negative"
     # HPV cobas
