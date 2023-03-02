@@ -21,6 +21,8 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
+from sklearn.base import BaseEstimator, TransformerMixin
+
 from bokeh.layouts import column, grid, row
 from bokeh.models import Div, SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
@@ -173,10 +175,9 @@ def _group_to_risks(group, pipeline):
     return list(history)
 
 def _group_to_detailed(group, pipeline):
-    cyts = group[["cytMorfologi", "bin"]]
     history = [None] * pipeline["age_bin_assigner"].n_bins
-    for _, (bin, cyt) in group[["bin", "cytMorfologi"]].iterrows():
-        history[bin] = ExamResult(ExamTypes.Cytology, Diagnosis(cyt))
+    for _, (bin, type, diagnosis) in group[["bin", "exam_type", "diagnosis"]].iterrows():
+        history[bin] = ExamResult(type, diagnosis)
     return history
 
 def group_to_person(id, group, pipeline):
@@ -197,6 +198,25 @@ def group_to_person(id, group, pipeline):
 def df_to_perons(data: pd.DataFrame, pipeline):
     return [group_to_person(i, group, pipeline) for i, (_, group) in enumerate(data.groupby("PID"))]
 
+class DiagnosisAdder(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        has_cyt = ~X["cytMorfologi"].isna()
+        has_hist = ~X["histMorfologi"].isna()
+        assert np.logical_xor(has_cyt, has_hist).all()
+
+        diagnosis = np.where(X["cytMorfologi"].isna(), X["histMorfologi"].astype('Int64').astype(str), X["cytMorfologi"])
+        diagnosis = np.where(has_hist, X["histMorfologi"].astype('Int64').astype(str), X["cytMorfologi"])
+        date = np.where(has_hist, X["histDate"], X["cytDate"])
+
+        new_X = X.drop(columns=["cytMorfologi", "histMorfologi", "histDate", "cytDate"])
+        new_X["diagnosis"] = [Diagnosis(diagnosis_string) for diagnosis_string in diagnosis]
+        new_X["exam_type"] = [ExamTypes.Cytology if is_cyt else ExamTypes.Histology for is_cyt in new_X["cytMorfologi"].isna()]
+        new_X["exam_date"] = date
+        return X
+
 
 def main():
     # base_path = Path("/Users/thorvald/Documents/Decipher/decipher/matfact/tests/test_datasets")
@@ -205,10 +225,11 @@ def main():
 
     # settings.processing.raw_dob_data_path = dob_path
     # settings.processing.raw_screening_data_path = screeingin_path
-    settings.processing.max_n_females = 100
+    # settings.processing.max_n_females = 100
 
     screening_data, matfact_pipeline = load_and_process_screening_data(settings.processing.raw_screening_data_path)
-    screening_data = screening_data.dropna(subset="cytMorfologi").astype({"risk": "int"})
+    # screening_data = screening_data.dropna(subset="cytMorfologi").astype({"risk": "int"})
+    screening_data = DiagnosisAdder().transform(screening_data).astype({"risk": "int"})
     people = df_to_perons(screening_data, matfact_pipeline)
     for person in people:
         person.__class__ = MyPerson

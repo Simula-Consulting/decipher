@@ -122,7 +122,7 @@ class Person:
     vaccine_age: float | None
     vaccine_type: VaccineType | None
     exam_results: Sequence[int]
-    detailed_exam_results: Sequence[ExamResult | None]
+    detailed_exam_results: Sequence[Sequence[ExamResult] | None]
     predicted_exam_result: int
     prediction_time: int
     prediction_probabilities: Sequence[float]
@@ -184,7 +184,7 @@ class Person:
             "vaccine_line_endpoints_year": endpoints_year_vaccine,
         }
 
-    def as_scatter_source_dict(self) -> dict[str, list[Any]]:
+    def as_scatter_source_dict(self) -> list[dict[str, list[Any]]]:
         exam_time_age = list(
             time_converter.time_point_to_age(range(len(self.exam_results)))
         )
@@ -195,7 +195,7 @@ class Person:
                 element for i, element in enumerate(seq) if self.exam_results[i] != 0
             ]
 
-        return {
+        person_info = {
             key: get_nonzero(value)
             for key, value in (
                 ("age", exam_time_age),
@@ -208,14 +208,16 @@ class Person:
                 ),
                 ("person_index", itertools.repeat(self.index, len(self.exam_results))),
             )
-        } | {
+        }
+        return [person_info | {
             "exam_type": [
-                exam.type.value for exam in self.detailed_exam_results if exam
+                exam.type.value
             ],
             "exam_result": [
-                exam.result.value for exam in self.detailed_exam_results if exam
+                exam.result.value
             ],
         }
+        for exams in self.detailed_exam_results if exams for exam in exams]
 
 
 @dataclass
@@ -828,7 +830,7 @@ class SourceManager:
     @staticmethod
     def scatter_source_from_people(people: Sequence[Person]) -> ColumnDataSource:
         source_dict = _combine_scatter_dicts(
-            [person.as_scatter_source_dict() for person in people]
+            list(itertools.chain.from_iterable(person.as_scatter_source_dict() for person in people))
         )
         return ColumnDataSource(source_dict)
 
