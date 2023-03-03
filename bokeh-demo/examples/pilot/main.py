@@ -20,11 +20,12 @@ from enum import Enum
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from collections import defaultdict
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
 from bokeh.layouts import column, grid, row
-from bokeh.models import Div, SymmetricDifferenceFilter
+from bokeh.models import Div, SymmetricDifferenceFilter, ColumnDataSource
 from bokeh.plotting import curdoc
 
 from matfact.processing.data_manager import load_and_process_screening_data
@@ -49,7 +50,7 @@ from bokeh_demo.frontend import (
     TrajectoriesPlot,
     get_filter_element_from_source_manager,
 )
-from bokeh_demo.exam_data import Diagnosis, ExamResult, ExamTypes
+from bokeh_demo.exam_data import Diagnosis, ExamResult, ExamTypes, ToExam, ExtractPeople
 
 
 def example_app(source_manager):
@@ -130,7 +131,7 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
             source_manager=source_manager,
             exam_indices=[
                 i
-                for i, state in enumerate(source_manager.exam_source.data["state"])
+                for i, state in enumerate(source_manager.exam_source.data["risk"])
                 if state == 3
             ],
         ),
@@ -164,77 +165,27 @@ class HomePlaces(str, Enum):
     Other = "other"
 
 
-@dataclass
-class MyPerson(Person):
-    home: HomePlaces
-
-def _group_to_risks(group, pipeline):
-    risks = group[["risk", "bin"]]
-    history = np.zeros(pipeline["age_bin_assigner"].n_bins, dtype=int)
-    history[risks["bin"]] = risks["risk"]
-    return list(history)
-
-def _group_to_detailed(group, pipeline):
-    history = [None] * pipeline["age_bin_assigner"].n_bins
-    for _, (bin, type, diagnosis) in group[["bin", "exam_type", "diagnosis"]].iterrows():
-        history[bin] = ExamResult(type, diagnosis)
-    return history
-
-def group_to_person(id, group, pipeline):
-    risk_history = _group_to_risks(group, pipeline)
-    return Person(
-        # index=group.iloc[0]["PID"],
-        index=id,
-        year_of_birth=group.iloc[0]["FOEDT"].year,
-        exam_results=risk_history,
-        vaccine_age=None,
-        vaccine_type=None,
-        detailed_exam_results=_group_to_detailed(group, pipeline),
-        predicted_exam_result=1,
-        prediction_time=np.flatnonzero(risk_history)[0],
-        prediction_probabilities=[1, 0, 0, 0],
-    )
-
-def df_to_perons(data: pd.DataFrame, pipeline):
-    return [group_to_person(i, group, pipeline) for i, (_, group) in enumerate(data.groupby("PID"))]
-
-class DiagnosisAdder(BaseEstimator, TransformerMixin):
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        has_cyt = ~X["cytMorfologi"].isna()
-        has_hist = ~X["histMorfologi"].isna()
-        assert np.logical_xor(has_cyt, has_hist).all()
-
-        diagnosis = np.where(X["cytMorfologi"].isna(), X["histMorfologi"].astype('Int64').astype(str), X["cytMorfologi"])
-        diagnosis = np.where(has_hist, X["histMorfologi"].astype('Int64').astype(str), X["cytMorfologi"])
-        date = np.where(has_hist, X["histDate"], X["cytDate"])
-
-        new_X = X.drop(columns=["cytMorfologi", "histMorfologi", "histDate", "cytDate"])
-        new_X["diagnosis"] = [Diagnosis(diagnosis_string) for diagnosis_string in diagnosis]
-        new_X["exam_type"] = [ExamTypes.Cytology if is_cyt else ExamTypes.Histology for is_cyt in new_X["cytMorfologi"].isna()]
-        new_X["exam_date"] = date
-        return X
-
-
 def main():
-    # base_path = Path("/Users/thorvald/Documents/Decipher/decipher/matfact/tests/test_datasets")
-    # dob_path = base_path / "test_dob_data.csv"
-    # screeingin_path = base_path / "test_screening_data.csv"
+    base_path = Path("/Users/thorvald/Documents/Decipher/decipher/matfact/tests/test_datasets")
+    dob_path = base_path / "test_dob_data.csv"
+    screeingin_path = base_path / "test_screening_data.csv"
 
-    # settings.processing.raw_dob_data_path = dob_path
-    # settings.processing.raw_screening_data_path = screeingin_path
-    # settings.processing.max_n_females = 100
+    settings.processing.raw_dob_data_path = dob_path
+    settings.processing.raw_screening_data_path = screeingin_path
+    settings.processing.max_n_females = 100
 
     screening_data, matfact_pipeline = load_and_process_screening_data(settings.processing.raw_screening_data_path)
     # screening_data = screening_data.dropna(subset="cytMorfologi").astype({"risk": "int"})
-    screening_data = DiagnosisAdder().transform(screening_data).astype({"risk": "int"})
-    people = df_to_perons(screening_data, matfact_pipeline)
-    for person in people:
-        person.__class__ = MyPerson
-        person.home = random.choice(list(HomePlaces)).value
-    source_manager = SourceManager.from_people(people)
+    # screening_data = DiagnosisAdder().transform(screening_data).astype({"risk": "int"})
+    screening_data["age"] = screening_data["age"] / 365
+    exams = ToExam().fit_transform(screening_data).astype({"risk": "int", "bin": int})
+    people = ExtractPeople().fit_transform(exams)
+    people["home"] = HomePlaces.Other
+
+    source_manager = SourceManager(
+        ColumnDataSource(people),
+        ColumnDataSource(exams),
+    )
     source_manager.filters = _get_filters(source_manager)
 
     example_app(source_manager)

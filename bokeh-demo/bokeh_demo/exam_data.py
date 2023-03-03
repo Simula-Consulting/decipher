@@ -1,9 +1,13 @@
 from dataclasses import dataclass
+from pathlib import Path
 from enum import Enum
 
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.pipeline import Pipeline
 import pandas as pd
 import numpy as np
+
+from matfact.processing.transformers import BirthdateAdder
 
 
 class VaccineType(str, Enum):
@@ -34,10 +38,16 @@ class Diagnosis(str, Enum):
     HSIL = "HSIL"
     ASC_H = "ASC-H"
     NORMAL = "Normal"
+    NORMAL_w_blood = "Normal m betennelse eller blod"
+    NORMAL_wo_cylinder = "Normal uten sylinder"
     ADC = "ADC"
     SCC = "SCC"
     ACIS = "ACIS"
     ASC_US = "ASC-US"
+    Nonconclusive = "Uegnet"  # HPV has a diagnosis called 'uegned' (lowercase)
+    #
+    METASTASIS = "Metastase"
+    CANCER = "Cancer Cervix cancer andre/usp"
     #
     Hist10 = "10"
     Hist100 = "100"
@@ -69,8 +79,52 @@ class Diagnosis(str, Enum):
     """Channel collecting 31, 33, 35, 52, 58; 51, 59; 39, 56, 66, 68"""
 
 
+def read_raw_df(screening_data_path: Path, dtypes: dict | None = None, datetime_cols: list | None = None):
+    dtypes = dtypes or {
+        "cytMorfologi": "category",
+        "histMorfologi": "Int64",
+        "hpvResultat": "category",
+    }
+    datetime_cols = datetime_cols or ["hpvDate", "cytDate", "histDate"]
+
+    return pd.read_csv(
+        screening_data_path,
+        dtype=dtypes,
+        parse_dates=datetime_cols,
+        dayfirst=True,
+    )
+
+def exam_pipeline() -> Pipeline:
+    return Pipeline([
+        ("cleaner", CleanData()),
+        ("birthdate_adder", BirthdateAdder()),
+        ("wide_to_long", ToExam()),
+        ("age_adder", AgeAdder(date_field="exam_date", birth_field="FOEDT")),
+    ],
+    verbose=True
+    )
+
+class CleanData(BaseEstimator, TransformerMixin):
+    dtypes = {
+        "cytMorfologi": "category",
+        "histMorfologi": "Int64",
+        "hpvResultat": "category",
+        "risk": "Int64",
+    }
+    def fit(self, X, y=None):
+        for column, dtype in X.dtypes.items():
+            if column in self.dtypes and (expected_type:=self.dtypes[column]) != dtype:
+                raise ValueError(f"Column {column} must have dtype {expected_type}, but it is {dtype}")
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        return X
+
 class ToExam(BaseEstimator, TransformerMixin):
-    fields_to_keep = ["PID", "FOEDT", "age", "risk", "bin", "row"]
+    def __init__(self, fields_to_keep: list | None = None) -> None:
+        self.fields_to_keep = fields_to_keep or ["PID", "FOEDT"]
+        super().__init__()
+
 
     def fit(self, X, y=None):
         self._has_hpv_data = "hpvDate" in X
@@ -91,6 +145,7 @@ class ToExam(BaseEstimator, TransformerMixin):
                 value_name="exam_date",
             )
             .dropna()
+            .astype({"exam_type": "category"})
         )
 
         # Join on result columns
@@ -109,7 +164,12 @@ class ToExam(BaseEstimator, TransformerMixin):
 
         # Remap exam types
         exams["exam_type"] = exams["exam_type"].transform(self._map_exam_type)
-        exams["exam_diagnosis"] = exams["exam_diagnosis"].astype('str').transform(lambda diagnosis_string: Diagnosis(diagnosis_string))
+        exams["exam_diagnosis"] = (
+            exams["exam_diagnosis"]
+            .astype("str")
+            .apply(lambda diagnosis_string: Diagnosis(diagnosis_string))
+            .astype("category")
+        )
 
         return exams.join(X[self.fields_to_keep], on="index")
 
@@ -120,6 +180,69 @@ class ToExam(BaseEstimator, TransformerMixin):
             "histDate": ExamTypes.Histology,
             "hpvDate": ExamTypes.HPVCobas,
         }[field_name]
+
+class AgeAdder(BaseEstimator, TransformerMixin):
+    def __init__(self, date_field: str, birth_field: str, age_field: str = "age") -> None:
+        self.date_field = date_field
+        self.birth_field = birth_field
+        self.age_field = age_field
+        super().__init__()
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        X = X.copy()
+        X[self.age_field] = X[self.date_field] - X[self.birth_field]
+        return X
+
+class ExtractPeople(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        def _minmax(column):
+            return (min(column), max(column))
+
+        person_df = (
+            X.groupby("PID")
+            .agg(
+                {
+                    "exam_date": _minmax,
+                    "age": _minmax,
+                    "FOEDT": "first",  # We assume all FOEDT are the same
+                }
+            )
+            .reset_index()  # We want PID as explicit column
+        )
+
+        # Rename columns
+        # person_df.columns = ["_".join(x) for x in person_df.columns]  # Flatten names
+        person_df = person_df.rename(
+            columns={
+                "exam_date": "lexis_line_endpoints_year",
+                "age": "lexis_line_endpoints_age",
+            }
+        )
+
+        # Add some auxillary columns
+        person_df["lexis_line_endpoints_person_index"] = person_df["PID"].transform(
+            lambda pid: (pid, pid)
+        )
+
+
+        # Dummies
+        person_df["exam_results"] = [[0]] * len(person_df.index)
+        person_df["exam_time_age"] = [[0]] * len(person_df.index)
+        person_df["prediction_time"] = 0
+        person_df["predicted_exam_result"] = 0
+        person_df["delta"] = 0
+        person_df["vaccine_age"] = None
+        person_df["vaccine_year"] = None
+        person_df["vaccine_type"] = None
+        person_df["vaccine_line_endpoints_age"] = [[]] * len(person_df.index)
+        person_df["vaccine_line_endpoints_year"] = [[]] * len(person_df.index)
+        return person_df
 
 
 @dataclass

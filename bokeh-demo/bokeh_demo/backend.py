@@ -200,13 +200,13 @@ class Person:
             for key, value in (
                 ("age", exam_time_age),
                 ("year", exam_time_year),
-                ("state", self.exam_results),
+                ("risk", self.exam_results),
                 # Used for legend generation
                 (
                     "state_label",
                     [settings.label_map[state] for state in self.exam_results],
                 ),
-                ("person_index", itertools.repeat(self.index, len(self.exam_results))),
+                ("PID", itertools.repeat(self.index, len(self.exam_results))),
             )
         }
         return [person_info | {
@@ -302,7 +302,7 @@ def link_sources(
     def select_person_callback(attr, old, selected_people):
         all_indices = [
             i
-            for i, person_index in enumerate(exam_source.data["person_index"])
+            for i, person_index in enumerate(exam_source.data["PID"])
             if person_index in selected_people
         ]
 
@@ -312,7 +312,7 @@ def link_sources(
     def set_group_selected_callback(attr, old, new):
         if new == []:  # Avoid unsetting when hitting a line in scatter plot
             return
-        selected_people = list({exam_source.data["person_index"][i] for i in new})
+        selected_people = list({exam_source.data["PID"][i] for i in new})
         select_person_callback(None, None, selected_people)
 
     exam_source.selected.on_change("indices", set_group_selected_callback)  # type: ignore
@@ -378,7 +378,7 @@ class BaseFilter:
 
         exam_to_person_mapping : a sequence with the person index of each exam, i.e.
             element number n contains the index of the person belonging to exam n.
-            Typically, this is retrieved from a source as `exam_source.data["person_index"]`
+            Typically, this is retrieved from a source as `exam_source.data["PID"]`
         """
         return [
             i
@@ -394,7 +394,7 @@ class BaseFilter:
 
         exam_to_person_mapping : a sequence with the person index of each exam, i.e.
             element number n contains the index of the person belonging to exam n.
-            Typically, this is retrieved from a source as `exam_source.data["person_index"]`
+            Typically, this is retrieved from a source as `exam_source.data["PID"]`
         """
         return list({exam_to_person_mapping[i] for i in exam_indices})
 
@@ -440,7 +440,7 @@ class PersonSimpleFilter(SimpleFilter):
         inverted: bool = False,
     ) -> None:
         exam_to_person = cast(
-            Sequence[int], source_manager.exam_source.data["person_index"]
+            Sequence[int], source_manager.exam_source.data["PID"]
         )
         exam_indices = self._person_to_exam_indices(person_indices, exam_to_person)
         super().__init__(
@@ -463,7 +463,7 @@ class ExamSimpleFilter(SimpleFilter):
         inverted: bool = False,
     ) -> None:
         exam_to_person = cast(
-            Sequence[int], source_manager.exam_source.data["person_index"]
+            Sequence[int], source_manager.exam_source.data["PID"]
         )
         person_indices = self._exam_to_person_indices(exam_indices, exam_to_person)
         super().__init__(
@@ -496,7 +496,7 @@ class RangeFilter(BaseFilter):
         self.field = field
         self.selected = self._get_selection_indices()
         self.exams_selected = self._person_to_exam_indices(
-            self.selected, self.source_manager.exam_source.data["person_index"]
+            self.selected, self.source_manager.exam_source.data["PID"]
         )
 
     def _get_selection_indices(self) -> list[int]:
@@ -518,7 +518,7 @@ class RangeFilter(BaseFilter):
             self._range = new
             self.selected = self._get_selection_indices()
             self.exams_selected = self._person_to_exam_indices(
-                self.selected, self.source_manager.exam_source.data["person_index"]
+                self.selected, self.source_manager.exam_source.data["PID"]
             )
             self.source_manager.update_views()
 
@@ -582,7 +582,7 @@ class CategoricalFilter(BaseFilter):
 
         self.selected = self._get_selection_indices()
         self.exams_selected = self._person_to_exam_indices(
-            self.selected, self.source_manager.exam_source.data["person_index"]
+            self.selected, self.source_manager.exam_source.data["PID"]
         )
 
     def _get_selection_indices(self) -> list[int]:
@@ -599,7 +599,7 @@ class CategoricalFilter(BaseFilter):
             self._categories = new
             self.selected = self._get_selection_indices()
             self.exams_selected = self._person_to_exam_indices(
-                self.selected, self.source_manager.exam_source.data["person_index"]
+                self.selected, self.source_manager.exam_source.data["PID"]
             )
             self.source_manager.update_views()
 

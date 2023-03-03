@@ -25,7 +25,9 @@ class BirthdateAdder(BaseEstimator, TransformerMixin):
         birthday_file: Path | None = None,
     ) -> None:
         self.birthday_file = birthday_file or settings.processing.raw_dob_data_path
-        self.dob_data = pd.read_csv(self.birthday_file)
+        self.dob_data = pd.read_csv(
+            self.birthday_file, parse_dates=["FOEDT"], dayfirst=True
+        )
         self.columns = settings.processing.column_names
 
     def fit(self, X, y=None) -> BirthdateAdder:
