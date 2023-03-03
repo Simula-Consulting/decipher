@@ -9,12 +9,15 @@ from matfact.settings import settings
 
 
 def load_and_process_screening_data(
-    screening_data_path: Path = settings.processing.raw_screening_data_path, **kwargs
+    screening_data_path: Path | None = None, **kwargs
 ) -> tuple[pd.DataFrame, Pipeline]:
     """Function to load and process raw screening data. Returns the processed dataframe
     and the corresponding fitted pipeline.
 
     `kwargs` are passed to `pd.read_csv`"""
+    screening_data_path = (
+        screening_data_path or settings.processing.raw_screening_data_path
+    )
     raw_data = pd.read_csv(screening_data_path, **kwargs)
     pipeline = matfact_pipeline()
     processed_data = pipeline.fit_transform(raw_data)
