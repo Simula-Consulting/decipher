@@ -26,6 +26,12 @@ optional = true
 [tool.poetry.group.examples.dependencies]
 matfact = {path = "../matfact", develop = true}
 
+[tool.poetry.group.ipython]
+optional = true
+
+[tool.poetry.group.ipython.dependencies]
+ipykernel = "^6.21.2"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
