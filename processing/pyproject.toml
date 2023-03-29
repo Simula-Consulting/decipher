@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "processing"
+version = "0.1.0"
+description = ""
+authors = ["anders0204 <anders0204@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+scikit-learn = "^1.2.0"
+pandas = "^1.5.3"
+numpy = "^1.23.2"
+pydantic = "^1.10.7"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.15.2"
+pytest = "^7.1.3"
+mypy = "^0.982"
+types-tqdm = "^4.64.7"
+black = "^22.10.0"
+isort = "^5.10.1"
+flake8 = "^5.0.4"
+hypothesis = "^6.54.5"
+pre-commit = "^2.20.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

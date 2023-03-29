@@ -5,10 +5,9 @@ import pandas as pd
 import pytest
 from sklearn.pipeline import Pipeline
 
-from matfact.processing.data_manager import generate_observation_matrix
-from matfact.processing.pipelines import matfact_pipeline
-from matfact.processing.transformers import BirthdateAdder
-from matfact.settings import settings
+from processing.pipelines import matfact_pipeline
+from processing.transformers import BirthdateAdder
+from processing.settings import settings
 
 settings.processing.raw_dob_data_path = Path("tests/test_datasets/test_dob_data.csv")
 settings.processing.raw_screening_data_path = Path(
@@ -42,18 +41,6 @@ def test_processing_pipeline(
 
     for _, data in prepared_data.groupby(settings.processing.column_names.pid):
         assert len(data["row"].unique()) == 1
-
-
-def test_generate_observation_matrix(
-    screening_data: pd.DataFrame, testing_pipeline: Pipeline
-) -> None:
-    reference = testing_pipeline.fit_transform(screening_data)
-    X = generate_observation_matrix()
-    n_rows, n_cols = X.shape
-
-    assert n_rows == reference[settings.processing.column_names.pid].nunique()
-    assert n_cols == testing_pipeline["age_bin_assigner"].n_bins
-    assert np.all((0 <= X) & (X <= 4))
 
 
 def test_birthdate_adder(screening_data: pd.DataFrame) -> None:

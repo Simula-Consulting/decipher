@@ -2,10 +2,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from processing.pipelines import matfact_pipeline
+from processing.settings import settings
 from sklearn.pipeline import Pipeline
-
-from matfact.processing.pipelines import matfact_pipeline
-from matfact.settings import settings
 
 
 def load_and_process_screening_data(

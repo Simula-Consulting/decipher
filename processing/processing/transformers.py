@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from matfact.settings import settings
+from processing.settings import settings
 
 
 class BirthdateAdder(BaseEstimator, TransformerMixin):
