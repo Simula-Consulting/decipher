@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "hhmm"
+version = "0.1.0"
+description = "HHMM code from Livermore, refactored."
+authors = ["anders0204 <anders0204@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+scipy = "^1.10.1"
+numpy = "^1.24.2"
+processing = {path = "../processing", develop = true}
+matplotlib = "^3.7.1"
+autograd = "^1.5"
+scikit-learn = "^1.2.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.mypy.overrides]]
+module = [
+    "processing.*",
+    ]
