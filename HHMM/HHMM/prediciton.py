@@ -36,10 +36,10 @@ def Initialization():
 
     args = parser.parse_args()
 
-    try:
-        os.chdir(os.path.dirname(__file__))
-    except:
-        pass
+    # try:
+    #     os.chdir(os.path.dirname(__file__))
+    # except:
+    #     pass
 
     if args.test:
         out_folder = args.name + '_' + str(
@@ -81,7 +81,7 @@ def Initialization():
     n_inv = len(inv)
 
     if dataset == 'data_1000':
-        data_location = '../../data/data_1000/'
+        data_location = "data/"
     else:
         print("dataset {} is not available".format(dataset))
 
@@ -150,7 +150,7 @@ def Initialization():
 
 def Load_EM_res(verbose=False):
     global currPars
-    with open("../../data/data_2400/EM_hierarchical_16_updated_data_inv4_continuous_240000/res", "rb") as em_res:
+    with open("outcome/EM_hierarchical_16_updated_data_inv4_continuous_100/res_prior_0.5", "rb") as em_res:
         counter, currZ_pos_list, currStates_list, currAlpha, currEta, currW, currC, currNegLogLik, inv = pickle.load(
             em_res, encoding="bytes")
         currPars = [currAlpha, currEta, currW, currC]
@@ -642,28 +642,28 @@ if __name__ == "__main__":
     #################################
     ####### HHMM Prediction #########
     #################################
-    # # Compute predictive distribution of model index
-    # Compute_pos_Z_test(p, verbose=False)
-    # # Compute predictive distribution of last second state given model index z
-    # Compute_pos_last2(currPars, verbose=True)
-    # # Compute predictive distribution of last state
-    # Compute_pos_last(currPars, verbose=True)
+    # Compute predictive distribution of model index
+    Compute_pos_Z_test(p, verbose=False)
+    # Compute predictive distribution of last second state given model index z
+    Compute_pos_last2(currPars)
+    # Compute predictive distribution of last state
+    Compute_pos_last(currPars, verbose=True)
 
     ################################
     ######## Save Results ##########
     ################################
-    # with open("../../res/EM_2400/hierarchical_prediction_MI.pickle", "wb") as res:
-    #     pickle.dump(Z_pos, res)
-    # with open("../../res/EM_2400/hierarchical_prediction_LS.pickle", "wb") as res:
-    #     pickle.dump(lasts, res)
+    with open("res/hierarchical_prediction_MI.pickle", "wb") as res:
+        pickle.dump(Z_pos, res)
+    with open("res/hierarchical_prediction_LS.pickle", "wb") as res:
+        pickle.dump(lasts, res)
 
     ############################
     #######Load Results ########
     ############################
-    with open("../../res/EM_2400/hierarchical_prediction_MI.pickle", "rb") as res:
-        Z_pos = pickle.load(res)
-    with open("../../res/EM_2400/hierarchical_prediction_LS.pickle", "rb") as res:
-        lasts = pickle.load(res)
+    # with open("../../res/EM_2400/hierarchical_prediction_MI.pickle", "rb") as res:
+    #     Z_pos = pickle.load(res)
+    # with open("../../res/EM_2400/hierarchical_prediction_LS.pickle", "rb") as res:
+    #     lasts = pickle.load(res)
 
 
     ts = time.time()

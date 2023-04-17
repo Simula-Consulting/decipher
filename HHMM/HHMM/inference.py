@@ -23,19 +23,20 @@ from autograd.scipy import special
 from autograd import grad
 
 ### Parallel Library
-from mpi4py import MPI
+# from mpi4py import MPI
 
 def Initialization():
-    global comm, rank
+    # global comm, rank
     global ages, testTypes, observations, treatment_indx, censor_ages, death_states, ind, nTests, inv, n_inv, MPmatrixs, nPatients
     global out_path, max_steps_em, max_steps_optim, model, autograd_optim, p, args
     global currPars, curr_parameter_vector
 
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    size = comm.Get_size()
-    print('rank: ', rank)
-    print('size: ', size)
+    # comm = MPI.COMM_WORLD
+    # rank = comm.Get_rank()
+    # size = comm.Get_size()
+    size = 1
+    # print('rank: ', rank)
+    # print('size: ', size)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", help="name of the experiment", default="EM_hierarchical")
@@ -54,11 +55,11 @@ def Initialization():
 
     args = parser.parse_args()
 
-    try:
-        os.chdir(os.path.dirname(__file__))
-    except:
-        pass
-    os.chdir("../GeneralStateModel/Rui/EM_hierarchical")
+    # try:
+    #     os.chdir(os.path.dirname(__file__))
+    # except:
+    #     pass
+    # os.chdir("../GeneralStateModel/Rui/EM_hierarchical")
 
 
     # if np.isinf(args.n_patients_per_proc):
@@ -114,7 +115,8 @@ def Initialization():
     n_inv = len(inv)
 
     if dataset == 'updated_data':
-        data_location = '../../distributed_updated_data/'
+        # data_location = '../../distributed_updated_data/'
+        data_location = "data"
     elif dataset == 'updated_nonzero_data':
         data_location = '../../distributed_updated_nonzero_data/'
     elif dataset == 'survey_patient_data':
@@ -124,16 +126,18 @@ def Initialization():
 
 
     # subdata_location = data_location + 'p%s/'%(str(rank_dict[rank]))
-    subdata_location = data_location + 'p{}/'.format(rank)
+    # subdata_location = data_location + 'p{}/'.format(rank)
+    subdata_location = "data/"
 
     # load data
     times           =  pickle.load(open( subdata_location + 'mcmcPatientTimes', 'rb'), encoding = "bytes")          #
     testTypes       =  pickle.load(open( subdata_location + 'mcmcPatientTestTypes', 'rb'), encoding = "bytes")      #
     observations    =  pickle.load(open( subdata_location + 'mcmcPatientObservations', 'rb'), encoding = "bytes")   #
-    regressors      =  pickle.load(open( subdata_location + 'mcmcPatientRegressors', 'rb'), encoding = "bytes")     #
+    # regressors      =  pickle.load(open( subdata_location + 'mcmcPatientRegressors', 'rb'), encoding = "bytes")     #
     treatment_indx  =  pickle.load(open( subdata_location + 'mcmcPatientTreatmentIndx', 'rb'), encoding = "bytes")           #
     censor_ages     =  pickle.load(open( subdata_location + 'mcmcPatientCensorDates', 'rb'), encoding = "bytes")             #
     death_states    =  pickle.load(open( subdata_location + 'mcmcPatientDeathStates', 'rb'), encoding = "bytes")             #
+    ages            =  pickle.load(open( subdata_location + 'mcmcPatientAges', 'rb'), encoding = "bytes")          # Anders added this
 
     # Move to outcome dir
     if not os.path.exists("outcome"):
@@ -151,12 +155,12 @@ def Initialization():
     MPmatrix_1[0,1] = MPmatrix_1[1,0] = MPmatrix_1[1,2] = MPmatrix_1[2,1] = MPmatrix_1[2,3] = MPmatrix_1[:-1,-1] = 1
     MPmatrixs = [MPmatrix_0, MPmatrix_1]
 
-    temp_ages = regressors[1]
-    ages = []
-    # Reset age
-    for temp_patient_ages, patient_times in zip(temp_ages, times):
-        new_patient_ages = temp_patient_ages[0] + patient_times/12.0
-        ages.append(new_patient_ages)
+    # temp_ages = regressors[1]
+    # ages = []
+    # # Reset age
+    # for temp_patient_ages, patient_times in zip(temp_ages, times):
+    #     new_patient_ages = temp_patient_ages[0] + patient_times/12.0
+    #     ages.append(new_patient_ages)
 
     nPatients = len(times)
 
@@ -1200,18 +1204,20 @@ def NegativeLogLikelihood_caller(parameter_vector, verbose = False):
         'frailty' is a list or array of length N with 0 or 1 elements.
         'states' is a list of length N, each element of which is an array of length O[i].
     '''
-    stop[0] = comm.bcast(stop[0], 0)
-    summ = 0
-    if stop[0] == 0:
-        parameter_vector = comm.bcast(parameter_vector, 0)
-        negativeloglikelihood = NegativeLogLikelihood(parameter_vector)
-        if verbose:
-            print ("NegativeLogLikelihood for {}th process = {}".format(rank, negativeloglikelihood))
-        summ = comm.reduce(negativeloglikelihood, op = MPI.SUM, root = 0)
-    if rank == 0:
-        return summ
-    else:
-        return 0
+    return NegativeLogLikelihood(parameter_vector)
+
+    # stop[0] = comm.bcast(stop[0], 0)
+    # summ = 0
+    # if stop[0] == 0:
+    #     parameter_vector = comm.bcast(parameter_vector, 0)
+    #     negativeloglikelihood = NegativeLogLikelihood(parameter_vector)
+    #     if verbose:
+    #         print ("NegativeLogLikelihood for {}th process = {}".format(rank, negativeloglikelihood))
+    #     summ = comm.reduce(negativeloglikelihood, op = MPI.SUM, root = 0)
+    # if rank == 0:
+    #     return summ
+    # else:
+    #     return 0
 
 def NegativeLogLikelihood_shared_caller(parameter_vector_shared):
     # Convert parameter_vector_shared to parameter_vector
@@ -1220,28 +1226,32 @@ def NegativeLogLikelihood_shared_caller(parameter_vector_shared):
     return res
 
 def NegativeLoglikelihood_shared_grad_caller(parameter_vector_shared, verbose = False):
-    stop[0] = comm.bcast(stop[0], 0)
-    negativeloglikelihood_grad_list = []
-    if stop[0] == 0:
-        parameter_vector_shared = comm.bcast(parameter_vector_shared, 0)
-        negativeloglikelihood_grad_f = grad(NegativeLogLikelihood_shared)
-        negativeloglikelihood_grad = negativeloglikelihood_grad_f(parameter_vector_shared)
-        if verbose:
-            print ("NegativeLogLikelihood gradient for {}th process = {}".format(rank, negativeloglikelihood_grad))
-        negativeloglikelihood_grad_list = comm.gather(negativeloglikelihood_grad, root = 0)
+    negativeloglikelihood_grad_f = grad(NegativeLogLikelihood_shared)
+    negativeloglikelihood_grad = negativeloglikelihood_grad_f(parameter_vector_shared)
+    return negativeloglikelihood_grad
 
-    if rank == 0:
-        summ = sum(negativeloglikelihood_grad_list)
-        if verbose:
-            print ("negativeloglikelihood gradient is {}".format(summ))
-        return summ
-    else:
-        return 0
+    # stop[0] = comm.bcast(stop[0], 0)
+    # negativeloglikelihood_grad_list = []
+    # if stop[0] == 0:
+    #     parameter_vector_shared = comm.bcast(parameter_vector_shared, 0)
+    #     negativeloglikelihood_grad_f = grad(NegativeLogLikelihood_shared)
+    #     negativeloglikelihood_grad = negativeloglikelihood_grad_f(parameter_vector_shared)
+    #     if verbose:
+    #         print ("NegativeLogLikelihood gradient for {}th process = {}".format(rank, negativeloglikelihood_grad))
+    #     negativeloglikelihood_grad_list = comm.gather(negativeloglikelihood_grad, root = 0)
+
+    # if rank == 0:
+    #     summ = sum(negativeloglikelihood_grad_list)
+    #     if verbose:
+    #         print ("negativeloglikelihood gradient is {}".format(summ))
+    #     return summ
+    # else:
+    #     return 0
 
 def Compute_pos_Z_state(p, verbose = False): ### given state Z | S -
-    global currZ_pos, currZ_pos_list
+    global currZ_pos# , currZ_pos_list
     # It is a Bernouli(p)
-    t_z = time.clock()
+    t_z = time.time()
     if counter == 0:
         # Rough estimation
         currZ_pos = [.5 for nvs in range(nPatients)]
@@ -1254,24 +1264,24 @@ def Compute_pos_Z_state(p, verbose = False): ### given state Z | S -
             tilde_p = np.exp(np.log(p)+loglik_1 - np.log((1-p)*np.exp(loglik_0) + p*np.exp(loglik_1)))
             currZ_pos.append(tilde_p)
 
-    comm.Barrier()
-    currZ_pos_list = comm.gather(currZ_pos, 0)
-    if rank == 0:
-        print('Compute the posterior of Z costs {}'.format(time.clock() - t_z))
+    # comm.Barrier()
+    # currZ_pos_list = comm.gather(currZ_pos, 0)
+    # if rank == 0:
+    print('Compute the posterior of Z costs {}'.format(time.time() - t_z))
     ## print the Negative log likelihood
     if counter > 0:
         stop = [0]
-        if rank == 0:
-            print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
+        # if rank == 0:
+        print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
             # print ('Current probabilities of Z is: {}'.format(currZ_pos_list))
-        else:
-            NegativeLogLikelihood_caller(curr_parameter_vector)
+        # else:
+        #     NegativeLogLikelihood_caller(curr_parameter_vector)
     return 0
 
 def Compute_pos_Z(p, verbose = False): ### given no state Z | -
-    global currZ_pos, currZ_pos_list
+    global currZ_pos #, currZ_pos_list
     # It is a Bernouli(p)
-    t_z = time.clock()
+    t_z = time.time()
     if counter == 0:
         # Rough estimation
         currZ_pos = [.5 for nvs in range(nPatients)]
@@ -1284,23 +1294,23 @@ def Compute_pos_Z(p, verbose = False): ### given no state Z | -
             tilde_p = np.exp(np.log(p)+loglik_1 - np.log((1-p)*np.exp(loglik_0) + p*np.exp(loglik_1)))
             currZ_pos.append(tilde_p)
 
-    comm.Barrier()
-    currZ_pos_list = comm.gather(currZ_pos, 0)
-    if rank == 0:
-        print('Compute the posterior of Z costs {}'.format(time.clock() - t_z))
-    ## print the Negative log likelihood
-    if counter > 0:
-        stop = [0]
-        if rank == 0:
-            print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
-            # print ('Current probabilities of Z is: {}'.format(currZ_pos_list))
-        else:
-            NegativeLogLikelihood_caller(curr_parameter_vector)
-    return 0
+    # comm.Barrier()
+    # currZ_pos_list = comm.gather(currZ_pos, 0)
+    # if rank == 0:
+    #     print('Compute the posterior of Z costs {}'.format(time.clock() - t_z))
+    # ## print the Negative log likelihood
+    # if counter > 0:
+    #     stop = [0]
+    #     if rank == 0:
+    #         print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
+    #         # print ('Current probabilities of Z is: {}'.format(currZ_pos_list))
+    #     else:
+    #         NegativeLogLikelihood_caller(curr_parameter_vector)
+    # return 0
 
 def Compute_Z(verbose = False):
-    global currZ_pos, currZ_pos_list
-    t_z = time.clock()
+    global currZ_pos #, currZ_pos_list
+    t_z = time.time()
     if counter == 0:
         currZ_pos = [.5 for nvs in range(nPatients)]
     else:
@@ -1325,24 +1335,24 @@ def Compute_Z(verbose = False):
             #     print ("p = {} and prev_p = {}".format(p, prevZ_pos[indx]))
             # ####
 
-    comm.Barrier()
-    currZ_pos_list = comm.gather(currZ_pos, 0)
-    if rank == 0:
-        print('Compute the posterior of Z costs {}'.format(time.clock() - t_z))
-    ## print the Negative log likelihood
-    if counter > 0:
-        stop = [0]
-        if rank == 0:
-            print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop, verbose)))
-            # print ('Current probabilities of Z is: {}'.format(currZ_pos_list))
-        else:
-            NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop)
+    # comm.Barrier()
+    # currZ_pos_list = comm.gather(currZ_pos, 0)
+    # if rank == 0:
+    #     print('Compute the posterior of Z costs {}'.format(time.clock() - t_z))
+    # ## print the Negative log likelihood
+    # if counter > 0:
+    #     stop = [0]
+    #     if rank == 0:
+    #         print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop, verbose)))
+    #         # print ('Current probabilities of Z is: {}'.format(currZ_pos_list))
+    #     else:
+    #         NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop)
     return 0
 
 def Update_states_single(verbose = False):  ### S_z | z
-    global currStates, currStates_list, stop
-    if rank == 0:
-        t_s = time.clock()
+    global currStates, stop # currStates_list
+    # if rank == 0:
+    #     t_s = time.clock()
 
     currStates_0 = []
     currLoglikelihood_0 = []
@@ -1411,23 +1421,23 @@ def Update_states_single(verbose = False):  ### S_z | z
 
 
     currStates = [currStates_0, currStates_1]
-    currStates_list = comm.gather(currStates)
-    comm.Barrier()
-    if rank == 0:
-        print ('Update states costs: {}'.format(time.clock() - t_s))
-     ## print the Negative log likelihood
-    stop = [0]
-    if rank == 0:
-        print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
-        # print ('Current States: \n Model 0: {} \n Model 1: {}'.format(currStates_0, currStates_1))
-    else:
-        NegativeLogLikelihood_caller(curr_parameter_vector, verbose)
+    #currStates_list = comm.gather(currStates)
+    # comm.Barrier()
+    # if rank == 0:
+    #     print ('Update states costs: {}'.format(time.clock() - t_s))
+    #  ## print the Negative log likelihood
+    # stop = [0]
+    # if rank == 0:
+    #     print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
+    #     # print ('Current States: \n Model 0: {} \n Model 1: {}'.format(currStates_0, currStates_1))
+    # else:
+    #     NegativeLogLikelihood_caller(curr_parameter_vector, verbose)
     return 0
 
 def Update_states(verbose = False):   ### S | z
-    global currStates, currStates_list, stop #, currStates0
-    if rank == 0:
-        t_s = time.clock()
+    global currStates, stop #currStates_list, stop #, currStates0
+    # if rank == 0:
+    #     t_s = time.clock()
 
     currStates_0 = []
     currStates_1 = []
@@ -1472,185 +1482,186 @@ def Update_states(verbose = False):   ### S | z
 
     currStates = [currStates_0, currStates_1]
     # currStates0 = [currStates0_0, currStates0_1]
-    currStates_list = comm.gather(currStates)
-    comm.Barrier()
-    if rank == 0:
-        print ('Update states costs: {}'.format(time.clock() - t_s))
-     ## print the Negative log likelihood
-    stop = [0]
-    if rank == 0:
-        print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
-        # print ('Current States: \n Model 0: {} \n Model 1: {}'.format(currStates_0, currStates_1))
-    else:
-        NegativeLogLikelihood_caller(curr_parameter_vector, verbose)
+    # currStates_list = comm.gather(currStates)
+    # comm.Barrier()
+    # if rank == 0:
+    #     print ('Update states costs: {}'.format(time.clock() - t_s))
+    #  ## print the Negative log likelihood
+    # stop = [0]
+    # if rank == 0:
+    #     print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
+    #     # print ('Current States: \n Model 0: {} \n Model 1: {}'.format(currStates_0, currStates_1))
+    # else:
+    #     NegativeLogLikelihood_caller(curr_parameter_vector, verbose)
     return 0 ### already know the true model indicator
 
 def Update_all_pars(verbose = False):
     global currPars, currNegLogLik, curr_parameter_vector
     stop = [0]
-    comm.Barrier()
+    # comm.Barrier()
     # break
     parameter_vector = ParList2ParVec(currPars[0], currPars[1], currPars[2], currPars[3], ind)
 
-    if rank == 0:
-        t_m = time.clock()
-        res = optimize.minimize(NegativeLogLikelihood_caller,
-                                x0=parameter_vector,
-                                args=(currZ_pos, currStates, stop),
-                                jac=None,
-                                 method='L-BFGS-B',
-                                options={'disp': True, 'maxiter': max_steps_optim})
-        stop = [1] # Declare the NegativeLogLikelihood_caller computation stoped for optimization
-        NegativeLogLikelihood_caller(parameter_vector, currZ_pos, currStates, stop)
-    else:
-        while stop[0] == 0:
-             NegativeLogLikelihood_caller(parameter_vector, currZ_pos, currStates, stop)
+    # if rank == 0:
+    t_m = time.time()
+    res = optimize.minimize(NegativeLogLikelihood_caller,
+                            x0=parameter_vector,
+                            args=(currZ_pos, currStates, stop),
+                            jac=None,
+                                method='L-BFGS-B',
+                            options={'disp': True, 'maxiter': max_steps_optim})
+    stop = [1] # Declare the NegativeLogLikelihood_caller computation stoped for optimization
+    NegativeLogLikelihood_caller(parameter_vector, currZ_pos, currStates, stop)
+    # else:
+    #     while stop[0] == 0:
+    #          NegativeLogLikelihood_caller(parameter_vector, currZ_pos, currStates, stop)
 
-    if rank == 0:
-        curr_parameter_vector = res.x
-        currNegLogLik = res.fun
-        print ('Updating all parameters costs: ', time.clock() - t_m)
-        currAlpha, currEta, currW, currC = ParVec2ParList(curr_parameter_vector, n_inv, ind)
-        currPars = [currAlpha, currEta, currW, currC]
-        print ("Under Model 0 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha[0], currEta[0], currW[0], currC[0]))
-        print ("Under Model 1 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha[1], currEta[1], currW[1], currC[1]))
-    ## print the Negative log likelihood
+    # if rank == 0:
+    curr_parameter_vector = res.x
+    currNegLogLik = res.fun
+    print ('Updating all parameters costs: ', time.time() - t_m)
+    currAlpha, currEta, currW, currC = ParVec2ParList(curr_parameter_vector, n_inv, ind)
+    currPars = [currAlpha, currEta, currW, currC]
+    print ("Under Model 0 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha[0], currEta[0], currW[0], currC[0]))
+    print ("Under Model 1 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha[1], currEta[1], currW[1], currC[1]))
+## print the Negative log likelihood
     stop = [0]
-    if rank == 0:
-        print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop, verbose)))
-    else:
-        NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop)
+    # if rank == 0:
+    print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop, verbose)))
     return 0
+    # else:
+    #     NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop)
+    # return 0
 
 def Update_all_pars_shared(verbose = False):
     global currPars, currNegLogLik, curr_parameter_vector
     global stop
     stop = [0]
-    comm.Barrier()
+    #comm.Barrier()
     # break
     parameter_vector = ParList2ParVec(currPars[0], currPars[1], currPars[2], currPars[3], ind)
     parameter_vector_shared = ParVec2ParVecShared(parameter_vector, n_inv, ind)
 
-    if rank == 0:
-        t_m = time.clock()
-        if autograd_optim:
-            res = optimize.minimize(NegativeLogLikelihood_shared_caller,
-                                    x0=parameter_vector_shared,
-                                    jac=NegativeLoglikelihood_shared_grad_caller,
-                                    method='L-BFGS-B',
-                                    options={'disp': True, 'maxiter': max_steps_optim})
-        else:
-            res = optimize.minimize(NegativeLogLikelihood_shared_caller,
-                                    x0=parameter_vector_shared,
-                                    jac=None,
-                                    method='L-BFGS-B',
-                                    options={'disp': True, 'maxiter': max_steps_optim})
-        stop = [1] # Declare the NegativeLogLikelihood_caller computation stoped for optimization
-        if autograd_optim:
-            NegativeLogLikelihood_shared_caller(parameter_vector_shared)
-            NegativeLoglikelihood_shared_grad_caller(parameter_vector_shared)
-        else:
-            NegativeLogLikelihood_shared_caller(parameter_vector_shared)
-    else:
-        while stop[0] == 0:
-            if autograd_optim:
-                NegativeLogLikelihood_shared_caller(parameter_vector_shared)
-                NegativeLoglikelihood_shared_grad_caller(parameter_vector_shared)
-            else:
-                NegativeLogLikelihood_shared_caller(parameter_vector_shared)
-
-    if rank == 0:
-        curr_parameter_vector_shared = res.x
-        currNegLogLik = res.fun
-        print ('Updating all parameters costs: ', time.clock() - t_m)
-        curr_parameter_vector = ParVecShared2ParVec(curr_parameter_vector_shared, n_inv, ind)
-        currAlpha, currEta, currW, currC = ParVec2ParList(curr_parameter_vector, n_inv, ind)
-        currPars = [currAlpha, currEta, currW, currC]
-        print ("Under Model 0 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha[0], currEta[0], currW[0], currC[0]))
-        print ("Under Model 1 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha[1], currEta[1], currW[1], currC[1]))
-    ## print the Negative log likelihood
-    stop = [0]
-    if rank == 0:
-        print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
-    else:
-        NegativeLogLikelihood_caller(curr_parameter_vector)
-    return 0
-
-def Update_all_pars_by_group(verbose = False):
-    global currPars, currNegLogLik, curr_parameter_vector
-
-    # Update the parameters in the Model 0
-    stop = [0]
-    comm.Barrier()
-    currPars_0 = [currPar[0] for currPar in currPars]
-    parameter_vector = ParList2ParVec_group(currPars_0[0], currPars_0[1], currPars_0[2], currPars_0[3], ind)
-    if rank == 0:
-        t_m = time.clock()
-        res = optimize.minimize(NegativeLogLikelihood_group_caller,
-                                x0=parameter_vector,
-                                args=(0, currPars, currZ_pos, currStates, stop),
-                                jac = None,
+    #if rank == 0:
+    t_m = time.time()
+    if autograd_optim:
+        res = optimize.minimize(NegativeLogLikelihood_shared_caller,
+                                x0=parameter_vector_shared,
+                                jac=NegativeLoglikelihood_shared_grad_caller,
                                 method='L-BFGS-B',
                                 options={'disp': True, 'maxiter': max_steps_optim})
-        stop = [1]
-        NegativeLogLikelihood_group_caller(parameter_vector, 0, currPars, currZ_pos, currStates, stop)
     else:
-        while stop[0] == 0:
-            NegativeLogLikelihood_group_caller(parameter_vector, 0, currPars, currZ_pos, currStates, stop)
-    if rank == 0:
-        curr_parameter_vector_0 = res.x
-        currNegLogLik_0 = res.fun
-        print ('Updating parameters for Model 0 costs: ', time.clock() - t_m)
-        currAlpha_0, currEta_0, currW_0, currC_0 = ParVec2ParList_group(0, curr_parameter_vector_0, n_inv, ind)
-        print ("Under Model 0 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha_0, currEta_0, currW_0, currC_0))
-        currPars[0][0] = currAlpha_0
-        currPars[1][0] = currEta_0
-        currPars[2][0] = currW_0
-        currPars[3][0] = currC_0
-
-
-    # Update the parameters in the Model 1
-    stop = [0]
-    comm.Barrier()
-    currPars_1 = [currPar[1] for currPar in currPars]
-    parameter_vector = ParList2ParVec_group(currPars_1[0], currPars_1[1], currPars_1[2], currPars_1[3], ind)
-    if rank == 0:
-        t_m = time.clock()
-        res = optimize.minimize(NegativeLogLikelihood_group_caller,
-                                x0=parameter_vector,
-                                args=(1, currPars, currZ_pos, currStates, stop),
-                                jac = None,
+        res = optimize.minimize(NegativeLogLikelihood_shared_caller,
+                                x0=parameter_vector_shared,
+                                jac=None,
                                 method='L-BFGS-B',
                                 options={'disp': True, 'maxiter': max_steps_optim})
-        stop = [1]
-        NegativeLogLikelihood_group_caller(parameter_vector, 1, currPars, currZ_pos, currStates, stop)
+    stop = [1] # Declare the NegativeLogLikelihood_caller computation stoped for optimization
+    if autograd_optim:
+        NegativeLogLikelihood_shared_caller(parameter_vector_shared)
+        NegativeLoglikelihood_shared_grad_caller(parameter_vector_shared)
     else:
-        while stop[0] == 0:
-            NegativeLogLikelihood_group_caller(parameter_vector, 1, currPars, currZ_pos, currStates, stop)
-    if rank == 0:
-        curr_parameter_vector_1 = res.x
-        currNegLogLik_1 = res.fun
-        print ('Updating parameters for Model 1 costs: ', time.clock() - t_m)
-        currAlpha_1, currEta_1, currW_1, currC_1 = ParVec2ParList_group(1, curr_parameter_vector_1, n_inv, ind)
-        print ("Under Model 1 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha_1, currEta_1, currW_1, currC_1))
+        NegativeLogLikelihood_shared_caller(parameter_vector_shared)
+    # else:
+    #     while stop[0] == 0:
+    #         if autograd_optim:
+    #             NegativeLogLikelihood_shared_caller(parameter_vector_shared)
+    #             NegativeLoglikelihood_shared_grad_caller(parameter_vector_shared)
+    #         else:
+    #             NegativeLogLikelihood_shared_caller(parameter_vector_shared)
 
-    if rank == 0:
-        # Combine parameters for two models
-        currNegLogLik = currNegLogLik_0 + currNegLogLik_1
-        currAlpha = [currAlpha_0, currAlpha_1]
-        currEta = [currEta_0, currEta_1]
-        currW = [currW_0, currW_1]
-        currC = [currC_0, currC_1]
-        currPars = [currAlpha, currEta, currW, currC]
-        curr_parameter_vector = ParList2ParVec(currAlpha, currEta, currW, currC, ind)
-
+    #if rank == 0:
+    curr_parameter_vector_shared = res.x
+    currNegLogLik = res.fun
+    print ('Updating all parameters costs: ', time.time() - t_m)
+    curr_parameter_vector = ParVecShared2ParVec(curr_parameter_vector_shared, n_inv, ind)
+    currAlpha, currEta, currW, currC = ParVec2ParList(curr_parameter_vector, n_inv, ind)
+    currPars = [currAlpha, currEta, currW, currC]
+    print ("Under Model 0 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha[0], currEta[0], currW[0], currC[0]))
+    print ("Under Model 1 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha[1], currEta[1], currW[1], currC[1]))
     ## print the Negative log likelihood
     stop = [0]
-    if rank == 0:
-        print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop, verbose)))
-    else:
-        NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop)
-    return 0
+    #if rank == 0:
+    print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
+    # else:
+    #     NegativeLogLikelihood_caller(curr_parameter_vector)
+    # return 0
+
+# def Update_all_pars_by_group(verbose = False):
+#     global currPars, currNegLogLik, curr_parameter_vector
+
+#     # Update the parameters in the Model 0
+#     stop = [0]
+#     comm.Barrier()
+#     currPars_0 = [currPar[0] for currPar in currPars]
+#     parameter_vector = ParList2ParVec_group(currPars_0[0], currPars_0[1], currPars_0[2], currPars_0[3], ind)
+#     if rank == 0:
+#         t_m = time.clock()
+#         res = optimize.minimize(NegativeLogLikelihood_group_caller,
+#                                 x0=parameter_vector,
+#                                 args=(0, currPars, currZ_pos, currStates, stop),
+#                                 jac = None,
+#                                 method='L-BFGS-B',
+#                                 options={'disp': True, 'maxiter': max_steps_optim})
+#         stop = [1]
+#         NegativeLogLikelihood_group_caller(parameter_vector, 0, currPars, currZ_pos, currStates, stop)
+#     else:
+#         while stop[0] == 0:
+#             NegativeLogLikelihood_group_caller(parameter_vector, 0, currPars, currZ_pos, currStates, stop)
+#     if rank == 0:
+#         curr_parameter_vector_0 = res.x
+#         currNegLogLik_0 = res.fun
+#         print ('Updating parameters for Model 0 costs: ', time.clock() - t_m)
+#         currAlpha_0, currEta_0, currW_0, currC_0 = ParVec2ParList_group(0, curr_parameter_vector_0, n_inv, ind)
+#         print ("Under Model 0 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha_0, currEta_0, currW_0, currC_0))
+#         currPars[0][0] = currAlpha_0
+#         currPars[1][0] = currEta_0
+#         currPars[2][0] = currW_0
+#         currPars[3][0] = currC_0
+
+
+#     # Update the parameters in the Model 1
+#     stop = [0]
+#     comm.Barrier()
+#     currPars_1 = [currPar[1] for currPar in currPars]
+#     parameter_vector = ParList2ParVec_group(currPars_1[0], currPars_1[1], currPars_1[2], currPars_1[3], ind)
+#     if rank == 0:
+#         t_m = time.clock()
+#         res = optimize.minimize(NegativeLogLikelihood_group_caller,
+#                                 x0=parameter_vector,
+#                                 args=(1, currPars, currZ_pos, currStates, stop),
+#                                 jac = None,
+#                                 method='L-BFGS-B',
+#                                 options={'disp': True, 'maxiter': max_steps_optim})
+#         stop = [1]
+#         NegativeLogLikelihood_group_caller(parameter_vector, 1, currPars, currZ_pos, currStates, stop)
+#     else:
+#         while stop[0] == 0:
+#             NegativeLogLikelihood_group_caller(parameter_vector, 1, currPars, currZ_pos, currStates, stop)
+#     if rank == 0:
+#         curr_parameter_vector_1 = res.x
+#         currNegLogLik_1 = res.fun
+#         print ('Updating parameters for Model 1 costs: ', time.clock() - t_m)
+#         currAlpha_1, currEta_1, currW_1, currC_1 = ParVec2ParList_group(1, curr_parameter_vector_1, n_inv, ind)
+#         print ("Under Model 1 \nCurrent Alpha: {}\n Current Eta: {}\n Current W: {}\n Current C:{}".format(currAlpha_1, currEta_1, currW_1, currC_1))
+
+#     if rank == 0:
+#         # Combine parameters for two models
+#         currNegLogLik = currNegLogLik_0 + currNegLogLik_1
+#         currAlpha = [currAlpha_0, currAlpha_1]
+#         currEta = [currEta_0, currEta_1]
+#         currW = [currW_0, currW_1]
+#         currC = [currC_0, currC_1]
+#         currPars = [currAlpha, currEta, currW, currC]
+#         curr_parameter_vector = ParList2ParVec(currAlpha, currEta, currW, currC, ind)
+
+#     ## print the Negative log likelihood
+#     stop = [0]
+#     if rank == 0:
+#         print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop, verbose)))
+#     else:
+#         NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop)
+#     return 0
 
 # loglikelihood of a single patient's observatoins for model Z (no states)
 def Loglikelihood_obs0(indx, Z, Pars, verbose = False):
@@ -1792,8 +1803,8 @@ if __name__ == "__main__":
     counter  = -1
     while (counter < max_steps_em):
         counter += 1
-        if rank == 0:
-            print ('step {}'.format(counter))
+        # if rank == 0:
+        print ('step {}'.format(counter))
 
         ###############################################
         ### Compute the posterior distribution of Z ###
@@ -1834,16 +1845,17 @@ if __name__ == "__main__":
         ###################
         ### Save update ###
         ###################
-        if rank == 0:
-            currAlpha, currEta, currW, currC = currPars
-            print("save results in dictory {}".format(os.getcwd()))
-            with open("res_prior_{}".format(args.Z_prior), "wb") as em_res:
-                pickle.dump([counter, currZ_pos_list , currStates_list, currAlpha, currEta, currW, currC, currNegLogLik, inv], em_res)
+        # if rank == 0:
+        currAlpha, currEta, currW, currC = currPars
+        print("save results in dictory {}".format(os.getcwd()))
+        with open("res_prior_{}".format(args.Z_prior), "wb") as em_res:
+            # pickle.dump([counter, currAlpha, currEta, currW, currC, currNegLogLik, inv, currZ_pos], em_res) # (+ currZ_pos_list)
+            pickle.dump([counter, currZ_pos, currStates, currAlpha, currEta, currW, currC, currNegLogLik, inv], em_res)
 
         ####################################
         ### Broadcast updated parameters ###
         ####################################
-        comm.Barrier()
+        # comm.Barrier()
         # Distribute new parameters in our model
-        currPars = comm.bcast(currPars, 0)
+        # currPars = comm.bcast(currPars, 0)
     print("Total costs {}s".format(ts_em - time.time()))
