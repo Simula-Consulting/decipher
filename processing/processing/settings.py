@@ -92,8 +92,9 @@ class DataProcessingSettings(BaseModel):
     row_map_save_location: str | None = None
 
     # data files
-    raw_screening_data_path: Path = Path("screening_data.csv")
-    raw_dob_data_path: Path = Path("dob_data.csv")
+    file_location: Path = Path("../processing/tests/test_datasets")
+    raw_screening_data_path: Path = file_location / "test_screening_data.csv"
+    raw_dob_data_path: Path = file_location / "test_dob_data.csv"
 
 
 class Settings(BaseConfig):
