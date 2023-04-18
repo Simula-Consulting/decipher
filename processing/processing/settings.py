@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+
 @dataclass
 class ColumnName:
     name: str
@@ -61,6 +62,11 @@ class DataProcessingSettings(BaseModel):
             81403: 4,
             82103: 4,
         },
+        "hpvResultat": {
+            "negativ": 0,
+            "positiv": 1,
+            "uegnet": 0,
+        },
     }
 
     months_per_timepoint: int = 3
@@ -77,7 +83,9 @@ class DataProcessingSettings(BaseModel):
     dob = ColumnName(name="STATUS", date="FOEDT")
     dob_status = ColumnName(name="STATUS", date="STATUSDATE")
 
-    column_names = ColumnNameCollection(pid=pid, cyt=cyt, hist=hist, dob=dob, dob_status=dob_status)
+    column_names = ColumnNameCollection(
+        pid=pid, cyt=cyt, hist=hist, dob=dob, dob_status=dob_status
+    )
     # processing pipeline configuration
     min_n_tests: int = 2
     max_n_females: int | None = None
@@ -90,5 +98,6 @@ class DataProcessingSettings(BaseModel):
 
 class Settings(BaseConfig):
     processing = DataProcessingSettings()
+
 
 settings = Settings()

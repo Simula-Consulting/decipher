@@ -126,6 +126,29 @@ class RiskAdder(BaseEstimator, TransformerMixin):
         return X
 
 
+class RiskAdderHHMM(BaseEstimator, TransformerMixin):
+    """Adds a risk column with an integer (1-4) risk level for each exam diagnosis result."""
+
+    def __init__(self):
+        self.risk_map = {
+            k: v
+            for subdict in settings.processing.risk_maps.values()
+            for k, v in subdict.items()
+        }
+
+    def fit(self, X: pd.DataFrame, y=None) -> RiskAdderHHMM:
+        if "exam_diagnosis" not in X:
+            raise ValueError(
+                "'exam_diagnosis' column not found. Make sure the DataFrame is transformed to exam-wise."
+            )
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        X = X.copy()
+        X["risk"] = X["exam_diagnosis"].map(self.risk_map)
+        return X
+
+
 class InvalidRemover(BaseEstimator, TransformerMixin):
     """Removes invalid rows in the data.
 
