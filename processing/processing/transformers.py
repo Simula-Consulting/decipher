@@ -53,8 +53,11 @@ class FolkeregInfoAdder(BaseEstimator, TransformerMixin):
 class DatetimeConverter(BaseEstimator, TransformerMixin):
     """Converts specified time columns into datetimes."""
 
-    def __init__(self) -> None:
-        self.columns = settings.processing.column_names
+    def __init__(self, columns: list[str] = None) -> None:
+        self.columns = settings.processing.column_names.get_date_columns()
+        if columns is not None:
+            self.columns.extend(columns)
+
 
     def fit(self, X: pd.DataFrame, y=None) -> DatetimeConverter:
         return self
@@ -64,7 +67,7 @@ class DatetimeConverter(BaseEstimator, TransformerMixin):
             return pd.to_datetime(x, format=settings.processing.dateformat)
 
         X = X.copy()
-        date_columns = list(set(self.columns.get_date_columns()) & set(X.columns))
+        date_columns = list(set(self.columns) & set(X.columns))
         X[date_columns] = X[date_columns].apply(datetime_conversion)
         return X
 
@@ -98,8 +101,8 @@ class AgeAdder(BaseEstimator, TransformerMixin):
         X = X.copy()
         X["age"] = np.nan
         div_factor = 365.0 if self.in_years else 1.0
-        for col in (self.columns.cyt.date, self.columns.hist.date):
-            X.loc[X[col].notna(), "age"] = (X[col] - X[self.columns.dob.date]).apply(
+        for col in self.target_columns:
+            X.loc[X[col].notna(), "age"] = (X[col] - X[self.reference_column]).apply(
                 lambda x: x.days / div_factor
             )
         return X
@@ -331,3 +334,22 @@ class ToExam(BaseEstimator, TransformerMixin):
             "histDate": "histology",
             "hpvDate": "hpv",
         }[field_name]
+
+
+class TestIndexAdder(BaseEstimator, TransformerMixin):
+    """Adds a test index to a DataFrame, needed for HHMM code."""
+
+    def __init__(self) -> None:
+        self.test_index = {"cytology": 0, "histology": 1, "hpv": 2}
+
+    def fit(self, X, y=None):
+        if "exam_type" not in X:
+            raise ValueError(
+                "'exam_type' column not found. Make sure the DataFrame is transformed to exam-wise."
+            )
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        X["test_index"] = X["exam_type"].map(self.test_index)
+        return X
