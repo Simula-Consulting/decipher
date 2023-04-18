@@ -1,11 +1,12 @@
-
 from pathlib import Path
 import numpy as np
+import pickle
 import pandas as pd
 from sklearn.pipeline import Pipeline
 
 from processing.pipelines import HHMM_pipeline
 from processing.settings import settings
+
 
 def read_and_process_data(
     screening_data_path: Path = settings.processing.raw_screening_data_path, **kwargs
@@ -21,12 +22,14 @@ def read_and_process_data(
 
 
 def create_HHMM_lists(processed_data: pd.DataFrame):
+    """Function to create lists of the form expected by the HHMM package."""
     PIDS = processed_data.PID.unique()
-    N_patients = len(PIDS)
-    K = 3
-    S = 4
+    K = 3  # number of test types
+    S = 4  # number of states
 
-    testTypes, observations, ages, treatment_indx, censor_ages, death_states = [[] for _ in range(6)]
+    testTypes, observations, ages, treatment_indx, censor_ages, death_states = [
+        [] for _ in range(6)
+    ]
 
     for PID in PIDS:
         df = processed_data[processed_data.PID == PID].sort_values("age")
@@ -37,9 +40,7 @@ def create_HHMM_lists(processed_data: pd.DataFrame):
         risks = df["risk"].astype(int).tolist()
         risks = [risk - 1 for risk in risks]
 
-        observations_i = [
-            np.zeros([K, S], dtype=int) for _ in range(n_obs)
-        ]
+        observations_i = [np.zeros([K, S], dtype=int) for _ in range(n_obs)]
 
         for i, (k, s) in enumerate(zip(testTypes_i, risks)):
             observations_i[i][k, s] = 1
@@ -55,4 +56,20 @@ def create_HHMM_lists(processed_data: pd.DataFrame):
 
         treatment_indx.append([])
 
-    return PIDS.tolist(), testTypes, observations, ages, treatment_indx, censor_ages, death_states
+    return testTypes, observations, ages, treatment_indx, censor_ages, death_states
+
+
+def save_HHMM_lists(lists):
+    """Function to save the HHMM lists with the correct names for the HHMM package."""
+    file_names = [
+        "mcmcPatientTestTypes",
+        "mcmcPatientObservations",
+        "mcmcPatientAges",
+        "mcmcPatientTreatmentIndx",
+        "mcmcPatientCensorDates",
+        "mcmcPatientDeathStates",
+    ]
+    data_location = Path("data")
+    for fname, data in zip(file_names, lists):
+        with open(data_location / fname, "wb") as location:
+            pickle.dump(data, location)
