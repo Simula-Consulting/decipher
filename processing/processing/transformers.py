@@ -28,7 +28,7 @@ class FolkeregInfoAdder(BaseEstimator, TransformerMixin):
 
         self.death_column = death_column
 
-    def fit(self, X, y=None) -> FolkeregInfoAdder:
+    def fit(self, X: pd.DataFrame, y=None) -> FolkeregInfoAdder:
         self.dob_map = self.dob_data.set_index(self.columns.pid).to_dict()[
             self.columns.dob.date
         ]
@@ -41,7 +41,7 @@ class FolkeregInfoAdder(BaseEstimator, TransformerMixin):
             ]
         return self
 
-    def transform(self, X) -> pd.DataFrame:
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         X[self.columns.dob.date] = X[self.columns.pid].map(self.dob_map)
 
@@ -94,10 +94,10 @@ class AgeAdder(BaseEstimator, TransformerMixin):
         ]
         self.reference_column = reference_column or self.columns.dob.date
 
-    def fit(self, X, y=None) -> AgeAdder:
+    def fit(self, X: pd.DataFrame, y=None) -> AgeAdder:
         return self
 
-    def transform(self, X) -> pd.DataFrame:
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         X["age"] = np.nan
         div_factor = 365.0 if self.in_years else 1.0
@@ -115,7 +115,7 @@ class RiskAdder(BaseEstimator, TransformerMixin):
     def __init__(self) -> None:
         self.risk_maps = settings.processing.risk_maps
 
-    def fit(self, X, y=None) -> RiskAdder:
+    def fit(self, X: pd.DataFrame, y=None) -> RiskAdder:
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -132,7 +132,7 @@ class RiskAdder(BaseEstimator, TransformerMixin):
 class RiskAdderHHMM(BaseEstimator, TransformerMixin):
     """Adds a risk column with an integer (1-4) risk level for each exam diagnosis result."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.risk_map = {
             k: v
             for subdict in settings.processing.risk_maps.values()
@@ -184,13 +184,13 @@ class DataSampler(BaseEstimator, TransformerMixin):
     included.
     """
 
-    def __init__(self, max_n_females: int | None = None):
+    def __init__(self, max_n_females: int | None = None) -> None:
         self.max_n_females = max_n_females or settings.processing.max_n_females
         self.columns = settings.processing.column_names
 
         self.n_total = None
 
-    def fit(self, X, y=None) -> DataSampler:
+    def fit(self, X: pd.DataFrame, y=None) -> DataSampler:
         if self.max_n_females is None:
             return self
         n_total = X[self.columns.pid].nunique()
@@ -264,7 +264,7 @@ class RowAssigner(BaseEstimator, TransformerMixin):
         )
         self.pid = settings.processing.column_names.pid
 
-    def fit(self, X, y=None) -> RowAssigner:
+    def fit(self, X: pd.DataFrame, y=None) -> RowAssigner:
         individuals = sorted(X[self.pid].unique())
         n_females = len(individuals)
         self.row_map = dict(zip(individuals, np.arange(n_females)))
@@ -285,7 +285,7 @@ class ToExam(BaseEstimator, TransformerMixin):
     The resulting Dataframe will have one row per exam result.
     """
 
-    def __init__(self, fields_to_keep: list | None = None) -> None:
+    def __init__(self, fields_to_keep: list[str] | None = None) -> None:
         self.fields_to_keep = fields_to_keep or ["PID", "FOEDT"]
 
     def fit(self, X: pd.DataFrame, y=None) -> ToExam:
@@ -342,14 +342,14 @@ class TestIndexAdder(BaseEstimator, TransformerMixin):
     def __init__(self) -> None:
         self.test_index = {"cytology": 0, "histology": 1, "hpv": 2}
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None) -> TestIndexAdder:
         if "exam_type" not in X:
             raise ValueError(
                 "'exam_type' column not found. Make sure the DataFrame is transformed to exam-wise."
             )
         return self
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         X["test_index"] = X["exam_type"].map(self.test_index)
         return X
