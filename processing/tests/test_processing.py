@@ -1,12 +1,11 @@
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import pytest
 from sklearn.pipeline import Pipeline
 
 from processing.pipelines import matfact_pipeline
-from processing.transformers import BirthdateAdder
+from processing.transformers import FolkeregInfoAdder
 from processing.settings import settings
 
 settings.processing.raw_dob_data_path = Path("tests/test_datasets/test_dob_data.csv")
@@ -43,9 +42,9 @@ def test_processing_pipeline(
         assert len(data["row"].unique()) == 1
 
 
-def test_birthdate_adder(screening_data: pd.DataFrame) -> None:
+def test_folkereg_adder(screening_data: pd.DataFrame) -> None:
     # TODO: Write more transformer tests and move to separate testing file
-    birthdate_adder = BirthdateAdder()
+    birthdate_adder = FolkeregInfoAdder()
     df = birthdate_adder.fit_transform(screening_data)
     column_names = settings.processing.column_names
     date_col_name = column_names.dob.date
