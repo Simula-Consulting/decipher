@@ -338,7 +338,7 @@ class ToExam(BaseEstimator, TransformerMixin):
 
 class TestIndexAdder(BaseEstimator, TransformerMixin):
     """Adds a test index to a DataFrame, needed for HHMM code."""
-
+    __test__ = False
     def __init__(self) -> None:
         self.test_index = {"cytology": 0, "histology": 1, "hpv": 2}
 
