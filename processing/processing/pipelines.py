@@ -11,6 +11,7 @@ from processing.transformers import (
     InvalidRemover,
     RiskAdder,
     RowAssigner,
+    FolkeregInfoAdder
 )
 
 def matfact_pipeline(
@@ -24,7 +25,7 @@ def matfact_pipeline(
     """Returns a sklearn type pipeline for processing the matfact screening data."""
     return Pipeline(
         [
-            ("birthdate_adder", BirthdateAdder(birthday_file=birthday_file)),
+            ("birthdate_adder", FolkeregInfoAdder(birthday_file=birthday_file, death_column=False)),
             ("datetime_converter", DatetimeConverter()),
             ("age_adder", AgeAdder()),
             ("risk_adder", RiskAdder()),

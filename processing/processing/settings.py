@@ -16,9 +16,10 @@ class ColumnNameCollection:
     cyt: ColumnName
     hist: ColumnName
     dob: ColumnName
+    dob_status: ColumnName
 
     def get_date_columns(self):
-        return [self.cyt.date, self.hist.date, self.dob.date]
+        return [self.cyt.date, self.hist.date, self.dob.date, self.dob_status.date]
 
     def get_screening_columns(self):
         return [
@@ -74,9 +75,9 @@ class DataProcessingSettings(BaseModel):
 
     # Date of birth data column names
     dob = ColumnName(name="STATUS", date="FOEDT")
+    dob_status = ColumnName(name="STATUS", date="STATUSDATE")
 
-    column_names = ColumnNameCollection(pid=pid, cyt=cyt, hist=hist, dob=dob)
-
+    column_names = ColumnNameCollection(pid=pid, cyt=cyt, hist=hist, dob=dob, dob_status=dob_status)
     # processing pipeline configuration
     min_n_tests: int = 2
     max_n_females: int | None = None

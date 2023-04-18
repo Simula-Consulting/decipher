@@ -10,35 +10,43 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from processing.settings import settings
 
 
-class BirthdateAdder(BaseEstimator, TransformerMixin):
-    """Adds a birthdate column to the screening data by using the PID mapping to another
-    file containing the birth registry.
-
-    The only valid person status is 'B' meaning 'bosatt', other statuses such as 'dead', 'emigrated', etc.
-    are not included and will have a None value in the birthdate column.
-    """
+class FolkeregInfoAdder(BaseEstimator, TransformerMixin):
+    """Adds a birthdate column and a death/emigrated indicator to the screening data by using the PID mapping to another
+    file containing the birth registry."""
 
     dob_map: dict[int, str] = dict()
+    death_map: dict[int, int] = dict()
 
     def __init__(
         self,
         birthday_file: Path | None = None,
+        death_column: bool = True,
     ) -> None:
         self.birthday_file = birthday_file or settings.processing.raw_dob_data_path
         self.dob_data = pd.read_csv(self.birthday_file)
         self.columns = settings.processing.column_names
 
-    def fit(self, X, y=None) -> BirthdateAdder:
-        self.dob_map = (
-            self.dob_data[self.dob_data[self.columns.dob.name] == "B"]
-            .set_index(self.columns.pid)
-            .to_dict()[self.columns.dob.date]
-        )
+        self.death_column = death_column
+
+    def fit(self, X, y=None) -> FolkeregInfoAdder:
+        self.dob_map = self.dob_data.set_index(self.columns.pid).to_dict()[
+            self.columns.dob.date
+        ]
+        if self.death_column:
+            self.dob_data["is_dead"] = (
+                self.dob_data[self.columns.dob_status.date].notna().astype(int)
+            )
+            self.death_map = self.dob_data.set_index(self.columns.pid).to_dict()[
+                "is_dead"
+            ]
         return self
 
     def transform(self, X) -> pd.DataFrame:
         X = X.copy()
         X[self.columns.dob.date] = X[self.columns.pid].map(self.dob_map)
+
+        if self.death_column:
+            X["is_dead"] = X[self.columns.pid].map(self.death_map)
         return X
 
 
@@ -48,25 +56,40 @@ class DatetimeConverter(BaseEstimator, TransformerMixin):
     def __init__(self) -> None:
         self.columns = settings.processing.column_names
 
-    def fit(self, X, y=None) -> DatetimeConverter:
+    def fit(self, X: pd.DataFrame, y=None) -> DatetimeConverter:
         return self
 
-    def transform(self, X) -> pd.DataFrame:
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         def datetime_conversion(x: str) -> pd.Timestamp:
             return pd.to_datetime(x, format=settings.processing.dateformat)
 
         X = X.copy()
-        date_columns = self.columns.get_date_columns()
+        date_columns = list(set(self.columns.get_date_columns()) & set(X.columns))
         X[date_columns] = X[date_columns].apply(datetime_conversion)
         return X
 
 
 class AgeAdder(BaseEstimator, TransformerMixin):
     """The AgeAdder adds an age column to the dataframe based which is the person age at the the time of
-    screening. The age column is therefore based on the cytology/histology date and their birthdate."""
+    screening / exam result.
 
-    def __init__(self) -> None:
+    The age column is based on a reference column / usually birthdate, and a target column of dates.
+    """
+
+    def __init__(
+        self,
+        *,
+        in_years: bool = False,
+        target_columns: list[str] | None = None,
+        reference_column: str = None,
+    ) -> None:
         self.columns = settings.processing.column_names
+        self.in_years = in_years
+        self.target_columns = target_columns or [
+            self.columns.cyt.date,
+            self.columns.hist.date,
+        ]
+        self.reference_column = reference_column or self.columns.dob.date
 
     def fit(self, X, y=None) -> AgeAdder:
         return self
@@ -74,9 +97,10 @@ class AgeAdder(BaseEstimator, TransformerMixin):
     def transform(self, X) -> pd.DataFrame:
         X = X.copy()
         X["age"] = np.nan
+        div_factor = 365.0 if self.in_years else 1.0
         for col in (self.columns.cyt.date, self.columns.hist.date):
             X.loc[X[col].notna(), "age"] = (X[col] - X[self.columns.dob.date]).apply(
-                lambda x: x.days
+                lambda x: x.days / div_factor
             )
         return X
 
@@ -228,3 +252,59 @@ class RowAssigner(BaseEstimator, TransformerMixin):
         X = X.copy()
         X["row"] = X[self.pid].map(self.row_map)
         return X
+
+
+class ToExam(BaseEstimator, TransformerMixin):
+    """Transform the screening data from screening-based to exam result-based.
+    The resulting Dataframe will have one row per exam result.
+    """
+
+    def __init__(self, fields_to_keep: list | None = None) -> None:
+        self.fields_to_keep = fields_to_keep or ["PID", "FOEDT"]
+
+    def fit(self, X: pd.DataFrame, y=None) -> ToExam:
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        mapper = {
+            "cytDate": "cytMorfologi",
+            "histDate": "histMorfologi",
+            "hpvDate": "hpvResultat",
+        }
+
+        # Transform from wide to long
+        exams = (
+            X.reset_index()
+            .melt(
+                id_vars="index",
+                value_vars=mapper.keys(),  # type: ignore[arg-type]
+                var_name="exam_type",
+                value_name="exam_date",
+            )
+            .dropna()
+            .astype({"exam_type": "category"})
+        )
+
+        # Join on result columns
+        exams = exams.join(X[mapper.values()], on="index")  # type: ignore[call-overload]
+
+        # Add result column
+        conditions = [exams["exam_type"] == key for key in mapper]
+        values = [exams[key] for key in mapper.values()]
+        exams["exam_diagnosis"] = np.select(conditions, values)
+
+        # Drop the raw exam result
+        exams = exams.drop(columns=mapper.values())
+
+        # Remap exam types
+        exams["exam_type"] = exams["exam_type"].transform(self._map_exam_type)
+
+        return exams.join(X[self.fields_to_keep], on="index")
+
+    @staticmethod
+    def _map_exam_type(field_name):
+        return {
+            "cytDate": "cytology",
+            "histDate": "histology",
+            "hpvDate": "hpv",
+        }[field_name]
