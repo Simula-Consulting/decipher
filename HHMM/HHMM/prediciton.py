@@ -152,7 +152,7 @@ def Load_EM_res(verbose=False):
     global currPars
     with open("outcome/EM_hierarchical_16_updated_data_inv4_continuous_100/res_prior_0.5", "rb") as em_res:
         counter, currZ_pos_list, currStates_list, currAlpha, currEta, currW, currC, currNegLogLik, inv = pickle.load(
-            em_res, encoding="bytes")
+            em_res, encoding="bytxes")
         currPars = [currAlpha, currEta, currW, currC]
 
     if verbose:

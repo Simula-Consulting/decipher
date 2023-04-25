@@ -48,7 +48,7 @@ def Initialization():
     parser.add_argument("--max_steps_optim", help="maximum number of optim iterations", type=int, default=5)
     parser.add_argument("--model", help="discrete or continuous model", default="continuous")
     parser.add_argument("--test", help="boolean indicator for testing", action='store_true')
-    parser.add_argument("--autograd_optim", help="boolean indicator for auto-gradient in optimization", action='store_true')
+    parser.add_argument("--autograd_optim", default=True, action=argparse.BooleanOptionalAction, help="boolean indicator for auto-gradient in optimization")
     parser.add_argument("--Z_prior", help="prior probability of Model 1", type=np.float32, default=0.5)
     # parser.add_argument("--bootstrap_seed", help="seed number setting in Boostrap", type=int, default=0)
     # parser.add_argument("--bootstrap_total", help="number of total seeds in pool", type = int, default=14602)
@@ -130,13 +130,13 @@ def Initialization():
     subdata_location = "data/"
 
     # load data
-    times           =  pickle.load(open( subdata_location + 'mcmcPatientTimes', 'rb'), encoding = "bytes")          #
+    # times           =  pickle.load(open( subdata_location + 'mcmcPatientTimes', 'rb'), encoding = "bytes")          #
     testTypes       =  pickle.load(open( subdata_location + 'mcmcPatientTestTypes', 'rb'), encoding = "bytes")      #
     observations    =  pickle.load(open( subdata_location + 'mcmcPatientObservations', 'rb'), encoding = "bytes")   #
     # regressors      =  pickle.load(open( subdata_location + 'mcmcPatientRegressors', 'rb'), encoding = "bytes")     #
     treatment_indx  =  pickle.load(open( subdata_location + 'mcmcPatientTreatmentIndx', 'rb'), encoding = "bytes")           #
     censor_ages     =  pickle.load(open( subdata_location + 'mcmcPatientCensorDates', 'rb'), encoding = "bytes")             #
-    death_states    =  pickle.load(open( subdata_location + 'mcmcPatientDeathStates', 'rb'), encoding = "bytes")             #
+    death_states    =  pickle.load(open( subdata_location + 'mcmcPatientDeathStates2', 'rb'), encoding = "bytes")             #
     ages            =  pickle.load(open( subdata_location + 'mcmcPatientAges', 'rb'), encoding = "bytes")          # Anders added this
 
     # Move to outcome dir
@@ -162,9 +162,10 @@ def Initialization():
     #     new_patient_ages = temp_patient_ages[0] + patient_times/12.0
     #     ages.append(new_patient_ages)
 
-    nPatients = len(times)
+    nPatients = len(ages)
 
     n_patients_per_proc = min(n_patients_per_proc, nPatients)
+    print("Patients PER PROC", n_patients_per_proc, " N PATIENTS", nPatients)
     testTypes       =  testTypes[:n_patients_per_proc]
     observations    =  observations[:n_patients_per_proc]
     ages            =  ages[:n_patients_per_proc]
@@ -192,7 +193,7 @@ def Initialization():
                     else:
                          treatment_indx[p][ti] -= first_indx
 
-                times[p]           =  times[p][keep_obs]
+                # times[p]           =  times[p][keep_obs]
                 testTypes[p]       =  testTypes[p][keep_obs,:]
                 observations[p]    =  observations[p][keep_obs,:,:]
                 ages[p]            =  ages[p][keep_obs]
@@ -202,7 +203,7 @@ def Initialization():
 
         if len(drop_patient_indx) > 0:
             for p in sorted(drop_patient_indx, reverse=True):
-                del times[p]
+                # del times[p]
                 del testTypes[p]
                 del observations[p]
                 del ages[p]
@@ -212,7 +213,7 @@ def Initialization():
 
     print('original n patients: ', nPatients)
     nPatients = len(ages)
-    print('Length of times: ', nPatients)
+    print('Length of ages: ', nPatients)
 
     # ### Initialize parameters
     # currAlpha_0 = [np.zeros([nStates_0,4]), np.zeros([nStates_0,4]), np.zeros([nStates_0, 2])]
@@ -466,9 +467,10 @@ def ProbTransition_interval(MPmatrix, dt, W):
 
         '''
     matrix = np.array(MPmatrix,copy=True)
-
     if model == 'continuous':
         if autograd_optim:
+            if isinstance(W, np.numpy_boxes.ArrayBox):
+                W = W._value
             matrix_filled = []
             indx = 0
             indx_row = -1
@@ -483,7 +485,10 @@ def ProbTransition_interval(MPmatrix, dt, W):
                         temp_row.append(0)
                 temp_row[indx_row] = -sum(temp_row)
                 matrix_filled.append(temp_row)
+
             out = expm(dt*np.array(matrix_filled))
+
+
         else:
             matrix_filled = np.zeros_like(matrix, dtype=np.float32)
             matrix_filled[np.where(matrix > 0)] = np.exp(W)
@@ -708,6 +713,7 @@ def Loglikelihood_group (indx, patient_states, Alpha, Eta, W, C, MPmatrix, verbo
         print ("2.3", loglikelihood)
 
     return loglikelihood
+
 
 def Loglikelihood_group_states (indx, patient_states, Alpha, Eta, W, C, MPmatrix, verbose = False):
     patient_ages = ages[indx]
@@ -1227,7 +1233,8 @@ def NegativeLogLikelihood_shared_caller(parameter_vector_shared):
 
 def NegativeLoglikelihood_shared_grad_caller(parameter_vector_shared, verbose = False):
     negativeloglikelihood_grad_f = grad(NegativeLogLikelihood_shared)
-    negativeloglikelihood_grad = negativeloglikelihood_grad_f(parameter_vector_shared)
+    negativeloglikelihood_grad = negativeloglikelihood_grad_f(parameter_vector_shared) # BUG: Returns 0 gradient for W
+    #from IPython import embed; embed()
     return negativeloglikelihood_grad
 
     # stop[0] = comm.bcast(stop[0], 0)
@@ -1247,6 +1254,12 @@ def NegativeLoglikelihood_shared_grad_caller(parameter_vector_shared, verbose = 
     #     return summ
     # else:
     #     return 0
+
+def NegativeLoglikelihood_grad_caller(parameter_vector):
+    negativeloglikelihood_grad_f = grad(NegativeLogLikelihood)
+    negativeloglikelihood_grad = negativeloglikelihood_grad_f(parameter_vector)
+    return negativeloglikelihood_grad
+
 
 def Compute_pos_Z_state(p, verbose = False): ### given state Z | S -
     global currZ_pos# , currZ_pos_list
@@ -1505,13 +1518,13 @@ def Update_all_pars(verbose = False):
     # if rank == 0:
     t_m = time.time()
     res = optimize.minimize(NegativeLogLikelihood_caller,
-                            x0=parameter_vector,
-                            args=(currZ_pos, currStates, stop),
-                            jac=None,
+                                x0=parameter_vector,
+                                #args=(currZ_pos, currStates, stop),
+                                jac=NegativeLoglikelihood_grad_caller,
                                 method='L-BFGS-B',
-                            options={'disp': True, 'maxiter': max_steps_optim})
+                                options={'disp': True, 'maxiter': max_steps_optim})
     stop = [1] # Declare the NegativeLogLikelihood_caller computation stoped for optimization
-    NegativeLogLikelihood_caller(parameter_vector, currZ_pos, currStates, stop)
+    NegativeLogLikelihood_caller(parameter_vector)#, currZ_pos, currStates, stop)
     # else:
     #     while stop[0] == 0:
     #          NegativeLogLikelihood_caller(parameter_vector, currZ_pos, currStates, stop)
@@ -1527,7 +1540,7 @@ def Update_all_pars(verbose = False):
 ## print the Negative log likelihood
     stop = [0]
     # if rank == 0:
-    print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop, verbose)))
+    print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector)))#, currZ_pos, currStates, stop, verbose)))
     return 0
     # else:
     #     NegativeLogLikelihood_caller(curr_parameter_vector, currZ_pos, currStates, stop)
@@ -1536,7 +1549,7 @@ def Update_all_pars(verbose = False):
 def Update_all_pars_shared(verbose = False):
     global currPars, currNegLogLik, curr_parameter_vector
     global stop
-    stop = [0]
+    #stop = [0]
     #comm.Barrier()
     # break
     parameter_vector = ParList2ParVec(currPars[0], currPars[1], currPars[2], currPars[3], ind)
@@ -1556,7 +1569,7 @@ def Update_all_pars_shared(verbose = False):
                                 jac=None,
                                 method='L-BFGS-B',
                                 options={'disp': True, 'maxiter': max_steps_optim})
-    stop = [1] # Declare the NegativeLogLikelihood_caller computation stoped for optimization
+    #stop = [1] # Declare the NegativeLogLikelihood_caller computation stoped for optimization
     if autograd_optim:
         NegativeLogLikelihood_shared_caller(parameter_vector_shared)
         NegativeLoglikelihood_shared_grad_caller(parameter_vector_shared)
@@ -1761,7 +1774,6 @@ def Loglikelihood_group_obs0(patient_tests, patient_observations, patient_ages, 
         # Q = np.sum(P_forward_matrix,0)/np.sum(P_forward_matrix)
         Q = np.sum(P_forward_matrix, 0)
         log_Q = np.log(Q)
-
     ## P(S_T, O)
     if nvisits > 1:
         PP = np.sum(P_forward_matrices[nvisits-1], 0)
@@ -1781,7 +1793,7 @@ def Loglikelihood_group_obs0(patient_tests, patient_observations, patient_ages, 
             patient_censor_age = patient_ages[-1] + 0.25
         p_transition = ProbTransition(MPmatrix, W, patient_ages[-1], patient_censor_age, inv)
         if patient_death_state > 0: # this means censor age is age of 'death', not end of observations.
-            log_PP += np.log(p_transition[:nStates,-1])
+            log_PP += np.log(p_transition[:nStates,-1]) # BUG: this is zero
         else: # this means censor age is age of end of observations, not 'death'. So we know they are still alive at the time the study ended.
             log_PP += np.log(1. - p_transition[:nStates,-1])
 
@@ -1821,7 +1833,7 @@ if __name__ == "__main__":
         #############################
         ### Update all parameters ###
         #############################
-        # Update_all_pars()
+        Update_all_pars()
 
         #############################################################
         ### Update all parameters with shared emission parameters ###
