@@ -2,7 +2,7 @@ from pathlib import Path
 
 from sklearn.pipeline import Pipeline
 
-from matfact.processing.transformers import (
+from processing.transformers import (
     AgeAdder,
     AgeBinAssigner,
     BirthdateAdder,

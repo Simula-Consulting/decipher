@@ -19,7 +19,7 @@ artifact_path = settings.paths.test / "test_artifacts" / "SCMF_test"
 @given(st.data())
 def test_custom_roll(data):
     """Compare _custom_roll with naive slow rolling"""
-    array = data.draw(arrays(np.float, array_shapes(min_dims=2, max_dims=2)))
+    array = data.draw(arrays(float, array_shapes(min_dims=2, max_dims=2)))
     assume(not np.isnan(array).any())
     # Limit shifts to not be too large (1e4 arbitrarily chosen), as _custom_roll
     # is susceptible to floating point errors for large shifts.
