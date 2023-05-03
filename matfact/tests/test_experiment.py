@@ -64,7 +64,7 @@ def test_aggregate_fields():
             assert out[field] == correct_value
 
 
-def _artifact_path_from_run(run: mlflow.entities.Run):
+def _artifact_path_from_run(run: mlflow.ActiveRun):
     """Return pathlib.Path object of run artifact directory."""
     # When artifact_uri is a file, it is a string prefixed with 'file:', then the
     # string representation of the artifact directory.
@@ -78,11 +78,11 @@ def test_mlflow_context_hierarchy():
     """Test configurations of nested MLFlowLoggers."""
 
     with MLFlowLogger(allow_nesting=True):
-        pass
+        assert mlflow.active_run() is not None
     assert mlflow.active_run() is None
 
     with MLFlowLogger(allow_nesting=False):
-        pass
+        assert mlflow.active_run() is not None
     assert mlflow.active_run() is None
 
     with pytest.raises(MLFlowRunHierarchyException):
@@ -93,15 +93,19 @@ def test_mlflow_context_hierarchy():
 
     with pytest.raises(MLFlowRunHierarchyException):
         with MLFlowLogger(allow_nesting=False):
+            assert mlflow.active_run() is not None
             with MLFlowLogger(allow_nesting=True):
+                assert mlflow.active_run() is not None
                 with MLFlowLogger(allow_nesting=False):
                     pass
     assert mlflow.active_run() is None
 
     with MLFlowLogger(allow_nesting=False):
+        assert mlflow.active_run() is not None
         with MLFlowLogger(allow_nesting=True):
+            assert mlflow.active_run() is not None
             with MLFlowLogger(allow_nesting=True):
-                pass
+                assert mlflow.active_run() is not None
     assert mlflow.active_run() is None
 
 
@@ -110,7 +114,8 @@ def test_mlflow_logger(tmp_path):
     mlflow.set_tracking_uri(tmp_path)
     artifact_path = tmp_path / "artifacts"
     artifact_path.mkdir()
-    mlflow.create_experiment("TestExperiment")
+    experiment_id = mlflow.create_experiment("TestExperiment")
+    mlflow.set_experiment(experiment_id)
 
     sample_size, time_span = 100, 40
     U = V = np.random.choice(np.arange(5), size=(sample_size, time_span))
@@ -159,16 +164,14 @@ def test_mlflow_logger(tmp_path):
         logger(dummy_output)
     stored_artifact_path = _artifact_path_from_run(run_with_artifact)
     stored_artifacts = stored_artifact_path.glob("*")
-    supposed_to_be_stored = set(
-        (
-            "basis_.pdf",
-            "coefs_.pdf",
-            "confusion_.pdf",
-            "roc_auc_micro_.pdf",
-            "certainty_plot.pdf",
-        )
-    )
-    assert supposed_to_be_stored == set([file.name for file in stored_artifacts])
+    supposed_to_be_stored = {
+        "basis_.pdf",
+        "coefs_.pdf",
+        "confusion_.pdf",
+        "roc_auc_micro_.pdf",
+        "certainty_plot.pdf",
+    }
+    assert supposed_to_be_stored == {file.name for file in stored_artifacts}
 
 
 def test_train_and_log_params():

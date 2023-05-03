@@ -9,12 +9,15 @@ readme = "README.md"
 python = ">=3.10,<3.11"
 numpy = "^1.23.2"
 scipy = "^1.9.1"
-seaborn = "^0.11.2"
+seaborn = "^0.12.2"
 scikit-learn = "^1.2.0"
-tensorflow = {version="^2.9.2", markers="platform_machine != 'arm64'"}
-tensorflow-macos = {version="2.9.2", markers="platform_machine == 'arm64'"}  # fixed to only working version currently (15.12.2022)
-tensorflow-metal = {version="0.5.1", markers="platform_machine == 'arm64'"}  # fixed to only working version currently (15.12.2022)
-mlflow = "^1.28.0"
+tensorflow = {version="^2.11.1", markers="platform_machine != 'arm64'"}
+tensorflow-macos = {version="^2.11.1", markers="platform_machine == 'arm64'"}
+tensorflow-metal = {version="^0.8.0", markers="platform_machine == 'arm64'"}
+mlflow-skinny = "^2.2.2"
+SQLAlchemy = "^2.0.9"  # Needed to use sqlite with mlflow-skinny
+alembic = "^1.10.3"  # Needed to use sqlite with mlflow-skinny
+sqlparse = "^0.4.4"  # Needed to use sqlite with mlflow-skinny
 tqdm = "^4.64.1"
 scikit-optimize = "^0.9.0"
 pydantic = {extras = ["dotenv"], version = "^1.10.4"}
