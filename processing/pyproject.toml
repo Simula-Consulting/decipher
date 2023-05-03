@@ -26,3 +26,10 @@ pre-commit = "^2.20.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[[tool.mypy.overrides]]
+module = [
+    "sklearn.*",
+    "pandas.*",
+]
+ignore_missing_imports = true

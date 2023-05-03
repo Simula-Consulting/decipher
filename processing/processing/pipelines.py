@@ -13,6 +13,7 @@ from processing.transformers import (
     RowAssigner,
 )
 
+
 def matfact_pipeline(
     *,
     verbose: bool = True,

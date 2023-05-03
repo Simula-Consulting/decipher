@@ -1,13 +1,12 @@
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import pytest
 from sklearn.pipeline import Pipeline
 
 from processing.pipelines import matfact_pipeline
-from processing.transformers import BirthdateAdder
 from processing.settings import settings
+from processing.transformers import BirthdateAdder
 
 settings.processing.raw_dob_data_path = Path("tests/test_datasets/test_dob_data.csv")
 settings.processing.raw_screening_data_path = Path(
