@@ -43,8 +43,6 @@ plugins = "numpy.typing.mypy_plugin"
 
 [[tool.mypy.overrides]]
 module = [
-    "matfact.*",
-    "processing.*",
     "matplotlib.*",
     #
     "scipy.*",
