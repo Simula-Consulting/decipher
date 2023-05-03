@@ -13,7 +13,7 @@ from processing.transformers import (
     RiskAdderHHMM,
     RowAssigner,
     TestIndexAdder,
-    ToExam
+    ToExam,
 )
 
 
@@ -63,5 +63,5 @@ def HHMM_pipeline(
             ("test_index", TestIndexAdder()),
             ("invalid_remover", InvalidRemover(min_n_tests=0)),
         ],
-        verbose=verbose
+        verbose=verbose,
     )

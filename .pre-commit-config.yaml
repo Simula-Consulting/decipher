@@ -23,6 +23,12 @@ repos:
         entry: bash -c 'cd hmm_synthetic && poetry run flake8'
         types: [python]
         files: ^hmm_synthetic/
+    -   id: flake8
+        name: flake8 for processing
+        language: system
+        entry: bash -c 'cd processing && poetry run flake8'
+        types: [python]
+        files: ^processing/
     -   id: black
         name: black for matfact
         language: system
@@ -35,6 +41,12 @@ repos:
         entry: bash -c 'cd hmm_synthetic && poetry run black .'
         types: [python]
         files: ^hmm_synthetic/
+    -   id: black
+        name: black for processing
+        language: system
+        entry: bash -c 'cd processing && poetry run black .'
+        types: [python]
+        files: ^processing/
     -   id: mypy
         name: mypy for matfact
         language: system
@@ -47,6 +59,12 @@ repos:
         entry: bash -c 'cd hmm_synthetic && poetry run mypy .'
         types: [python]
         files: ^hmm_synthetic/
+    -   id: mypy
+        name: mypy for processing
+        language: system
+        entry: bash -c 'cd processing && poetry run mypy .'
+        types: [python]
+        files: ^processing/
     -   id: isort
         name: isort for matfact (python)
         language: system
@@ -59,3 +77,9 @@ repos:
         entry: bash -c 'cd hmm_synthetic && poetry run isort --profile black .'
         types: [python]
         files: ^hmm_synthetic/
+    -   id: isort
+        name: isort for processing (python)
+        language: system
+        entry: bash -c 'cd processing && poetry run isort --profile black .'
+        types: [python]
+        files: ^processing/

@@ -1,7 +1,8 @@
-from pydantic import BaseConfig, BaseModel
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from pydantic import BaseConfig, BaseModel
 
 
 @dataclass

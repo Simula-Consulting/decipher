@@ -4,9 +4,14 @@ import pandas as pd
 import pytest
 from sklearn.pipeline import Pipeline
 
-from processing.pipelines import matfact_pipeline, HHMM_pipeline
-from processing.transformers import FolkeregInfoAdder, TestIndexAdder, ToExam, RiskAdderHHMM
+from processing.pipelines import HHMM_pipeline, matfact_pipeline
 from processing.settings import settings
+from processing.transformers import (
+    FolkeregInfoAdder,
+    RiskAdderHHMM,
+    TestIndexAdder,
+    ToExam,
+)
 
 settings.processing.raw_dob_data_path = Path("tests/test_datasets/test_dob_data.csv")
 settings.processing.raw_screening_data_path = Path(
@@ -99,6 +104,7 @@ def test_risk_adder(exam_data: pd.DataFrame) -> None:
     risk_adder = RiskAdderHHMM()
     df = risk_adder.fit_transform(exam_data)
     assert "risk" in df
+
 
 def test_hhmm_pipeline() -> None:
     """Test that the HHMM pipeline works as expected."""

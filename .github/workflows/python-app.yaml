@@ -35,6 +35,8 @@ jobs:
       run: cd matfact && poetry install
     - name: Poetry in HMM
       run: cd hmm_synthetic && poetry install
+    - name: Poetry in processing
+      run: cd processing && poetry install
     - name: Run pre-commit
       run: |
         pre-commit run --all-files
@@ -45,4 +47,8 @@ jobs:
     - name: Test HMM with pytest
       run: |
         cd hmm_synthetic
+        poetry run pytest -Wignore
+    - name: test processing with pytest
+      run : |
+        cd processing
         poetry run pytest -Wignore
