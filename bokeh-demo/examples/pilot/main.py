@@ -85,8 +85,11 @@ def extract_and_predict(
         predicted_states=predicted_states,
     )
 
+def filter_people():
+    pass
 
 def example_app(source_manager):
+    from bokeh.models import Text
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
     delta = DeltaScatter(source_manager)
@@ -95,6 +98,12 @@ def example_app(source_manager):
     table.person_table.styles = {"border": "1px solid #e6e6e6", "border-radius": "5px"}
     table.person_table.height = 500
     hist = HistogramPlot(source_manager)
+
+    args = curdoc().session_context.request.arguments
+    pid_list = args.get("pid_list")
+    if pid_list is not None:
+        # filter people
+        filter_people()
 
     lp.figure.x_range = lpa.figure.x_range
     high_risk_person_group = get_filter_element_from_source_manager(
@@ -138,6 +147,7 @@ def example_app(source_manager):
             Div(text="<h1>Data table</h1>"),
             table.person_table,
         ),
+        Div(text=pid_list),
         hist.figure,
         delta.figure,
         filter_grid,
