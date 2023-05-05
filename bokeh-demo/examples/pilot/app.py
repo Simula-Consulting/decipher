@@ -89,7 +89,6 @@ def filter_people():
     pass
 
 def example_app(source_manager):
-    from bokeh.models import Text
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
     delta = DeltaScatter(source_manager)
@@ -229,5 +228,48 @@ def main():
     example_app(source_manager)
 
 
-# Name is not main when run through bokeh serve, so no __name__ == __main__ guard
-main()
+"""
+
+END OF main.py
+
+"""
+from flask import Flask, render_template
+
+from bokeh.client import pull_session
+from bokeh.embed import server_session
+from bokeh.server.server import Server
+from tornado.ioloop import IOLoop
+app = Flask(__name__)
+
+@app.route('/', methods=['GET'])
+def bkapp_page():
+
+    with pull_session(url="http://localhost:5006/pilot") as session:
+
+        # update or customize that session
+        #session.document.roots[0].children[1].title.text = "Special sliders for a specific user!"
+
+        # generate a script to load the customized session
+        script = server_session(session_id=session.id, url='http://localhost:5006/pilot')
+
+        # use the script in the rendered page
+        return render_template("embed.html", script=script, template="Flask")
+
+
+def bokeh_app():
+    prediction_data = extract_and_predict(dataset)
+    people = prediction_data.extract_people()
+    for person in people:
+        person.__class__ = MyPerson
+        person.home = random.choice(list(HomePlaces)).value
+    source_manager = SourceManager.from_people(people)
+    source_manager.filters = _get_filters(source_manager)
+    example_app(source_manager)
+
+
+
+if __name__ == '__main__':
+    server = Server({"/pilot": bokeh_app},)#allow_websocket_origin=["localhost:8080"])
+    server.start()
+    #server.io_loop.start()
+    app.run()#port=8080)
