@@ -89,7 +89,6 @@ def filter_people():
     pass
 
 def example_app(source_manager):
-    from bokeh.models import Text
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
     delta = DeltaScatter(source_manager)

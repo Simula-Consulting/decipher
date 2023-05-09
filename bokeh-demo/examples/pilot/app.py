@@ -239,24 +239,10 @@ from bokeh.client import pull_session
 from bokeh.embed import server_session
 from bokeh.server.server import Server
 from tornado.ioloop import IOLoop
-app = Flask(__name__)
-
-@app.route('/', methods=['GET'])
-def bkapp_page():
-
-    with pull_session(url="http://localhost:5006/pilot") as session:
-
-        # update or customize that session
-        #session.document.roots[0].children[1].title.text = "Special sliders for a specific user!"
-
-        # generate a script to load the customized session
-        script = server_session(session_id=session.id, url='http://localhost:5006/pilot')
-
-        # use the script in the rendered page
-        return render_template("embed.html", script=script, template="Flask")
+from bokeh.document.document import Document
 
 
-def bokeh_app():
+def bokeh_app(doc: Document):
     prediction_data = extract_and_predict(dataset)
     people = prediction_data.extract_people()
     for person in people:
@@ -264,12 +250,99 @@ def bokeh_app():
         person.home = random.choice(list(HomePlaces)).value
     source_manager = SourceManager.from_people(people)
     source_manager.filters = _get_filters(source_manager)
-    example_app(source_manager)
 
+    lp = LexisPlot(source_manager)
+    lpa = LexisPlotAge(source_manager)
+    delta = DeltaScatter(source_manager)
+    traj = TrajectoriesPlot(source_manager)
+    table = PersonTable(source_manager)
+    table.person_table.styles = {"border": "1px solid #e6e6e6", "border-radius": "5px"}
+    table.person_table.height = 500
+    hist = HistogramPlot(source_manager)
+
+    try:
+        args = doc.session_context.request.arguments
+        pid_list = args.get("pid_list")
+    except:
+        pid_list = None
+        
+
+    
+    if pid_list is not None:
+        # filter people
+        filter_people()
+
+    lp.figure.x_range = lpa.figure.x_range
+    high_risk_person_group = get_filter_element_from_source_manager(
+        "High risk - Person", source_manager
+    )
+    high_risk_exam_group = get_filter_element_from_source_manager(
+        "High risk - Exam", source_manager
+    )
+    vaccine_type = get_filter_element_from_source_manager(
+        "Vaccine type", source_manager
+    )
+    vaccine_group = get_filter_element_from_source_manager(
+        "Vaccine age", source_manager
+    )
+    category_group = get_filter_element_from_source_manager("Region", source_manager)
+
+    filter_grid = grid(
+        column(
+            row(Div(), Div(text="Active"), Div(text="Invert")),
+            high_risk_person_group,
+            high_risk_exam_group,
+            vaccine_group,
+            vaccine_type,
+            category_group,
+            # get_filter_element_from_source_manager(
+            #     "symmetric_difference", source_manager, label="XOR"
+            # ),
+        )
+    )
+    # `grid` does not pass kwargs to constructor, so must set attrs here.
+    filter_grid.name = "filter_control"
+    filter_grid.stylesheets = [
+        ":host {grid-template-rows: unset; grid-template-columns: unset;}"
+    ]
+
+    for element in (
+        lp.figure,
+        lpa.figure,
+        traj.figure,
+        column(
+            Div(text="<h1>Data table</h1>"),
+            table.person_table,
+        ),
+        hist.figure,
+        delta.figure,
+        filter_grid,
+    ):
+        doc.add_root(element)
+
+app = Flask(__name__)
+
+@app.route('/pilot', methods=['GET'])
+def bkapp_page():
+
+    with pull_session(url="http://localhost:5006/pilot") as session:
+
+        script = server_session(session_id=session.id, url='http://localhost:5006/pilot')
+        return render_template("embed.html", script=script, template="Flask")
+
+@app.route('/', methods=['GET'])
+def landing_page():
+    return render_template("landing_page.html")
+
+def bk_worker():
+    server = Server({"/pilot": bokeh_app}, io_loop=IOLoop(), allow_websocket_origin=["localhost:8080"])
+    server.start()
+    server.io_loop.start()
+
+from threading import Thread
+
+Thread(target=bk_worker).start()
 
 
 if __name__ == '__main__':
-    server = Server({"/pilot": bokeh_app},)#allow_websocket_origin=["localhost:8080"])
-    server.start()
-    #server.io_loop.start()
-    app.run()#port=8080)
+    app.run(host="localhost", port=8080)
