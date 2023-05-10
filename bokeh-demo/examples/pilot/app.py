@@ -328,7 +328,8 @@ def bkapp_page():
     with pull_session(url="http://localhost:5006/pilot") as session:
 
         script = server_session(session_id=session.id, url='http://localhost:5006/pilot')
-        return render_template("embed.html", script=script, template="Flask")
+        doc = session.document
+        return render_template("viztool.html", doc=doc, template="Flask")
 
 @app.route('/', methods=['GET'])
 def landing_page():
