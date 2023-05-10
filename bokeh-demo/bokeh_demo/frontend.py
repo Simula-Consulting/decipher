@@ -28,6 +28,7 @@ from bokeh.models import (  # type: ignore
     Switch,
     TableColumn,
 )
+from bokeh.models.widgets import Button
 from bokeh.models.tickers import FixedTicker
 from bokeh.plotting import figure
 

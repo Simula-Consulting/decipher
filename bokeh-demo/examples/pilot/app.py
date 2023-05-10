@@ -85,8 +85,6 @@ def extract_and_predict(
         predicted_states=predicted_states,
     )
 
-def filter_people():
-    pass
 
 def example_app(source_manager):
     lp = LexisPlot(source_manager)
@@ -242,6 +240,10 @@ from tornado.ioloop import IOLoop
 from bokeh.document.document import Document
 
 
+def filter_people():
+    pass
+
+
 def bokeh_app(doc: Document):
     prediction_data = extract_and_predict(dataset)
     people = prediction_data.extract_people()
@@ -265,9 +267,7 @@ def bokeh_app(doc: Document):
         pid_list = args.get("pid_list")
     except:
         pid_list = None
-        
 
-    
     if pid_list is not None:
         # filter people
         filter_people()

@@ -20,6 +20,8 @@ from enum import Enum
 import tensorflow as tf
 from bokeh.layouts import column, grid, row
 from bokeh.models import Div, SymmetricDifferenceFilter
+from bokeh.models.callbacks import CustomJS
+from bokeh.models.widgets import Button
 from bokeh.plotting import curdoc
 from matfact.data_generation import Dataset
 from matfact.model.config import ModelConfig
@@ -143,7 +145,17 @@ def example_app(source_manager):
         ":host {grid-template-rows: unset; grid-template-columns: unset;}"
     ]
 
+    back_button = Button(name="back_button", label="Back to filtering page")
+
+    back_button.js_on_click(CustomJS(code= """
+    const url = "http://localhost:5006/landing_page";
+    window.open(url, "_self")
+    
+    """))
+
+    
     for element in (
+        back_button,
         lp.figure,
         lpa.figure,
         traj.figure,
@@ -152,7 +164,7 @@ def example_app(source_manager):
             table.person_table,
         ),
         hist.figure,
-        delta.figure,
+        # delta.figure,
         filter_grid,
     ):
         curdoc().add_root(element)
