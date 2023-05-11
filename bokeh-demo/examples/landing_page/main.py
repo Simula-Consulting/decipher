@@ -17,9 +17,8 @@ window.location.href = "/pilot"
 go_button = Button(label="Go")
 go_button.js_on_click(callback)
 
-
+# currently saving file on every change
 text.on_change("value", save_text)
-
 
 for root_element in (text, go_button):
     curdoc().add_root(root_element)
