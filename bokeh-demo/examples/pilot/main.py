@@ -85,6 +85,7 @@ def extract_and_predict(
         predicted_states=predicted_states,
     )
 
+
 def example_app(source_manager):
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
@@ -128,7 +129,7 @@ def example_app(source_manager):
     filter_grid.stylesheets = [
         ":host {grid-template-rows: unset; grid-template-columns: unset;}"
     ]
-    
+
     for element in (
         lp.figure,
         lpa.figure,
@@ -201,19 +202,18 @@ class HomePlaces(str, Enum):
 class MyPerson(Person):
     home: HomePlaces
 
+
 def extract_PID_from_args():
-    try:
-        args = curdoc().session_context.request.arguments
-        pid_list = args.get("pid_list")
-    except:
-        return
-    
+    args = curdoc().session_context.request.arguments
+    pid_list = args.get("pid_list")
+
     # parse pid_list
     ...
     return pid_list
 
+
 def main():
-    PIDS = extract_PID_from_args()
+    # PIDS = extract_PID_from_args()
     prediction_data = extract_and_predict(dataset)
     people = prediction_data.extract_people()
     for person in people:
