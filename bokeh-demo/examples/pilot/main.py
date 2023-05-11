@@ -20,8 +20,6 @@ from enum import Enum
 import tensorflow as tf
 from bokeh.layouts import column, grid, row
 from bokeh.models import Div, SymmetricDifferenceFilter
-from bokeh.models.callbacks import CustomJS
-from bokeh.models.widgets import Button
 from bokeh.plotting import curdoc
 from matfact.data_generation import Dataset
 from matfact.model.config import ModelConfig
@@ -87,9 +85,6 @@ def extract_and_predict(
         predicted_states=predicted_states,
     )
 
-def filter_people():
-    pass
-
 def example_app(source_manager):
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
@@ -99,17 +94,6 @@ def example_app(source_manager):
     table.person_table.styles = {"border": "1px solid #e6e6e6", "border-radius": "5px"}
     table.person_table.height = 500
     hist = HistogramPlot(source_manager)
-
-    try:
-        args = curdoc().session_context.request.arguments
-        pid_list = args.get("pid_list")
-    except:
-        pid_list = None
-
-    
-    if pid_list is not None:
-        # filter people
-        filter_people()
 
     lp.figure.x_range = lpa.figure.x_range
     high_risk_person_group = get_filter_element_from_source_manager(
@@ -144,18 +128,8 @@ def example_app(source_manager):
     filter_grid.stylesheets = [
         ":host {grid-template-rows: unset; grid-template-columns: unset;}"
     ]
-
-    back_button = Button(name="back_button", label="Back to filtering page")
-
-    back_button.js_on_click(CustomJS(code= """
-    const url = "http://localhost:5006/landing_page";
-    window.open(url, "_self")
-    
-    """))
-
     
     for element in (
-        back_button,
         lp.figure,
         lpa.figure,
         traj.figure,
@@ -164,7 +138,7 @@ def example_app(source_manager):
             table.person_table,
         ),
         hist.figure,
-        # delta.figure,
+        delta.figure,
         filter_grid,
     ):
         curdoc().add_root(element)
@@ -227,8 +201,19 @@ class HomePlaces(str, Enum):
 class MyPerson(Person):
     home: HomePlaces
 
+def extract_PID_from_args():
+    try:
+        args = curdoc().session_context.request.arguments
+        pid_list = args.get("pid_list")
+    except:
+        return
+    
+    # parse pid_list
+    ...
+    return pid_list
 
 def main():
+    PIDS = extract_PID_from_args()
     prediction_data = extract_and_predict(dataset)
     people = prediction_data.extract_people()
     for person in people:
