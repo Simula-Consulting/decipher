@@ -60,11 +60,27 @@
   </head>
   <body>
     <h1>Welcome to the VizTool Landing Page</h1>
-    <form action="/pilot" method="get">
-      <label for="text-field">Enter Your Text: </label>
-      <input type="text" id="text-field" name="pid_list" required>
-      <button type="submit">Submit</button>
-    </form>
+    <div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5">
+      {%      for doc in docs %}
+      {{        embed(doc) if doc.elementid }}
+      {%-       for root in doc.roots  %}
+      <div class="card flex justify-center">
+      {{            embed(root) }}
+      </div>
+      {%        endfor %}
+      {%      endfor %}
+
   </body>
 </div>
+
+
+<!-- <div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5">
+  {%      for doc in docs %}
+  {{        embed(doc) if doc.elementid }}
+  {%-       for root in doc.roots if root.name != "filter_control" %}
+  <div class="card">
+  {{            embed(root) }}
+  </div>
+  {%        endfor %}
+  {%      endfor %} -->
 {% endblock %}
