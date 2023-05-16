@@ -14,6 +14,7 @@ by the visualization.
 
 import copy
 import random
+import pickle
 from dataclasses import dataclass
 from enum import Enum
 
@@ -203,17 +204,15 @@ class MyPerson(Person):
     home: HomePlaces
 
 
-def extract_PID_from_args():
-    args = curdoc().session_context.request.arguments
-    pid_list = args.get("pid_list")
-
-    # parse pid_list
-    ...
+def get_selected_pids_from_landing_page():
+    """Function to load the selected pids from the landing page."""
+    with open(settings.selected_pids_path, "rb") as f:
+        pid_list: list[int] = pickle.load(f)
     return pid_list
 
 
 def main():
-    # PIDS = extract_PID_from_args()
+    # PIDS = get_selected_pids_from_landing_page()
     prediction_data = extract_and_predict(dataset)
     people = prediction_data.extract_people()
     for person in people:
