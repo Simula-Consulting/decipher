@@ -1,4 +1,4 @@
-import pickle
+import json
 
 from bokeh.io import curdoc
 from bokeh.models.callbacks import CustomJS
@@ -10,15 +10,13 @@ text = TextInput(title="Text input", value="input your text here")
 
 
 def save_text(attr, old, new):
-    with open(settings.selected_pids_path, "wb") as f:
-        pickle.dump(text.value, f)
+    with open(settings.selected_pids_path, "w") as f:
+        json.dump(text.value, f)
 
 
 go_button = Button(label="Go")
 go_button_js_callback = CustomJS(
-    code="""
-window.location.href = "/pilot"
-"""
+    code="window.location.href = '/pilot'"
 )
 go_button.js_on_click(go_button_js_callback)
 

@@ -13,7 +13,7 @@ by the visualization.
 """
 
 import copy
-import pickle
+import json
 import random
 from dataclasses import dataclass
 from enum import Enum
@@ -206,8 +206,8 @@ class MyPerson(Person):
 
 def get_selected_pids_from_landing_page():
     """Function to load the selected pids from the landing page."""
-    with open(settings.selected_pids_path, "rb") as f:
-        pid_list: list[int] = pickle.load(f)
+    with open(settings.selected_pids_path, "r") as f:
+        pid_list: list[int] = json.load(f)
     return pid_list
 
 
