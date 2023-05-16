@@ -1,6 +1,9 @@
-from bokeh.io import curdoc
-from bokeh.models import TextInput, Button, CustomJS
 import pickle
+
+from bokeh.io import curdoc
+from bokeh.models.callbacks import CustomJS
+from bokeh.models.widgets import Button, TextInput
+
 from bokeh_demo.settings import settings
 
 text = TextInput(title="Text input", value="input your text here")

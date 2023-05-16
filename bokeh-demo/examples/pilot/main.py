@@ -13,8 +13,8 @@ by the visualization.
 """
 
 import copy
-import random
 import pickle
+import random
 from dataclasses import dataclass
 from enum import Enum
 
