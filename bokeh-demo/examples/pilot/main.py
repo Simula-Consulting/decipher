@@ -13,6 +13,7 @@ by the visualization.
 """
 
 import copy
+import json
 import random
 from dataclasses import dataclass
 from enum import Enum
@@ -203,7 +204,15 @@ class MyPerson(Person):
     home: HomePlaces
 
 
+def get_selected_pids_from_landing_page():
+    """Function to load the selected pids from the landing page."""
+    with open(settings.selected_pids_path, "r") as f:
+        pid_list: list[int] = json.load(f)
+    return pid_list
+
+
 def main():
+    # PIDS = get_selected_pids_from_landing_page()
     prediction_data = extract_and_predict(dataset)
     people = prediction_data.extract_people()
     for person in people:

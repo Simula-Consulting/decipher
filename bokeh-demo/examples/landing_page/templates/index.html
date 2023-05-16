@@ -1,0 +1,75 @@
+{% extends base %}
+
+{% block contents %}
+<div>
+  <head>
+    <title>Landing Page</title>
+    <style>
+      body {
+        font-family: "Helvetica Neue", sans-serif;
+        background: url('https://wallpaper.dog/large/20500272.png') no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 0;
+      }
+      h1 {
+        font-size: 4em;
+        text-align: center;
+        margin-top: 2em;
+        color: #fff;
+      }
+      form {
+        width: 50%;
+        margin: 2em auto;
+        background: #fff;
+        padding: 2em;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        text-align: center;
+      }
+      label {
+        font-size: 1.2em;
+        display: block;
+        margin-bottom: 1em;
+        color: #777;
+        text-align: left;
+      }
+      input[type="text"] {
+        padding: 0.5em;
+        font-size: 1.2em;
+        border-radius: 5px;
+        border: none;
+        border: 1px solid #ccc;
+        margin-bottom: 1em;
+        width: 100%;
+      }
+      button[type="submit"] {
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 1.2em;
+        padding: 0.5em 2em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      button[type="submit"]:hover {
+        background: #777;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Welcome to the VizTool Landing Page</h1>
+    <div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5">
+      {%      for doc in docs %}
+      {{        embed(doc) if doc.elementid }}
+      {%-       for root in doc.roots  %}
+      <div class="card flex justify-center">
+      {{            embed(root) }}
+      </div>
+      {%        endfor %}
+      {%      endfor %}
+
+  </body>
+</div>
+{% endblock %}
