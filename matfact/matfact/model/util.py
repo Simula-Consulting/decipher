@@ -14,7 +14,7 @@ from matfact.model.predict.classification_tree import (
     estimate_probability_thresholds,
 )
 from matfact.model.predict.dataset_utils import prediction_data
-from matfact.settings import DEFAULT_AGE_SEGMENTS
+from matfact.settings import settings
 
 
 def model_factory(
@@ -78,7 +78,7 @@ def _get_classification_tree(
     X_train_masked, t_pred_train, x_true_train = prediction_data(observation_matrix)
     p_pred_train = factoriser.predict_probability(X_train_masked, t_pred_train)
 
-    age_segments = DEFAULT_AGE_SEGMENTS
+    age_segments = settings.matfact_defaults.age_segments
     age_segment_indexes = _age_segment_index(t_pred_train, age_segments)
     thresholds = estimate_probability_thresholds(
         x_true_train,
@@ -169,7 +169,7 @@ def train_and_log(
         if use_threshold_optimization:
             # Find the optimal threshold values
             classification_tree = _get_classification_tree(
-                X_train, DEFAULT_AGE_SEGMENTS, factoriser
+                X_train, settings.matfact_defaults.age_segments, factoriser
             )
             threshold_values = {
                 f"classification_tree_{key}": value
@@ -179,7 +179,8 @@ def train_and_log(
 
             # Use threshold values on the test set
             x_pred = classification_tree.predict(
-                p_pred, _age_segment_index(t_pred, DEFAULT_AGE_SEGMENTS)
+                p_pred,
+                _age_segment_index(t_pred, settings.matfact_defaults.age_segments),
             )
         else:
             # Simply choose the class with the highest probability

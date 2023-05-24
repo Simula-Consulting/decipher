@@ -9,10 +9,9 @@ import re
 from contextlib import nullcontext
 from typing import Callable, cast
 
-import mlflow  # type: ignore
+import mlflow
 import numpy as np
 
-from matfact import settings
 from matfact.plotting import (
     plot_basis,
     plot_certainty,
@@ -20,6 +19,7 @@ from matfact.plotting import (
     plot_confusion,
     plot_roc_curve,
 )
+from matfact.settings import settings
 
 # An AggregationFunction takes a field name and list of values for that field, and
 # returns a dictionary of fields aggregated from the values.
@@ -305,7 +305,7 @@ class MLFlowLoggerArtifact(MLFlowLogger):
         artifact_path: pathlib.Path,
         allow_nesting: bool = True,
         extra_tags: dict | None = None,
-        create_artifact_path: bool = settings.create_path_default,
+        create_artifact_path: bool = settings.paths.create_default,
     ):
         super().__init__(allow_nesting=allow_nesting, extra_tags=extra_tags)
         self.figure_path = artifact_path

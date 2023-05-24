@@ -7,7 +7,7 @@ import seaborn as sns
 from sklearn.metrics import auc, roc_curve
 from sklearn.preprocessing import label_binarize
 
-from matfact import settings
+from matfact.settings import settings
 
 from . import plot_config, plot_utils
 
@@ -20,7 +20,7 @@ def plot_coefs(U, path_to_figure: pathlib.Path, fname="", n_bins=50):
     hist, bins = np.histogram(U.ravel(), bins=n_bins)
 
     fig = plt.figure(figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
-    axis = fig.gca()  # type: ignore
+    axis = fig.gca()
     axis.bar((bins[:-1] + bins[1:]) / 2, hist)
     axis.set_ylabel("Count")
     axis.set_xlabel("Coefficient")
@@ -38,7 +38,7 @@ def plot_basis(V, path_to_figure: pathlib.Path, fname=""):
     "Plot the basic vectors in the V matrix."
 
     fig = plt.figure(figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
-    axis = fig.gca()  # type: ignore
+    axis = fig.gca()
     axis.plot(V)
     axis.set_xlabel("Column coordinate")
     axis.set_ylabel("Basic vector")
@@ -78,7 +78,7 @@ def plot_confusion(x_true, x_pred, path_to_figure: pathlib.Path, n_classes=4, fn
         linewidths=0.5,
         square=True,
         cbar=False,
-        cmap=plt.cm.get_cmap("Blues", np.max(cmat)),  # type: ignore
+        cmap=plt.cm.get_cmap("Blues", np.max(cmat)),
         linecolor="k",
         ax=axis,
     )
@@ -104,7 +104,7 @@ def plot_train_loss(epochs, loss_values, path_to_figure: pathlib.Path, fname="")
     "PLot the loss values from matrix completion."
 
     fig = plt.figure(figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
-    axis = fig.gca()  # type: ignore
+    axis = fig.gca()
 
     axis.plot(epochs, loss_values, marker="o", alpha=0.7)
 
@@ -157,7 +157,7 @@ def plot_roc_curve(
     x_true,
     p_pred,
     path_to_figure: pathlib.Path,
-    number_of_states=settings.default_number_of_states,
+    number_of_states=settings.matfact_defaults.number_of_states,
     average="micro",
     fname="",
 ):
@@ -181,7 +181,7 @@ def plot_roc_curve(
         raise ValueError(f"Invalid average: {average}")
 
     fig = plt.figure(figsize=plot_utils.set_fig_size(430, fraction=1, subplots=(1, 1)))
-    axis = fig.gca()  # type: ignore
+    axis = fig.gca()
 
     axis.plot([0, 1], [0, 1], linestyle="--", lw=1.5, color="gray", label="Random")
     axis.plot(
@@ -201,7 +201,7 @@ def plot_roc_curve(
 
     plot_utils.set_arrowed_spines(fig, axis)
 
-    plt.tight_layout()  # type: ignore
+    plt.tight_layout()
     plt.savefig(path_to_figure / f"roc_auc_{average}_{fname}.pdf")
     plt.close()
 

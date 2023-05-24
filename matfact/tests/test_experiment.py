@@ -8,7 +8,6 @@ from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import array_shapes, arrays
 
-from matfact import settings
 from matfact.model import CMF, SCMF, WCMF, data_weights, prediction_data, train_and_log
 from matfact.model.config import ModelConfig
 from matfact.model.factorization.convergence import ConvergenceMonitor
@@ -21,6 +20,7 @@ from matfact.model.logging import (
     dummy_logger_context,
 )
 from matfact.plotting.diagnostic import _calculate_delta
+from matfact.settings import settings
 
 
 def test_aggregate_fields():
@@ -64,7 +64,7 @@ def test_aggregate_fields():
             assert out[field] == correct_value
 
 
-def _artifact_path_from_run(run: mlflow.entities.Run):
+def _artifact_path_from_run(run: mlflow.ActiveRun):
     """Return pathlib.Path object of run artifact directory."""
     # When artifact_uri is a file, it is a string prefixed with 'file:', then the
     # string representation of the artifact directory.
@@ -78,11 +78,11 @@ def test_mlflow_context_hierarchy():
     """Test configurations of nested MLFlowLoggers."""
 
     with MLFlowLogger(allow_nesting=True):
-        pass
+        assert mlflow.active_run() is not None
     assert mlflow.active_run() is None
 
     with MLFlowLogger(allow_nesting=False):
-        pass
+        assert mlflow.active_run() is not None
     assert mlflow.active_run() is None
 
     with pytest.raises(MLFlowRunHierarchyException):
@@ -93,15 +93,19 @@ def test_mlflow_context_hierarchy():
 
     with pytest.raises(MLFlowRunHierarchyException):
         with MLFlowLogger(allow_nesting=False):
+            assert mlflow.active_run() is not None
             with MLFlowLogger(allow_nesting=True):
+                assert mlflow.active_run() is not None
                 with MLFlowLogger(allow_nesting=False):
                     pass
     assert mlflow.active_run() is None
 
     with MLFlowLogger(allow_nesting=False):
+        assert mlflow.active_run() is not None
         with MLFlowLogger(allow_nesting=True):
+            assert mlflow.active_run() is not None
             with MLFlowLogger(allow_nesting=True):
-                pass
+                assert mlflow.active_run() is not None
     assert mlflow.active_run() is None
 
 
@@ -110,7 +114,8 @@ def test_mlflow_logger(tmp_path):
     mlflow.set_tracking_uri(tmp_path)
     artifact_path = tmp_path / "artifacts"
     artifact_path.mkdir()
-    mlflow.create_experiment("TestExperiment")
+    experiment_id = mlflow.create_experiment("TestExperiment")
+    mlflow.set_experiment(experiment_id)
 
     sample_size, time_span = 100, 40
     U = V = np.random.choice(np.arange(5), size=(sample_size, time_span))
@@ -159,16 +164,14 @@ def test_mlflow_logger(tmp_path):
         logger(dummy_output)
     stored_artifact_path = _artifact_path_from_run(run_with_artifact)
     stored_artifacts = stored_artifact_path.glob("*")
-    supposed_to_be_stored = set(
-        (
-            "basis_.pdf",
-            "coefs_.pdf",
-            "confusion_.pdf",
-            "roc_auc_micro_.pdf",
-            "certainty_plot.pdf",
-        )
-    )
-    assert supposed_to_be_stored == set([file.name for file in stored_artifacts])
+    supposed_to_be_stored = {
+        "basis_.pdf",
+        "coefs_.pdf",
+        "confusion_.pdf",
+        "roc_auc_micro_.pdf",
+        "certainty_plot.pdf",
+    }
+    assert supposed_to_be_stored == {file.name for file in stored_artifacts}
 
 
 def test_train_and_log_params():
@@ -261,7 +264,9 @@ def test_model_input_not_changed():
     arrays(
         int,
         array_shapes(min_dims=2, max_dims=2),
-        elements=st.integers(min_value=0, max_value=settings.default_number_of_states),
+        elements=st.integers(
+            min_value=0, max_value=settings.matfact_defaults.number_of_states
+        ),
     )
 )
 def test_prediction_data(X):
@@ -299,9 +304,9 @@ def test_data_weights():
     """Test generation of data weights."""
     data_shape = (4, 3)  # Chosen arbitrarily
     observed_data = np.random.randint(
-        low=0, high=settings.default_number_of_states, size=data_shape
+        low=0, high=settings.matfact_defaults.number_of_states, size=data_shape
     )
-    weight_per_class = range(settings.default_number_of_states)
+    weight_per_class = range(settings.matfact_defaults.number_of_states)
     weights = data_weights(observed_data, weight_per_class)
 
     for i, weight in enumerate(weight_per_class):

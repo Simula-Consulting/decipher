@@ -12,6 +12,7 @@ from matfact.model.factorization.utils import (
     initialize_basis,
 )
 from matfact.model.factorization.weights import data_weights, propensity_weights
+from matfact.settings import settings
 
 
 class WeightGetter(ABC):
@@ -66,7 +67,7 @@ class ModelConfig:
     iter_V: int = 2
 
     learning_rate: float = 0.001
-    number_of_states: int = settings.default_number_of_states
+    number_of_states: int = settings.matfact_defaults.number_of_states
 
     epoch_generator: EpochGenerator = ConvergenceMonitor()
 
