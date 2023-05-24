@@ -5,7 +5,6 @@ from typing import Callable
 import numpy as np
 import numpy.typing as npt
 
-from matfact import settings
 from matfact.model.factorization.convergence import ConvergenceMonitor, EpochGenerator
 from matfact.model.factorization.utils import (
     convoluted_differences_matrix,
