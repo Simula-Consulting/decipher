@@ -5,6 +5,7 @@ from typing import Callable
 import numpy as np
 import numpy.typing as npt
 
+from matfact.model.factorization.convergence import ConvergenceMonitor, EpochGenerator
 from matfact.model.factorization.utils import (
     convoluted_differences_matrix,
     initialize_basis,
@@ -66,6 +67,8 @@ class ModelConfig:
 
     learning_rate: float = 0.001
     number_of_states: int = settings.matfact_defaults.number_of_states
+
+    epoch_generator: EpochGenerator = ConvergenceMonitor()
 
     difference_matrix_getter: Callable[[int], npt.NDArray] = np.identity
     """Return the difference matrix to use for regularization.
