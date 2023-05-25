@@ -14,28 +14,19 @@ by the visualization.
 
 import copy
 import json
-import random
 from dataclasses import dataclass
 from enum import Enum
 
-import tensorflow as tf
 from bokeh.layouts import column, grid, row
-from bokeh.models import Div, SymmetricDifferenceFilter
+from bokeh.models import Div, SymmetricDifferenceFilter, ColumnDataSource
 from bokeh.plotting import curdoc
-from matfact.data_generation import Dataset
-from matfact.model.config import ModelConfig
-from matfact.model.factorization.convergence import ConvergenceMonitor
-from matfact.model.matfact import MatFact
-from matfact.model.predict.dataset_utils import prediction_data
 
 from bokeh_demo.backend import (
     BaseFilter,
     BooleanFilter,
     CategoricalFilter,
     ExamSimpleFilter,
-    Person,
     PersonSimpleFilter,
-    PredictionData,
     RangeFilter,
     SourceManager,
 )
@@ -48,43 +39,7 @@ from bokeh_demo.frontend import (
     TrajectoriesPlot,
     get_filter_element_from_source_manager,
 )
-from bokeh_demo.settings import settings
-
-tf.config.set_visible_devices([], "GPU")
-
-
-# Import data
-dataset = Dataset.from_file(settings.dataset_path)
-
-
-def extract_and_predict(
-    dataset: Dataset, model: MatFact | None = None
-) -> PredictionData:
-    model = model or MatFact(
-        ModelConfig(
-            epoch_generator=ConvergenceMonitor(
-                number_of_epochs=settings.number_of_epochs
-            ),
-        )
-    )
-
-    X_train, X_test, _, _ = dataset.get_split_X_M()
-    X_test_masked, t_pred_test, x_true_test = prediction_data(X_test)
-
-    model.fit(X_train)
-    predicted_probabilities = model.predict_probabilities(X_test, t_pred_test)
-    # Could alternatively do matfact._predictor(predicted_probabilites) ...
-    predicted_states = model.predict(X_test, t_pred_test)
-
-    return PredictionData(
-        X_train=X_train,
-        X_test=X_test,
-        X_test_masked=X_test_masked,
-        time_of_prediction=t_pred_test,
-        true_state_at_prediction=x_true_test,
-        predicted_probabilities=predicted_probabilities,
-        predicted_states=predicted_states,
-    )
+from bokeh_demo.exam_data import ToExam, ExtractPeople
 
 
 def example_app(source_manager):
@@ -165,7 +120,7 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
             source_manager=source_manager,
             exam_indices=[
                 i
-                for i, state in enumerate(source_manager.exam_source.data["state"])
+                for i, state in enumerate(source_manager.exam_source.data["risk"])
                 if state == 3
             ],
         ),
@@ -199,9 +154,6 @@ class HomePlaces(str, Enum):
     Other = "other"
 
 
-@dataclass
-class MyPerson(Person):
-    home: HomePlaces
 
 
 def get_selected_pids_from_landing_page():
@@ -212,13 +164,26 @@ def get_selected_pids_from_landing_page():
 
 
 def main():
-    # PIDS = get_selected_pids_from_landing_page()
-    prediction_data = extract_and_predict(dataset)
-    people = prediction_data.extract_people()
-    for person in people:
-        person.__class__ = MyPerson
-        person.home = random.choice(list(HomePlaces)).value
-    source_manager = SourceManager.from_people(people)
+    base_path = Path("/Users/thorvald/Documents/Decipher/decipher/matfact/tests/test_datasets")
+    dob_path = base_path / "test_dob_data.csv"
+    screeingin_path = base_path / "test_screening_data.csv"
+
+    settings.processing.raw_dob_data_path = dob_path
+    settings.processing.raw_screening_data_path = screeingin_path
+    settings.processing.max_n_females = 100
+
+    screening_data, matfact_pipeline = load_and_process_screening_data(settings.processing.raw_screening_data_path)
+    # screening_data = screening_data.dropna(subset="cytMorfologi").astype({"risk": "int"})
+    # screening_data = DiagnosisAdder().transform(screening_data).astype({"risk": "int"})
+    screening_data["age"] = screening_data["age"] / 365
+    exams = ToExam().fit_transform(screening_data).astype({"risk": "int", "bin": int})
+    people = ExtractPeople().fit_transform(exams)
+    people["home"] = HomePlaces.Other
+
+    source_manager = SourceManager(
+        ColumnDataSource(people),
+        ColumnDataSource(exams),
+    )
     source_manager.filters = _get_filters(source_manager)
 
     example_app(source_manager)

@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from enum import Enum
 
+from sklearn.base import BaseEstimator, TransformerMixin
+import pandas as pd
+
 
 class VaccineType(str, Enum):
     VaccineType1 = "Vaccine type 1"
@@ -36,6 +39,55 @@ class Diagnosis(str, Enum):
     HPVGenXpert18_45 = "HPV pool 18/45"
     HPVGenXpertchannel1 = "genXpert channel 1"
     """Channel collecting 31, 33, 35, 52, 58; 51, 59; 39, 56, 66, 68"""
+
+
+class ExtractPeople(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        def _minmax(column):
+            return (min(column), max(column))
+
+        person_df = (
+            X.groupby("PID")
+            .agg(
+                {
+                    "exam_date": _minmax,
+                    "age": _minmax,
+                    "FOEDT": "first",  # We assume all FOEDT are the same
+                }
+            )
+            .reset_index()  # We want PID as explicit column
+        )
+
+        # Rename columns
+        # person_df.columns = ["_".join(x) for x in person_df.columns]  # Flatten names
+        person_df = person_df.rename(
+            columns={
+                "exam_date": "lexis_line_endpoints_year",
+                "age": "lexis_line_endpoints_age",
+            }
+        )
+
+        # Add some auxillary columns
+        person_df["lexis_line_endpoints_person_index"] = person_df["PID"].transform(
+            lambda pid: (pid, pid)
+        )
+
+
+        # Dummies
+        person_df["exam_results"] = [[0]] * len(person_df.index)
+        person_df["exam_time_age"] = [[0]] * len(person_df.index)
+        person_df["prediction_time"] = 0
+        person_df["predicted_exam_result"] = 0
+        person_df["delta"] = 0
+        person_df["vaccine_age"] = None
+        person_df["vaccine_year"] = None
+        person_df["vaccine_type"] = None
+        person_df["vaccine_line_endpoints_age"] = [[]] * len(person_df.index)
+        person_df["vaccine_line_endpoints_year"] = [[]] * len(person_df.index)
+        return person_df
 
 
 @dataclass
