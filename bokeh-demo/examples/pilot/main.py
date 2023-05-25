@@ -39,7 +39,9 @@ from bokeh_demo.frontend import (
     TrajectoriesPlot,
     get_filter_element_from_source_manager,
 )
-from bokeh_demo.exam_data import ToExam, ExtractPeople
+from bokeh_demo.exam_data import ExtractPeople
+from bokeh_demo.settings import settings
+from decipher.data import DataManager
 
 
 def example_app(source_manager):
@@ -154,8 +156,6 @@ class HomePlaces(str, Enum):
     Other = "other"
 
 
-
-
 def get_selected_pids_from_landing_page():
     """Function to load the selected pids from the landing page."""
     with open(settings.selected_pids_path, "r") as f:
@@ -163,26 +163,19 @@ def get_selected_pids_from_landing_page():
     return pid_list
 
 
+def extract_people_from_pids(pid_list, person_df, exams_df):
+    pass
+
 def main():
-    base_path = Path("/Users/thorvald/Documents/Decipher/decipher/matfact/tests/test_datasets")
-    dob_path = base_path / "test_dob_data.csv"
-    screeingin_path = base_path / "test_screening_data.csv"
+    # PIDS = get_selected_pids_from_landing_page()
+    data_manager = DataManager.read_from_csv(settings.data_paths.screening_data_path, settings.data_paths.dob_data_path)
 
-    settings.processing.raw_dob_data_path = dob_path
-    settings.processing.raw_screening_data_path = screeingin_path
-    settings.processing.max_n_females = 100
-
-    screening_data, matfact_pipeline = load_and_process_screening_data(settings.processing.raw_screening_data_path)
-    # screening_data = screening_data.dropna(subset="cytMorfologi").astype({"risk": "int"})
-    # screening_data = DiagnosisAdder().transform(screening_data).astype({"risk": "int"})
-    screening_data["age"] = screening_data["age"] / 365
-    exams = ToExam().fit_transform(screening_data).astype({"risk": "int", "bin": int})
-    people = ExtractPeople().fit_transform(exams)
-    people["home"] = HomePlaces.Other
-
+    person_df, exams_df = data_manager.person_df, data_manager.exams_df
+    person_df, exams_df = extract_people_from_pids([], person_df, exams_df)
+    
     source_manager = SourceManager(
-        ColumnDataSource(people),
-        ColumnDataSource(exams),
+        ColumnDataSource(person_df),
+        ColumnDataSource(exams_df),
     )
     source_manager.filters = _get_filters(source_manager)
 
