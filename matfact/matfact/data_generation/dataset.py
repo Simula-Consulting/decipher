@@ -7,12 +7,7 @@ import pathlib
 import numpy as np
 from scipy.stats import betabinom
 
-from matfact.settings import (
-    DATASET_PATH,
-    default_number_of_states,
-    default_observation_probabilities,
-    minimum_number_of_observations,
-)
+from matfact.settings import settings
 
 from .gaussian_generator import discretise_matrix, float_matrix
 from .masking import simulate_mask
@@ -21,7 +16,9 @@ from .masking import simulate_mask
 def censoring(X, missing=0):
     "Truncate histories to have patterns similar to the real histories"
 
-    t_cens = betabinom.rvs(n=X.shape[1], a=4.57, b=5.74, size=X.shape[0])
+    t_cens = betabinom.rvs(
+        n=X.shape[1], a=settings.censoring.a, b=settings.censoring.b, size=X.shape[0]
+    )
     for i, t_end in enumerate(t_cens):
         X[i, t_end:] = missing
 
@@ -33,11 +30,11 @@ def produce_dataset(
     T,
     r,
     level,
-    memory_length=5,
+    memory_length=settings.matrix_generation.memory_length,
     missing=0,
-    number_of_states: int = default_number_of_states,
-    observation_probabilities: np.ndarray | None = None,
-    theta=2.5,
+    number_of_states=settings.matfact_defaults.number_of_states,
+    observation_probabilities=settings.matrix_generation.observation_probabilities,
+    theta=settings.matrix_generation.confidence_parameter,
     seed=42,
 ):
     """Generate a synthetic dataset resembling the real screening data.
@@ -60,12 +57,9 @@ def produce_dataset(
             The sparse and original complete data matrices
             The name of the generation method
     """
-
     M = float_matrix(N=N, T=T, r=r, number_of_states=number_of_states, seed=seed)
     Y = discretise_matrix(M, number_of_states=number_of_states, theta=theta, seed=seed)
 
-    if observation_probabilities is None:
-        observation_probabilities = default_observation_probabilities
     if number_of_states + 1 != len(observation_probabilities):
         raise ValueError(
             "observation_probabilities must have length one more than the number of states!"  # noqa: E501
@@ -82,7 +76,10 @@ def produce_dataset(
     X = mask * Y
     X = censoring(X, missing=missing)
 
-    valid_rows = np.sum(X != 0, axis=1) >= minimum_number_of_observations
+    valid_rows = (
+        np.sum(X != 0, axis=1)
+        >= settings.matrix_generation.minimum_number_of_observations
+    )
 
     return X[valid_rows].astype(np.float32), M[valid_rows].astype(np.float32), "DGD"
 
@@ -137,8 +134,8 @@ class Dataset:
         rank,
         sparsity_level,
         produce_dataset_function=produce_dataset,
-        number_of_states=default_number_of_states,
-        observation_probabilities=default_observation_probabilities,
+        number_of_states=settings.matfact_defaults.number_of_states,
+        observation_probabilities=settings.matrix_generation.observation_probabilities,
     ):
         """Generate a Dataset
 
@@ -191,10 +188,10 @@ class Dataset:
 
 
 def main():
-    rank = 5
-    n_rows = 1000
-    n_columns = 50
-    sparsity_level = 6
+    rank = settings.matrix_generation.rank
+    n_rows = settings.matrix_generation.n_rows
+    n_columns = settings.matrix_generation.n_columns
+    sparsity_level = settings.matrix_generation.sparsity_level
 
     X, M = produce_dataset(N=n_rows, T=n_columns, r=rank, level=sparsity_level)
 
@@ -206,9 +203,9 @@ def main():
         "generation_method": "DGD",  # Only one method implemented.
     }
 
-    np.save(DATASET_PATH / "X.npy", X)
-    np.save(DATASET_PATH / "M.npy", M)
-    with (DATASET_PATH / "dataset_metadata.json").open("w") as metadata_file:
+    np.save(settings.paths.dataset / "X.npy", X)
+    np.save(settings.paths.dataset / "M.npy", M)
+    with (settings.paths.dataset / "dataset_metadata.json").open("w") as metadata_file:
         metadata_file.write(json.dumps(dataset_metadata))
 
 

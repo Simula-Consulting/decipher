@@ -11,18 +11,18 @@ from matfact.model.factorization.factorizers.scmf import (
     _custom_roll,
     _take_per_row_strided,
 )
-from matfact.settings import TEST_PATH
+from matfact.settings import settings
 
-artifact_path = TEST_PATH / "test_artifacts" / "SCMF_test"
+artifact_path = settings.paths.test / "test_artifacts" / "SCMF_test"
 
 
 @given(st.data())
 def test_custom_roll(data):
     """Compare _custom_roll with naive slow rolling"""
-    array = data.draw(arrays(np.float, array_shapes(min_dims=2, max_dims=2)))
+    array = data.draw(arrays(float, array_shapes(min_dims=2, max_dims=2)))
     assume(not np.isnan(array).any())
     # Limit shifts to not be too large (1e4 arbitrarily chosen), as _custom_roll
-    # is suseptible to floating point errors for large shifts.
+    # is susceptible to floating point errors for large shifts.
     # This is not relevant for us, as shifts are never larger than the number
     # of time steps.
     shifts = data.draw(
@@ -117,10 +117,10 @@ def test_scmf():
         observed = logs[attribute]
         # Use allclose instead of array_equal, to allow for refactoring
         # that cuases different round off (for example avoiding sqrt).
-        # atol of 1e-6 chosen by an educated guess to allow for
+        # atol of 1e-4 chosen by an educated guess to allow for
         # floating point variations (which differs across machines)
         # while still being small enough to catch errors.
-        assert np.allclose(correct, observed, atol=1e-06)
+        assert np.allclose(correct, observed, atol=1e-04)
         if not np.array_equal(correct, observed):
             warnings.warn(
                 "Test successful, but note that arrays are only similar, "

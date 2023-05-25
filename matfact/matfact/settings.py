@@ -1,44 +1,85 @@
-import pathlib
+from pathlib import Path
 
-import numpy as np
-
-BASE_PATH = pathlib.Path(__file__).parents[1]
-TEST_PATH = BASE_PATH / "tests"
-DATASET_PATH = BASE_PATH / "datasets"
-RESULT_PATH = BASE_PATH / "results"
-FIGURE_PATH = RESULT_PATH / "figures"
-
-create_path_default = True  # Create artifact directories if non-existent
-
-default_number_of_states = 4
+from pydantic import BaseModel, BaseSettings, root_validator
 
 
-default_weights = range(1, default_number_of_states + 1)
+class PathSettings(BaseModel):
+    base = Path(__file__).parents[1]
+    test = base / "tests"
+    dataset = base / "datasets"
+    results = base / "results"
+    figure = results / "figures"
 
-#### Data generation ####
-# Default observation values for five states.
-default_observation_probabilities = np.array([0.01, 0.03, 0.08, 0.12, 0.04])
-
-# Minimum number of observations to be considered valid
-# Used during data generation
-minimum_number_of_observations = 3
-
-
-### Convergence monitor ###
-DEFAULT_NUMBER_OF_EPOCHS = 2000
-DEFAULT_EPOCHS_PER_VAL = 5
-DEFAULT_PATIENCE = 200
+    create_default: bool = True  # Create artifact directories if non-existent
 
 
-### Projected Gradient Descent
-# Pretty much arbitrary values and require hyperparameter search on
-# real data.
-DEFAULT_TAU = 1.0
-DEFAULT_GAMMA = 3.0
+class MatFactSettings(BaseModel):
+    number_of_states: int = 4
+    age_segments: tuple[int, int] = (76, 116)
+    weights: list[float] = []
+
+    @root_validator(allow_reuse=True)
+    def set_default_weights(cls, values):
+        if len(values["weights"]) == 0:
+            values["weights"] = range(1, values["number_of_states"] + 1)
+        return values
 
 
-### Classification tree ###
-# Age segment (inclusive) endpoints, in 'time points'
-# I.e. [a, b] correspond to the segments (<-, a), (a+1, b), (b+1, ->)
+class ObservationMatrixGenerationSettings(BaseModel):
+    observation_probabilities: list[float] = [0.01, 0.03, 0.08, 0.12, 0.04]
+    minimum_number_of_observations = 3
+    sparsity_level: int = 6
+    confidence_parameter: float = 2.5
+    memory_length: int = 5
 
-DEFAULT_AGE_SEGMENTS = (76, 116)  # [35, 45] in years
+    # Matrix dimensions
+    rank: int = 5
+    n_rows: int = 1000
+    n_columns: int = 50
+
+
+class GaussianGeneratorSettings(BaseModel):
+    """Values used to generate a screening dataset with a
+    Discrete Gaussian Distribution (DGD).
+
+    Choices result from research and is explained in Mikal Stapnes'
+    Masters thesis (page 21-22).
+    """
+
+    scale_factor: float = 3.0
+    kernel_param: float = 5e-4
+    centre_minmax: tuple[float, float] = (70, 170)
+
+
+class CensoringSettings(BaseModel):
+    """Shape parameters for the beta-binomial used to censor generated data."""
+
+    a: float = 4.57
+    b: float = 5.74
+
+
+class PropensityWeightSettings(BaseModel):
+    tau: float = 1.0
+    gamma: float = 3.0
+
+
+class ConvergenceMonitorSettings(BaseModel):
+    number_of_epochs: int = 2000
+    epochs_per_val: int = 5
+    patience: int = 200
+
+
+class Settings(BaseSettings):
+    paths = PathSettings()
+    matfact_defaults = MatFactSettings(_env_file=".env")
+    matrix_generation = ObservationMatrixGenerationSettings()
+    propensity_weights = PropensityWeightSettings()
+    convergence = ConvergenceMonitorSettings()
+    gauss_gen = GaussianGeneratorSettings()
+    censoring = CensoringSettings()
+
+    class Config:
+        env_nested_delimiter = "__"
+
+
+settings = Settings(_env_file=".env")

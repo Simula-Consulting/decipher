@@ -11,7 +11,7 @@ repos:
 
 -   repo: local
     hooks:
-    # Matfact ##
+    # matfact
     -   id: flake8
         name: flake8 for matfact
         language: system
@@ -24,19 +24,20 @@ repos:
         entry: bash -c 'cd matfact && poetry run black .'
         types: [python]
         files: ^matfact/
-    -   id: mypy
-        name: mypy for matfact
-        language: system
-        entry: bash -c 'cd matfact && poetry run mypy .'
-        types: [python]
-        files: ^matfact/
     -   id: isort
         name: isort for matfact (python)
         language: system
         entry: bash -c 'cd matfact && poetry run isort --profile black .'
         types: [python]
         files: ^matfact/
-    # HMM ##
+    -   id: mypy
+        name: mypy for matfact
+        language: system
+        entry: bash -c 'cd matfact && poetry run mypy .'
+        types: [python]
+        files: ^matfact/
+
+    # hmm_synthetic
     -   id: flake8
         name: flake8 for hmm_synthetic
         language: system
@@ -61,7 +62,34 @@ repos:
         entry: bash -c 'cd hmm_synthetic && poetry run mypy .'
         types: [python]
         files: ^hmm_synthetic/
-    # Viz tool ##
+
+    # processing
+    -   id: flake8
+        name: flake8 for processing
+        language: system
+        entry: bash -c 'cd processing && poetry run flake8'
+        types: [python]
+        files: ^processing/
+    -   id: black
+        name: black for processing
+        language: system
+        entry: bash -c 'cd processing && poetry run black .'
+        types: [python]
+        files: ^processing/
+    -   id: isort
+        name: isort for processing (python)
+        language: system
+        entry: bash -c 'cd processing && poetry run isort --profile black .'
+        types: [python]
+        files: ^processing/
+    -   id: mypy
+        name: mypy for processing
+        language: system
+        entry: bash -c 'cd processing && poetry run mypy .'
+        types: [python]
+        files: ^processing/
+
+    # bokeh_demo
     -   id: flake8
         name: flake8 for bokeh-demo
         language: system
