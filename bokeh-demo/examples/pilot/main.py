@@ -17,6 +17,8 @@ import json
 from dataclasses import dataclass
 from enum import Enum
 
+import pandas as pd
+
 from bokeh.layouts import column, grid, row
 from bokeh.models import Div, SymmetricDifferenceFilter, ColumnDataSource
 from bokeh.plotting import curdoc
@@ -39,7 +41,7 @@ from bokeh_demo.frontend import (
     TrajectoriesPlot,
     get_filter_element_from_source_manager,
 )
-from bokeh_demo.exam_data import ExtractPeople
+from bokeh_demo.exam_data import CreatePlottingData
 from bokeh_demo.settings import settings
 from decipher.data import DataManager
 
@@ -164,17 +166,25 @@ def get_selected_pids_from_landing_page():
 
 
 def extract_people_from_pids(pid_list, person_df, exams_df):
-    pass
+    return person_df, exams_df
+
+import random
 
 def main():
     # PIDS = get_selected_pids_from_landing_page()
     data_manager = DataManager.read_from_csv(settings.data_paths.screening_data_path, settings.data_paths.dob_data_path)
 
     person_df, exams_df = data_manager.person_df, data_manager.exams_df
+
+    person_df["vaccine_age"] = [0] * len(person_df)
+    person_df["vaccine_type"] = ["None"] * len(person_df)
+    person_df["home"] = [random.choice(list(HomePlaces)) for _ in range(len(person_df))]
+
     person_df, exams_df = extract_people_from_pids([], person_df, exams_df)
-    
+    plotting_df = CreatePlottingData().fit_transform(exams_df)
+
     source_manager = SourceManager(
-        ColumnDataSource(person_df),
+        ColumnDataSource(plotting_df),
         ColumnDataSource(exams_df),
     )
     source_manager.filters = _get_filters(source_manager)

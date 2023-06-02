@@ -41,7 +41,12 @@ class Diagnosis(str, Enum):
     """Channel collecting 31, 33, 35, 52, 58; 51, 59; 39, 56, 66, 68"""
 
 
-class ExtractPeople(BaseEstimator, TransformerMixin):
+class CreatePlottingData(BaseEstimator, TransformerMixin):
+    """Takes in the exams dataframe and returns another dataframe for plotting Lexis plots."""
+
+    def __init__(self, *, prediction_data: None = None):
+        self.prediction_data = prediction_data
+
     def fit(self, X, y=None):
         return self
 
@@ -49,7 +54,7 @@ class ExtractPeople(BaseEstimator, TransformerMixin):
         def _minmax(column):
             return (min(column), max(column))
 
-        person_df = (
+        plotting_df = (
             X.groupby("PID")
             .agg(
                 {
@@ -62,8 +67,8 @@ class ExtractPeople(BaseEstimator, TransformerMixin):
         )
 
         # Rename columns
-        # person_df.columns = ["_".join(x) for x in person_df.columns]  # Flatten names
-        person_df = person_df.rename(
+        # plotting_df.columns = ["_".join(x) for x in plotting_df.columns]  # Flatten names
+        plotting_df = plotting_df.rename(
             columns={
                 "exam_date": "lexis_line_endpoints_year",
                 "age": "lexis_line_endpoints_age",
@@ -71,23 +76,29 @@ class ExtractPeople(BaseEstimator, TransformerMixin):
         )
 
         # Add some auxillary columns
-        person_df["lexis_line_endpoints_person_index"] = person_df["PID"].transform(
+        plotting_df["lexis_line_endpoints_person_index"] = plotting_df["PID"].transform(
             lambda pid: (pid, pid)
         )
 
 
         # Dummies
-        person_df["exam_results"] = [[0]] * len(person_df.index)
-        person_df["exam_time_age"] = [[0]] * len(person_df.index)
-        person_df["prediction_time"] = 0
-        person_df["predicted_exam_result"] = 0
-        person_df["delta"] = 0
-        person_df["vaccine_age"] = None
-        person_df["vaccine_year"] = None
-        person_df["vaccine_type"] = None
-        person_df["vaccine_line_endpoints_age"] = [[]] * len(person_df.index)
-        person_df["vaccine_line_endpoints_year"] = [[]] * len(person_df.index)
-        return person_df
+        plotting_df["exam_results"] = plotting_df["PID"].map({pid: sub_df["risk"].to_list() for pid, sub_df in X.groupby("PID")})
+        plotting_df["exam_time_age"] = plotting_df["PID"].map({pid: sub_df["age"].to_list() for pid, sub_df in X.groupby("PID")})
+        plotting_df["vaccine_age"] = None
+        plotting_df["vaccine_year"] = None
+        plotting_df["vaccine_type"] = None
+        plotting_df["vaccine_line_endpoints_age"] = [[]] * len(plotting_df.index)
+        plotting_df["vaccine_line_endpoints_year"] = [[]] * len(plotting_df.index)
+
+        if self.prediction_data is None:
+            plotting_df["prediction_time"] = 0
+            plotting_df["predicted_exam_result"] = 0
+            plotting_df["delta"] = 0
+        else:
+            # TODO: Add real prediction data
+            pass
+
+        return plotting_df
 
 
 @dataclass
