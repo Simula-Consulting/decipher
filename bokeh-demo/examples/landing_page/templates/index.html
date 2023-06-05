@@ -43,25 +43,6 @@
         margin-bottom: 1em;
         width: 100%;
       }
-      button[type="submit"] {
-        background: #333;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        font-size: 1.2em;
-        padding: 0.5em 2em;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-      input[type=submit] {
-        background-color: #ffae00;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-      }
       .footer {
         position: fixed;
         bottom: 0;
@@ -82,7 +63,7 @@
   </head>
   <body>
     <h1>Welcome to the VizTool Landing Page</h1>
-    <!-- <div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5">
+    <div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5">
       {%      for doc in docs %}
       {{        embed(doc) if doc.elementid }}
       {%-       for root in doc.roots  %}
@@ -90,14 +71,8 @@
       {{            embed(root) }}
       </div>
       {%        endfor %}
-      {%      endfor %} -->
-      <!-- Text Box Input with Button -->
-  <form action="second_page.html">
-    <label for="input">Type in a list of PID's</label><br>
-    <input type="text" id="input" name="input"><br>
-    <input type="submit" value="Submit">
-  </form>
-  <!-- Footer section with the image -->
+      {%      endfor %}
+
   <div class="footer">
     <img src="landing_page/static/images/SC_logo.png" alt="Footer Image">
   </div>

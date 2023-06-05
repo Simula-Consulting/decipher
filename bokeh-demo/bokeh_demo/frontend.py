@@ -3,6 +3,7 @@ from enum import Enum, auto
 from typing import Callable, Collection, Generator, Iterable, Sequence, cast
 
 import numpy as np
+import pandas as pd
 
 # mypy complains that bokeh.models does not have these attributes.
 # We were unsuccessful in finding the origin of the bug.
@@ -398,6 +399,7 @@ class LabelSelectedMixin:
         average_screening_interval = self._compute_average_screening_interval(
             nested_age_at_exam
         )
+        
         return (
             f" Individuals selected: {len(selected_indices)} \n"
             f" Individuals with vaccinations: {n_vaccines} \n"
@@ -495,7 +497,8 @@ class HistogramPlot(LabelSelectedMixin):
         out = {1: 0, 2: 0, 3: 0, 4: 0}
         for list_of_states in nested_list_of_states:
             for state in list_of_states:
-                out[state] += 1
+                if pd.notna(state):
+                    out[state] += 1
         return out
 
     def get_update_histogram_callback(self) -> Callable[..., None]:
@@ -567,9 +570,8 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
 
     match (FILTER_TO_FilterValueUIElement_MAPPING[type(filter)]):
         case FilterValueUIElement.RangeSlider:
-            start, end = filter.source_manager.get_vaccine_range()
             value_element = RangeSlider(
-                value=(0, 100), start=np.floor(start), end=np.ceil(end), width=None
+                value=(0, 100), start=0, end=100, width=None
             )
             value_element.on_change("value", filter.get_set_value_callback())
         case FilterValueUIElement.MultiChoice:

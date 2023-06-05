@@ -83,7 +83,7 @@ class CreatePlottingData(BaseEstimator, TransformerMixin):
 
         # Dummies
         plotting_df["exam_results"] = plotting_df["PID"].map({pid: sub_df["risk"].to_list() for pid, sub_df in X.groupby("PID")})
-        plotting_df["exam_time_age"] = plotting_df["PID"].map({pid: sub_df["age"].to_list() for pid, sub_df in X.groupby("PID")})
+        plotting_df["exam_time_age"] = plotting_df["PID"].map({pid: (sub_df["age"] / pd.Timedelta(days=365)).to_list() for pid, sub_df in X.groupby("PID")})
         plotting_df["vaccine_age"] = None
         plotting_df["vaccine_year"] = None
         plotting_df["vaccine_type"] = None

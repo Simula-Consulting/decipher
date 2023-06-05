@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 import pandas as pd
+import numpy as np
 
 from bokeh.layouts import column, grid, row
 from bokeh.models import Div, SymmetricDifferenceFilter, ColumnDataSource
@@ -175,16 +176,35 @@ def main():
     data_manager = DataManager.read_from_csv(settings.data_paths.screening_data_path, settings.data_paths.dob_data_path)
 
     person_df, exams_df = data_manager.person_df, data_manager.exams_df
+    exams_df = exams_df.sort_values(by="exam_date").reset_index(drop=True)
+
+  
+    person_df, exams_df = extract_people_from_pids([], person_df, exams_df)
+
+    # temp fix to replace <NA>
+    bool_cols = person_df.select_dtypes(include=['bool']).columns
+    person_df[bool_cols] = person_df[bool_cols].astype("float")
+    person_df = person_df.fillna(np.nan)
+
+    exams_df["risk"] = exams_df["risk"].astype("float")
+    exams_df = exams_df.fillna(np.nan)
+
+
+    person_df = CreatePlottingData().fit_transform(exams_df)
 
     person_df["vaccine_age"] = [0] * len(person_df)
     person_df["vaccine_type"] = ["None"] * len(person_df)
     person_df["home"] = [random.choice(list(HomePlaces)) for _ in range(len(person_df))]
 
-    person_df, exams_df = extract_people_from_pids([], person_df, exams_df)
-    plotting_df = CreatePlottingData().fit_transform(exams_df)
-
+    for df in exams_df, person_df:
+        category_cols = df.select_dtypes(include=['category']).columns
+        for col in category_cols:
+            df[col] = df[col].apply(lambda x: x.value)
+        #df[category_cols] = df[category_cols].apply(lambda x: x.value)
+        df[category_cols] = df[category_cols].astype("str")
+        
     source_manager = SourceManager(
-        ColumnDataSource(plotting_df),
+        ColumnDataSource(person_df),
         ColumnDataSource(exams_df),
     )
     source_manager.filters = _get_filters(source_manager)
