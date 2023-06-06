@@ -15,7 +15,6 @@ from bokeh.layouts import column, grid, row
 from bokeh.models import (  # type: ignore
     Circle,
     CustomJSExpr,
-    CustomJSHover,
     DataTable,
     HoverTool,
     Label,

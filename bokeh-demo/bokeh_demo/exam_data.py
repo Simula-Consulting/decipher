@@ -3,10 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-import numpy as np
-import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
-
 
 class VaccineType(str, Enum):
     VaccineType1 = "Vaccine type 1"

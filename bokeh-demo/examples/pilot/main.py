@@ -10,7 +10,6 @@ import copy
 import json
 from enum import Enum
 
-import numpy as np
 from bokeh.layouts import column, grid, row
 from bokeh.models import ColumnDataSource, Div, SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
