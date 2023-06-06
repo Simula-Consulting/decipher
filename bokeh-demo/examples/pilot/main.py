@@ -42,12 +42,14 @@ from decipher.data import DataManager
 def example_app(source_manager):
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
-    delta = DeltaScatter(source_manager)
     traj = TrajectoriesPlot(source_manager)
-    table = PersonTable(source_manager)
-    table.person_table.styles = {"border": "1px solid #e6e6e6", "border-radius": "5px"}
-    table.person_table.height = 500
     hist = HistogramPlot(source_manager)
+
+    # Remove delta plot and table as these are related to predictions, which we are not doing 
+    # delta = DeltaScatter(source_manager)
+    # table = PersonTable(source_manager)
+    # table.person_table.styles = {"border": "1px solid #e6e6e6", "border-radius": "5px"}
+    # table.person_table.height = 500
 
     lp.figure.x_range = lpa.figure.x_range
     high_risk_person_group = get_filter_element_from_source_manager(
@@ -56,22 +58,24 @@ def example_app(source_manager):
     high_risk_exam_group = get_filter_element_from_source_manager(
         "High risk - Exam", source_manager
     )
-    vaccine_type = get_filter_element_from_source_manager(
-        "Vaccine type", source_manager
-    )
-    vaccine_group = get_filter_element_from_source_manager(
-        "Vaccine age", source_manager
-    )
-    category_group = get_filter_element_from_source_manager("Region", source_manager)
+
+    # Remove vaccine filters as we do not have vaccine data
+    # vaccine_type = get_filter_element_from_source_manager(
+    #     "Vaccine type", source_manager
+    # )
+    # vaccine_group = get_filter_element_from_source_manager(
+    #     "Vaccine age", source_manager
+    # )
+    # category_group = get_filter_element_from_source_manager("Region", source_manager)
 
     filter_grid = grid(
         column(
             row(Div(), Div(text="Active"), Div(text="Invert")),
             high_risk_person_group,
             high_risk_exam_group,
-            vaccine_group,
-            vaccine_type,
-            category_group,
+            # vaccine_group,
+            # vaccine_type,
+            # category_group,
             # get_filter_element_from_source_manager(
             #     "symmetric_difference", source_manager, label="XOR"
             # ),
@@ -86,14 +90,15 @@ def example_app(source_manager):
     for element in (
         lp.figure,
         lpa.figure,
-        traj.figure,
-        column(
-            Div(text="<h1>Data table</h1>"),
-            table.person_table,
-        ),
         hist.figure,
-        delta.figure,
+        traj.figure,
         filter_grid,
+        # Prediction related
+        # delta.figure,
+        # column(
+        #     Div(text="<h1>Data table</h1>"),
+        #     table.person_table,
+        # ),
     ):
         curdoc().add_root(element)
 
@@ -121,11 +126,6 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
                 if state == 3
             ],
         ),
-        "Vaccine age": RangeFilter(source_manager=source_manager, field="vaccine_age"),
-        "Vaccine type": CategoricalFilter(
-            source_manager=source_manager, field="vaccine_type"
-        ),
-        "Region": CategoricalFilter(source_manager=source_manager, field="home"),
     }
 
     # Explicitly make the values a list.
@@ -184,7 +184,7 @@ def main():
 
     person_df = CreatePlottingData().fit_transform(exams_df)
 
-    person_df["vaccine_age"] = [0] * len(person_df)
+    person_df["vaccine_age"] = [None] * len(person_df)
     person_df["vaccine_type"] = ["None"] * len(person_df)
     person_df["home"] = [random.choice(list(HomePlaces)) for _ in range(len(person_df))]
 

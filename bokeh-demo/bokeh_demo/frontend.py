@@ -225,7 +225,7 @@ class TrajectoriesPlot(ToolsMixin):
             x_axis_label="Age",
             tools=self._get_tools(),
             x_range=pad_range((min(x_axis_data), max(x_axis_data))),
-            y_range=pad_range((0, len(settings.label_map) - 1)),
+            y_range=pad_range((1, len(settings.label_map) - 1)),
         )
 
         self.exam_plot = self.figure.multi_line(
@@ -234,30 +234,30 @@ class TrajectoriesPlot(ToolsMixin):
             source=source_manager.person_source,
             view=source_manager.combined_view,
             color=self._exam_color,
-            legend_label="Actual observation",
+            legend_label="Observation",
         )
-        self.predicted_exam_plot = self.figure.multi_line(
-            "exam_time_age",
-            "predicted_exam_results",
-            source=source_manager.person_source,
-            view=source_manager.combined_view,
-            color=self._predicted_exam_color,
-            legend_label="Predicted observation",
-        )
+        # self.predicted_exam_plot = self.figure.multi_line(
+        #     "exam_time_age",
+        #     "predicted_exam_results",
+        #     source=source_manager.person_source,
+        #     view=source_manager.combined_view,
+        #     color=self._predicted_exam_color,
+        #     legend_label="Predicted observation",
+        # )
 
         # Simple tooltip
-        list_formatter = CustomJSHover(
-            code="""
-        return `[${value.map(n => n.toFixed(2)).join(', ')}]`
-        """
-        )
+        # list_formatter = CustomJSHover(
+        #     code="""
+        # return `[${value.map(n => n.toFixed(2)).join(', ')}]`
+        # """
+        # )
         hover_tool = HoverTool(
             tooltips=[
                 ("Id", "$index"),
                 ("Vaccine", "@vaccine_age{0.0} (@vaccine_type)"),
-                ("Probabilities", "@prediction_probabilities{custom}"),
+                # ("Probabilities", "@prediction_probabilities{custom}"),
             ],
-            formatters={"@prediction_probabilities": list_formatter},
+            # formatters={"@prediction_probabilities": list_formatter},
         )
         self.figure.add_tools(hover_tool)
 
