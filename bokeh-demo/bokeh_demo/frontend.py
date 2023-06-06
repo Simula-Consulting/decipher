@@ -20,8 +20,6 @@ from bokeh.models import (  # type: ignore
     HoverTool,
     Label,
     LayoutDOM,
-    Legend,
-    LegendItem,
     MultiChoice,
     Paragraph,
     RangeSlider,
@@ -399,7 +397,7 @@ class LabelSelectedMixin:
         average_screening_interval = self._compute_average_screening_interval(
             nested_age_at_exam
         )
-        
+
         return (
             f" Individuals selected: {len(selected_indices)} \n"
             f" Individuals with vaccinations: {n_vaccines} \n"
