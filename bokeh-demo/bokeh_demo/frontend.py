@@ -568,9 +568,7 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
 
     match (FILTER_TO_FilterValueUIElement_MAPPING[type(filter)]):
         case FilterValueUIElement.RangeSlider:
-            value_element = RangeSlider(
-                value=(0, 100), start=0, end=100, width=None
-            )
+            value_element = RangeSlider(value=(0, 100), start=0, end=100, width=None)
             value_element.on_change("value", filter.get_set_value_callback())
         case FilterValueUIElement.MultiChoice:
             # We guarantuee CategoricalFilter inside this match

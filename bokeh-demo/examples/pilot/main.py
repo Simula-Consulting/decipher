@@ -11,10 +11,10 @@ import json
 from enum import Enum
 
 import numpy as np
-
 from bokeh.layouts import column, grid, row
-from bokeh.models import Div, SymmetricDifferenceFilter, ColumnDataSource
+from bokeh.models import ColumnDataSource, Div, SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
+from decipher.data import DataManager
 
 from bokeh_demo.backend import (
     BaseFilter,
@@ -23,6 +23,7 @@ from bokeh_demo.backend import (
     PersonSimpleFilter,
     SourceManager,
 )
+from bokeh_demo.data_ingestion import CreatePersonSource, exams_pipeline
 from bokeh_demo.frontend import (
     HistogramPlot,
     LexisPlot,
@@ -30,9 +31,7 @@ from bokeh_demo.frontend import (
     TrajectoriesPlot,
     get_filter_element_from_source_manager,
 )
-from bokeh_demo.data_ingestion import CreatePersonSource, exams_pipeline
 from bokeh_demo.settings import settings
-from decipher.data import DataManager
 
 
 def example_app(source_manager):
@@ -163,13 +162,11 @@ def main():
     data_manager = DataManager.read_from_csv(
         settings.data_paths.screening_data_path, settings.data_paths.dob_data_path
     )
-
     exams_df = data_manager.exams_df
 
     exams_df = extract_people_from_pids([], exams_df)
 
     exams_df = exams_pipeline.fit_transform(exams_df)
-
     person_df = CreatePersonSource().fit_transform(exams_df)
 
     source_manager = SourceManager(

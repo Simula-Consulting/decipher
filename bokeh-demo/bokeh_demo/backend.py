@@ -18,6 +18,7 @@ from bokeh.models import (
     UnionFilter,
 )
 
+
 ## Time Converter ##
 @dataclass
 class TimeConverter:
@@ -105,8 +106,6 @@ def _calculate_delta(
     # Set default=0 for the edge case that there is only one state, in which
     # case incorrect_estimates is empty.
     return max(incorrect_estimates, default=0) - probabilities[correct_index]
-
-
 
 
 def _combine_dicts(dictionaries: Iterable[dict]) -> dict:
@@ -283,9 +282,7 @@ class PersonSimpleFilter(SimpleFilter):
         active: bool = False,
         inverted: bool = False,
     ) -> None:
-        exam_to_person = cast(
-            Sequence[int], source_manager.exam_source.data["PID"]
-        )
+        exam_to_person = cast(Sequence[int], source_manager.exam_source.data["PID"])
         exam_indices = self._person_to_exam_indices(person_indices, exam_to_person)
         super().__init__(
             person_indices,
@@ -306,9 +303,7 @@ class ExamSimpleFilter(SimpleFilter):
         active: bool = False,
         inverted: bool = False,
     ) -> None:
-        exam_to_person = cast(
-            Sequence[int], source_manager.exam_source.data["PID"]
-        )
+        exam_to_person = cast(Sequence[int], source_manager.exam_source.data["PID"])
         person_indices = self._exam_to_person_indices(exam_indices, exam_to_person)
         super().__init__(
             person_indices,
@@ -658,7 +653,6 @@ class SourceManager:
             ]
             or [AllIndices()]
         )
-
 
     def get_vaccine_range(self) -> tuple[float, float]:
         """Return min and max age of vaccine administration."""

@@ -4,9 +4,12 @@ from pydantic import BaseModel, BaseSettings, DirectoryPath
 
 
 class DataPaths(BaseModel):
-    base_path: DirectoryPath = pathlib.Path(__file__).parents[2] / "processing" / "tests" / "test_datasets"
+    base_path: DirectoryPath = (
+        pathlib.Path(__file__).parents[2] / "processing" / "tests" / "test_datasets"
+    )
     screening_data_path: pathlib.Path = base_path / "test_screening_data.csv"
     dob_data_path: pathlib.Path = base_path / "test_dob_data.csv"
+
 
 class Settings(BaseSettings):
     number_of_epochs: int = 100
