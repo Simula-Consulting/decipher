@@ -1,8 +1,10 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
 from sklearn.base import BaseEstimator, TransformerMixin
 import pandas as pd
+import numpy as np
 
 
 class VaccineType(str, Enum):
@@ -39,66 +41,6 @@ class Diagnosis(str, Enum):
     HPVGenXpert18_45 = "HPV pool 18/45"
     HPVGenXpertchannel1 = "genXpert channel 1"
     """Channel collecting 31, 33, 35, 52, 58; 51, 59; 39, 56, 66, 68"""
-
-
-class CreatePlottingData(BaseEstimator, TransformerMixin):
-    """Takes in the exams dataframe and returns another dataframe for plotting Lexis plots."""
-
-    def __init__(self, *, prediction_data: None = None):
-        self.prediction_data = prediction_data
-
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        def _minmax(column):
-            return (min(column), max(column))
-
-        plotting_df = (
-            X.groupby("PID")
-            .agg(
-                {
-                    "exam_date": _minmax,
-                    "age": _minmax,
-                    "FOEDT": "first",  # We assume all FOEDT are the same
-                }
-            )
-            .reset_index()  # We want PID as explicit column
-        )
-
-        # Rename columns
-        # plotting_df.columns = ["_".join(x) for x in plotting_df.columns]  # Flatten names
-        plotting_df = plotting_df.rename(
-            columns={
-                "exam_date": "lexis_line_endpoints_year",
-                "age": "lexis_line_endpoints_age",
-            }
-        )
-
-        # Add some auxillary columns
-        plotting_df["lexis_line_endpoints_person_index"] = plotting_df["PID"].transform(
-            lambda pid: (pid, pid)
-        )
-
-
-        # Dummies
-        plotting_df["exam_results"] = plotting_df["PID"].map({pid: sub_df["risk"].to_list() for pid, sub_df in X.groupby("PID")})
-        plotting_df["exam_time_age"] = plotting_df["PID"].map({pid: (sub_df["age"] / pd.Timedelta(days=365)).to_list() for pid, sub_df in X.groupby("PID")})
-        plotting_df["vaccine_age"] = None
-        plotting_df["vaccine_year"] = None
-        plotting_df["vaccine_type"] = None
-        plotting_df["vaccine_line_endpoints_age"] = [[]] * len(plotting_df.index)
-        plotting_df["vaccine_line_endpoints_year"] = [[]] * len(plotting_df.index)
-
-        if self.prediction_data is None:
-            plotting_df["prediction_time"] = 0
-            plotting_df["predicted_exam_result"] = 0
-            plotting_df["delta"] = 0
-        else:
-            # TODO: Add real prediction data
-            pass
-
-        return plotting_df
 
 
 @dataclass

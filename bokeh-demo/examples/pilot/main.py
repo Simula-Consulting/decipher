@@ -19,22 +19,18 @@ from bokeh.plotting import curdoc
 from bokeh_demo.backend import (
     BaseFilter,
     BooleanFilter,
-    CategoricalFilter,
     ExamSimpleFilter,
     PersonSimpleFilter,
-    RangeFilter,
     SourceManager,
 )
 from bokeh_demo.frontend import (
-    DeltaScatter,
     HistogramPlot,
     LexisPlot,
     LexisPlotAge,
-    PersonTable,
     TrajectoriesPlot,
     get_filter_element_from_source_manager,
 )
-from bokeh_demo.exam_data import CreatePlottingData
+from bokeh_demo.data_ingestion import CreatePersonSource, exams_pipeline
 from bokeh_demo.settings import settings
 from decipher.data import DataManager
 
@@ -45,7 +41,7 @@ def example_app(source_manager):
     traj = TrajectoriesPlot(source_manager)
     hist = HistogramPlot(source_manager)
 
-    # Remove delta plot and table as these are related to predictions, which we are not doing 
+    # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
     # table = PersonTable(source_manager)
     # table.person_table.styles = {"border": "1px solid #e6e6e6", "border-radius": "5px"}
@@ -158,43 +154,24 @@ def get_selected_pids_from_landing_page():
     return pid_list
 
 
-def extract_people_from_pids(pid_list, person_df, exams_df):
-    return person_df, exams_df
+def extract_people_from_pids(pid_list, exams_df):
+    return exams_df
 
-import random
 
 def main():
     # PIDS = get_selected_pids_from_landing_page()
-    data_manager = DataManager.read_from_csv(settings.data_paths.screening_data_path, settings.data_paths.dob_data_path)
+    data_manager = DataManager.read_from_csv(
+        settings.data_paths.screening_data_path, settings.data_paths.dob_data_path
+    )
 
-    person_df, exams_df = data_manager.person_df, data_manager.exams_df
-    exams_df = exams_df.sort_values(by="exam_date").reset_index(drop=True)
+    exams_df = data_manager.exams_df
 
-  
-    person_df, exams_df = extract_people_from_pids([], person_df, exams_df)
+    exams_df = extract_people_from_pids([], exams_df)
 
-    # temp fix to replace <NA>
-    bool_cols = person_df.select_dtypes(include=['bool']).columns
-    person_df[bool_cols] = person_df[bool_cols].astype("float")
-    person_df = person_df.fillna(np.nan)
+    exams_df = exams_pipeline.fit_transform(exams_df)
 
-    exams_df["risk"] = exams_df["risk"].astype("float")
-    exams_df = exams_df.fillna(np.nan)
+    person_df = CreatePersonSource().fit_transform(exams_df)
 
-
-    person_df = CreatePlottingData().fit_transform(exams_df)
-
-    person_df["vaccine_age"] = [None] * len(person_df)
-    person_df["vaccine_type"] = ["None"] * len(person_df)
-    person_df["home"] = [random.choice(list(HomePlaces)) for _ in range(len(person_df))]
-
-    for df in exams_df, person_df:
-        category_cols = df.select_dtypes(include=['category']).columns
-        for col in category_cols:
-            df[col] = df[col].apply(lambda x: x.value)
-        #df[category_cols] = df[category_cols].apply(lambda x: x.value)
-        df[category_cols] = df[category_cols].astype("str")
-        
     source_manager = SourceManager(
         ColumnDataSource(person_df),
         ColumnDataSource(exams_df),
