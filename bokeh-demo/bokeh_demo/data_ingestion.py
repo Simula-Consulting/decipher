@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
@@ -27,7 +26,7 @@ class NAHandler(BaseEstimator, TransformerMixin):
 
 class CategoryColumnConverter(BaseEstimator, TransformerMixin):
     """Transforms category columns into string columns due to Bokeh not accepting category columns.
-    Also converts to the value of the category and not the category itself.
+    If the column values are enums, they are converted to their values.
     """
 
     category_cols: list[str] = []
@@ -39,9 +38,17 @@ class CategoryColumnConverter(BaseEstimator, TransformerMixin):
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         for col in self.category_cols:
-            X[col] = X[col].apply(lambda x: x.value)
+            X[col] = X[col].apply(self.try_convert_enum)
         X[self.category_cols] = X[self.category_cols].astype("str")
         return X
+
+    @staticmethod
+    def try_convert_enum(x):
+        """Converts enum to its value if it has one, otherwise returns the value itself."""
+        try:
+            return x.value
+        except AttributeError:
+            return x
 
 
 class CreatePersonSource(BaseEstimator, TransformerMixin):
