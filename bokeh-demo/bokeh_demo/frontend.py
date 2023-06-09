@@ -19,6 +19,8 @@ from bokeh.models import (  # type: ignore
     HoverTool,
     Label,
     LayoutDOM,
+    Legend,
+    LegendItem,
     MultiChoice,
     Paragraph,
     RangeSlider,
@@ -127,28 +129,28 @@ class LexisPlot(ToolsMixin):
         # We here implement a workaround, by manually making the legend.
         # In order to add a new legend item, there must be an associated renderer.
         # We here create some just for the sake of the legend, and set them to be invisible.
-        # self.figure.add_layout(
-        #     Legend(
-        #         items=[
-        #             LegendItem(label="Vaccine", renderers=[self.vaccine_line], index=0),
-        #             *(
-        #                 LegendItem(
-        #                     label=label,
-        #                     renderers=[
-        #                         self.figure.circle(
-        #                             [0], [0], color=[color], visible=False
-        #                         )
-        #                     ],
-        #                 )
-        #                 for label, color in zip(
-        #                     settings.label_map[1:], self._marker_colors[1:]
-        #                 )
-        #             ),
-        #         ],
-        #         orientation="horizontal",
-        #     ),
-        #     "above",
-        # )
+        self.figure.add_layout(
+            Legend(
+                items=[
+                    # LegendItem(label="Vaccine", renderers=[self.vaccine_line], index=0),
+                    *(
+                        LegendItem(
+                            label=label,
+                            renderers=[
+                                self.figure.circle(
+                                    [0], [0], color=[color], visible=False
+                                )
+                            ],
+                        )
+                        for label, color in zip(
+                            settings.label_map[1:], self._marker_colors[1:]
+                        )
+                    ),
+                ],
+                orientation="horizontal",
+            ),
+            "above",
+        )
         self.scatter = self.figure.circle(
             self._scatter_x_key,
             self._scatter_y_key,
