@@ -22,7 +22,6 @@ class NAHandler(BaseEstimator, TransformerMixin):
         X = X.copy()
         if self.bool_cols:
             X[self.bool_cols] = X[self.bool_cols].astype("float")
-        X = X.fillna(np.nan)
         return X
 
 
