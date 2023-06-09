@@ -103,7 +103,8 @@ class CreatePersonSource(BaseEstimator, TransformerMixin):
         ]
         return person_df
 
-    def _minmax(self, column):
+    @staticmethod
+    def _minmax(column):
         return (min(column), max(column))
 
 
