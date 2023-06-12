@@ -52,7 +52,8 @@ class CategoryColumnConverter(BaseEstimator, TransformerMixin):
 
 
 class CreatePersonSource(BaseEstimator, TransformerMixin):
-    """Takes in the exams dataframe and returns another dataframe for plotting Lexis plots."""
+    """Takes in the exams dataframe and returns another dataframe (with one row per person)
+    for plotting Lexis plots."""
 
     person_results_map: dict[int, list[int]] = {}
     person_exam_ages_map: dict[int, list[int]] = {}
