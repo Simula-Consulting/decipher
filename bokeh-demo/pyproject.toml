@@ -12,7 +12,6 @@ bokeh = "^3.0.2"
 pydantic = "^1.10.2"
 decipher = {git = "https://github.com/Simula-Consulting/decipher_data_handler"}
 
-
 [tool.poetry.group.dev.dependencies]
 mypy = "^0.982"
 flake8 = "^5.0.4"
@@ -20,12 +19,6 @@ black = {version = "^22.10.0", allow-prereleases = true}
 pytest = "^7.2.0"
 hypothesis = "^6.61.0"
 isort = "^5.11.3"
-
-[tool.poetry.group.examples]
-optional = true
-
-[tool.poetry.group.examples.dependencies]
-matfact = {path = "../matfact", develop = true}
 
 [build-system]
 requires = ["poetry-core"]
