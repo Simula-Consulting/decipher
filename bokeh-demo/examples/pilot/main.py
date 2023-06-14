@@ -8,6 +8,7 @@ The app consist of two main "parts"
 
 import copy
 import json
+import warnings
 from enum import Enum
 
 from bokeh.layouts import column, grid, row
@@ -158,7 +159,15 @@ def extract_people_from_pids(pid_list, exams_df):
 
 def main():
     # PIDS = get_selected_pids_from_landing_page()
-    data_manager = DataManager.from_parquet(settings.data_paths.base_path)
+    try:
+        data_manager = DataManager.from_parquet(settings.data_paths.base_path)
+    except FileNotFoundError:
+        warnings.warn(
+            "Could not find parquet file, falling back to csv. This will affect performance."
+        )
+        data_manager = DataManager.read_from_csv(
+            settings.data_paths.screening_data_path, settings.data_paths.dob_data_path
+        )
     exams_df = data_manager.exams_df
 
     exams_df = extract_people_from_pids([], exams_df)
