@@ -164,6 +164,7 @@ def main():
     exams_df = data_manager.exams_df
 
     exams_df = extract_people_from_pids([], exams_df)
+    exams_df = exams_df.drop(columns=["index"]).reset_index(drop=True)
 
     exams_df = exams_pipeline.fit_transform(exams_df)
     person_df = CreatePersonSource().fit_transform(exams_df)

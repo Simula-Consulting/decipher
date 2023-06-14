@@ -143,23 +143,40 @@ def link_sources(
     person_source: ColumnDataSource, exam_source: ColumnDataSource
 ) -> None:
     def select_person_callback(attr, old, selected_people):
-        all_indices = [
-            i
-            for i, person_index in enumerate(exam_source.data["PID"])
-            if person_index in selected_people
+        exam_indices = [
+            exam_inds
+            for exam_inds, pid in zip(
+                person_source.data["exam_idx"], person_source.data["PID"]
+            )
+            if pid in selected_people
         ]
+        exam_indices = [item for sublist in exam_indices for item in sublist]
 
-        exam_source.selected.indices = all_indices
-        person_source.selected.indices = selected_people
+        exam_source.selected.indices = exam_indices
+        person_source.selected.indices = [
+            i
+            for i, pid in enumerate(person_source.data["PID"])
+            if pid in selected_people
+        ]
+        print("Selected people:", selected_people)
+        print("Selected exams:", exam_indices)
 
     def set_group_selected_callback(attr, old, new):
+        print("NEW:", new)
         if new == []:  # Avoid unsetting when hitting a line in scatter plot
             return
         selected_people = list({exam_source.data["PID"][i] for i in new})
         select_person_callback(None, None, selected_people)
 
+    def person_selector_callback(attr, old, new):
+        # TODO this is a bit hacky, but it works
+        if new == []:  # Avoid unsetting when hitting a line in scatter plot
+            return
+        selected_people = list({person_source.data["PID"][i] for i in new})
+        select_person_callback(None, None, selected_people)
+
     exam_source.selected.on_change("indices", set_group_selected_callback)  # type: ignore
-    person_source.selected.on_change("indices", select_person_callback)  # type: ignore
+    person_source.selected.on_change("indices", person_selector_callback)  # type: ignore
 
 
 @dataclass

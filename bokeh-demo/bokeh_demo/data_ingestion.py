@@ -66,6 +66,9 @@ class CreatePersonSource(BaseEstimator, TransformerMixin):
             pid: (sub_df["age"] / pd.Timedelta(days=365)).to_list()
             for pid, sub_df in X.groupby("PID")
         }
+        self.person_exam_inds_map = {
+            pid: (sub_df.index.to_list()) for pid, sub_df in X.groupby("PID")
+        }
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -96,6 +99,7 @@ class CreatePersonSource(BaseEstimator, TransformerMixin):
         # Adding per person exam result and ages at exam time
         person_df["exam_results"] = person_df["PID"].map(self.person_results_map)
         person_df["exam_time_age"] = person_df["PID"].map(self.person_exam_ages_map)
+        person_df["exam_idx"] = person_df["PID"].map(self.person_exam_inds_map)
 
         # Adding dummy vaccine data for future use
         person_df[["vaccine_age", "vaccine_year", "vaccine_type"]] = None
