@@ -142,7 +142,7 @@ def _combine_scatter_dicts(dictionaries: Sequence[dict]) -> dict:
 def link_sources(
     person_source: ColumnDataSource, exam_source: ColumnDataSource
 ) -> None:
-    def select_person_callback(attr, old, selected_people):
+    def find_and_set_indices(selected_people):
         exam_indices = [
             exam_inds
             for exam_inds, pid in zip(
@@ -158,24 +158,20 @@ def link_sources(
             for i, pid in enumerate(person_source.data["PID"])
             if pid in selected_people
         ]
-        print("Selected people:", selected_people)
-        print("Selected exams:", exam_indices)
 
-    def set_group_selected_callback(attr, old, new):
-        print("NEW:", new)
+    def exam_selector_callback(attr, old, new):
         if new == []:  # Avoid unsetting when hitting a line in scatter plot
             return
         selected_people = list({exam_source.data["PID"][i] for i in new})
-        select_person_callback(None, None, selected_people)
+        find_and_set_indices(selected_people)
 
     def person_selector_callback(attr, old, new):
-        # TODO this is a bit hacky, but it works
         if new == []:  # Avoid unsetting when hitting a line in scatter plot
             return
         selected_people = list({person_source.data["PID"][i] for i in new})
-        select_person_callback(None, None, selected_people)
+        find_and_set_indices(selected_people)
 
-    exam_source.selected.on_change("indices", set_group_selected_callback)  # type: ignore
+    exam_source.selected.on_change("indices", exam_selector_callback)  # type: ignore
     person_source.selected.on_change("indices", person_selector_callback)  # type: ignore
 
 
