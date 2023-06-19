@@ -99,7 +99,7 @@ test-no-codebase = ["Pillow", "matplotlib", "pytest"]
 
 [[package]]
 name = "decipher"
-version = "0.1.31"
+version = "0.1.29"
 description = "Utilities for Decipher"
 category = "main"
 optional = false
@@ -121,8 +121,8 @@ pyarrow = ["pyarrow (>=11.0.0,<12.0.0)"]
 [package.source]
 type = "git"
 url = "https://github.com/Simula-Consulting/decipher_data_handler"
-reference = "HEAD"
-resolved_reference = "64afa5143133df0db4cdbb2e8a4fe5b5f4a4faf1"
+reference = "57f715c"
+resolved_reference = "57f715c9df74b6ba0d1312a674153457aa11c099"
 
 [[package]]
 name = "distlib"
@@ -647,7 +647,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "d7b8b5b10c01b408729d9323ad3b1c0d437517a42d7878e1369a31ee5fb6482b"
+content-hash = "34e7f20caede36d8a77a370809af07db0cccc79cd4c84f27b10d4c3194002117"
 
 [metadata.files]
 attrs = [

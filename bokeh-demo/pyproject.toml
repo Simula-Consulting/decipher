@@ -10,7 +10,7 @@ packages = [{include = "bokeh_demo"}]
 python = ">=3.10,<3.11"
 bokeh = "^3.0.2"
 pydantic = "^1.10.2"
-decipher = {git = "https://github.com/Simula-Consulting/decipher_data_handler"}
+decipher = {git = "https://github.com/Simula-Consulting/decipher_data_handler", rev = "57f715c"}
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.3"
