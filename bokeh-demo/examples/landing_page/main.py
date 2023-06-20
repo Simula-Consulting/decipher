@@ -12,6 +12,8 @@ from bokeh_demo.settings import settings
 
 class LandingPageFiltering:
     def __init__(self):
+        self.column_names = settings.feature_column_names
+
         self.data_manager = self._load_data_manager()
         self.person_df = self.data_manager.person_df
         self.pid_list = self.person_df.index.to_list()
@@ -61,7 +63,7 @@ class LandingPageFiltering:
         return save_button
 
     def _init_age_slider(self) -> RangeSlider:
-        birthyears = self.person_df["FOEDT"].dt.year
+        birthyears = self.person_df[self.column_names.birthdate].dt.year
         start, end = birthyears.min(), birthyears.max()
         age_slider = RangeSlider(
             name="age_slider", start=start, end=end, value=(start, end), step=1
@@ -73,7 +75,9 @@ class LandingPageFiltering:
 
         age_pids = list(
             self.person_df[
-                self.person_df["FOEDT"].dt.year.between(age_min, age_max)
+                self.person_df[self.column_names.birthdate].dt.year.between(
+                    age_min, age_max
+                )
             ].index
         )
         return age_pids
@@ -85,12 +89,16 @@ class LandingPageFiltering:
         if 0 in buttons_active:
             # Has HPV+
             button_pids = button_pids.intersection(
-                set(self.person_df[self.person_df["hr_count"] > 0].index)
+                set(
+                    self.person_df[
+                        self.person_df[self.column_names.hpv_pos_count] > 0
+                    ].index
+                )
             )
         if 1 in buttons_active:
             # Has High Risk Result
             button_pids = button_pids.intersection(
-                self.person_df[self.person_df["risk_max"] > 2].index
+                self.person_df[self.person_df[self.column_names.risk_max] > 2].index
             )
         return list(button_pids)
 

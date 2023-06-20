@@ -11,6 +11,18 @@ class DataPaths(BaseModel):
     dob_data_path: pathlib.Path = base_path / "test_dob_data.csv"
 
 
+class FeatureColumnNames(BaseModel):
+    exam_date: str = "exam_date"
+    age: str = "age"
+    birthdate: str = "FOEDT"
+    PID: str = "PID"
+    risk: str = "risk"
+    hpv_pos_count: str = "count_positive"
+    risk_max: str = "risk_max"
+    n_screenings: str = "number_of_screenings"
+    age_last_exam: str = "age_last_exam"
+
+
 class Settings(BaseSettings):
     number_of_epochs: int = 100
     dataset_path: DirectoryPath = pathlib.Path(__file__).parents[1] / "data/dataset1"
@@ -32,6 +44,8 @@ class Settings(BaseSettings):
     ]
     extra_tools: list[str] = ["tap", "lasso_select"]
     range_padding: float = 0.1
+
+    feature_column_names = FeatureColumnNames()
 
 
 settings = Settings()
