@@ -154,7 +154,7 @@ def get_selected_pids_from_landing_page():
 
 
 def extract_people_from_pids(pid_list, exams_df):
-    return exams_df
+    return exams_df[exams_df[settings.feature_column_names.PID].isin(pid_list)]
 
 
 def load_data_manager() -> DataManager:
@@ -171,11 +171,14 @@ def load_data_manager() -> DataManager:
 
 
 def main():
-    # PIDS = get_selected_pids_from_landing_page()
     data_manager = load_data_manager()
     exams_df = data_manager.exams_df
-
-    exams_df = extract_people_from_pids([], exams_df)
+    try:
+        selected_pids = get_selected_pids_from_landing_page()
+        exams_df = extract_people_from_pids(selected_pids, exams_df)
+    except FileNotFoundError as e:
+        print(str(e))
+        print("Falling back to displaying all people.")
     exams_df = exams_df.drop(columns=["index"]).reset_index(drop=True)
 
     exams_df = exams_pipeline.fit_transform(exams_df)
