@@ -21,6 +21,9 @@ class FeatureColumnNames(BaseModel):
     risk_max: str = "risk_max"
     n_screenings: str = "number_of_screenings"
     age_last_exam: str = "age_last_exam"
+    exam_type: str = "exam_type"
+    hr_cytology: str = "high_risk_cytology"
+    hr_histology: str = "high_risk_histology"
 
 
 class Settings(BaseSettings):

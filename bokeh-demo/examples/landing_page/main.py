@@ -16,6 +16,9 @@ class LandingPageFiltering:
 
         self.data_manager = self._load_data_manager()
         self.person_df = self.data_manager.person_df
+        self.exams_df = self.data_manager.exams_df
+        self._add_HR_screening_indicator()
+
         self.pid_list = self.person_df.index.to_list()
 
         self.age_slider = self._init_age_slider()
@@ -43,6 +46,17 @@ class LandingPageFiltering:
 
     def _n_people(self) -> int:
         return len(self.pid_list)
+
+    def _add_HR_screening_indicator(self) -> None:
+        for exam_type, df in self.exams_df.groupby(self.column_names.exam_type):
+            if exam_type == "HPV":
+                continue
+            column_name = f"high_risk_{exam_type.lower()}"
+            self.person_df.loc[
+                df[df[self.column_names.risk] > 2][self.column_names.PID].unique(),
+                column_name,
+            ] = True
+            self.person_df[column_name].fillna(False, inplace=True)
 
     def apply_filters_and_save(self) -> None:
         self.reset_pid_list()
@@ -118,10 +132,20 @@ class LandingPageFiltering:
             button_pids = button_pids.intersection(
                 self.person_df[self.person_df[self.column_names.risk_max] > 2].index
             )
+        if 2 in buttons_active:
+            # Has High Risk Cytology
+            button_pids = button_pids.intersection(
+                self.person_df[self.person_df[self.column_names.hr_cytology]].index
+            )
+        if 3 in buttons_active:
+            # Has High Risk Histology
+            button_pids = button_pids.intersection(
+                self.person_df[self.person_df[self.column_names.hr_histology]].index
+            )
         return list(button_pids)
 
     def _init_checkbox_buttons(self) -> CheckboxButtonGroup:
-        labels = ["Has HPV+", "Has High Risk Result"]
+        labels = ["HPV+", "HR Result", "HR Cytology", "HR Histology"]
 
         buttons = CheckboxButtonGroup(
             name="checkbox_buttons",
