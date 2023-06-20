@@ -21,6 +21,7 @@ class LandingPageFiltering:
         self.age_slider = self._init_age_slider()
         self.checkbox_buttons = self._init_checkbox_buttons()
         self.min_age_last_exam_slider = self._init_min_age_last_exam_slider()
+        self.min_n_screenings_slider = self._init_min_n_screenings_slider()
 
         self.save_button = self._init_save_button()
         self.person_counter = Div(text=f"Number of people: {self._n_people()}")
@@ -30,6 +31,7 @@ class LandingPageFiltering:
         return [
             self.age_slider,
             self.min_age_last_exam_slider,
+            self.min_n_screenings_slider,
             self.checkbox_buttons,
             self.person_counter,
             self.save_button,
@@ -47,11 +49,17 @@ class LandingPageFiltering:
         age_pids = self.age_slider_pids()
         button_pids = self.checkbox_button_pids()
         min_age_last_exam_pids = self.min_age_last_exam_slider_pids()
+        min_n_screenings_pids = self.min_n_screenings_slider_pids()
 
         self.pid_list = list(
             map(
                 int,
-                list(set(age_pids) & set(button_pids) & set(min_age_last_exam_pids)),
+                list(
+                    set(age_pids)
+                    & set(button_pids)
+                    & set(min_age_last_exam_pids)
+                    & set(min_n_screenings_pids)
+                ),
             )
         )
         self.person_counter.text = f"Number of people: {self._n_people()}"
@@ -59,8 +67,7 @@ class LandingPageFiltering:
 
     def _init_go_button(self) -> Button:
         go_button = Button(label="Go")
-        go_button_js_callback = CustomJS(code="window.location.href = '/pilot'")
-        go_button.js_on_click(go_button_js_callback)
+        go_button.js_on_click(CustomJS(code="window.location.href = '/pilot'"))
         return go_button
 
     def _init_save_button(self) -> Button:
@@ -139,6 +146,24 @@ class LandingPageFiltering:
             title="Minimum age at last exam",
         )
         return min_age_last_exam_slider
+
+    def min_n_screenings_slider_pids(self) -> list[int]:
+        """Function to get the pids that have the selected attributes"""
+        min_n_screenings = self.min_n_screenings_slider.value
+        return self.person_df[
+            self.person_df[self.column_names.n_screenings] >= min_n_screenings
+        ].index.to_list()
+
+    def _init_min_n_screenings_slider(self) -> Slider:
+        min_n_screenings_slider = Slider(
+            name="min_n_screenings",
+            start=0,
+            end=10,
+            value=0,
+            step=1,
+            title="Minimum number of screenings",
+        )
+        return min_n_screenings_slider
 
     def _load_data_manager(self) -> DataManager:
         """Function to load the dataframe from the parquet file.
