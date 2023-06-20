@@ -1,7 +1,6 @@
 import json
 import warnings
 
-import pandas as pd
 from bokeh.io import curdoc
 from bokeh.models import Model
 from bokeh.models.callbacks import CustomJS
@@ -13,7 +12,8 @@ from bokeh_demo.settings import settings
 
 class LandingPageFiltering:
     def __init__(self):
-        self.person_df: pd.DataFrame = self._load_data()
+        self.data_manager = self._load_data_manager()
+        self.person_df = self.data_manager.person_df
         self.pid_list = self.person_df.index.to_list()
 
         self.age_slider = self._init_age_slider()
@@ -100,13 +100,13 @@ class LandingPageFiltering:
         buttons = CheckboxButtonGroup(name="checkbox_buttons", labels=labels)
         return buttons
 
-    def _load_data(self) -> pd.DataFrame:
+    def _load_data_manager(self) -> DataManager:
         """Function to load the dataframe from the parquet file.
         If the parquet file is not found, it will fall back to loading the csv file.
         """
         try:
             data_manager = DataManager.from_parquet(settings.data_paths.base_path)
-        except (FileNotFoundError, ImportError) as e:
+        except (FileNotFoundError, ImportError, ValueError) as e:
             warnings.warn(str(e))
             print("Falling back to .csv loading. This will affect performance.")
             data_manager = DataManager.read_from_csv(
@@ -114,7 +114,7 @@ class LandingPageFiltering:
                 settings.data_paths.dob_data_path,
             )
         # Add column for age in years
-        return data_manager.person_df
+        return data_manager
 
     def save_pids(self):
         with open(settings.selected_pids_path, "w") as f:

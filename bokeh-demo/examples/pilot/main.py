@@ -157,17 +157,22 @@ def extract_people_from_pids(pid_list, exams_df):
     return exams_df
 
 
-def main():
-    # PIDS = get_selected_pids_from_landing_page()
+def load_data_manager() -> DataManager:
     try:
         data_manager = DataManager.from_parquet(settings.data_paths.base_path)
-    except FileNotFoundError:
-        warnings.warn(
-            "Could not find parquet file, falling back to csv. This will affect performance."
-        )
+    except (FileNotFoundError, ImportError, ValueError) as e:
+        warnings.warn(str(e))
+        print("Falling back to .csv loading. This will affect performance.")
         data_manager = DataManager.read_from_csv(
-            settings.data_paths.screening_data_path, settings.data_paths.dob_data_path
+            settings.data_paths.screening_data_path,
+            settings.data_paths.dob_data_path,
         )
+    return data_manager
+
+
+def main():
+    # PIDS = get_selected_pids_from_landing_page()
+    data_manager = load_data_manager()
     exams_df = data_manager.exams_df
 
     exams_df = extract_people_from_pids([], exams_df)
