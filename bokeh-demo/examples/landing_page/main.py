@@ -4,7 +4,7 @@ import warnings
 from bokeh.io import curdoc
 from bokeh.models import Model
 from bokeh.models.callbacks import CustomJS
-from bokeh.models.widgets import Button, CheckboxButtonGroup, Div, RangeSlider
+from bokeh.models.widgets import Button, CheckboxButtonGroup, Div, RangeSlider, Slider
 from decipher.data import DataManager
 
 from bokeh_demo.settings import settings
@@ -20,6 +20,7 @@ class LandingPageFiltering:
 
         self.age_slider = self._init_age_slider()
         self.checkbox_buttons = self._init_checkbox_buttons()
+        self.min_age_last_exam_slider = self._init_min_age_last_exam_slider()
 
         self.save_button = self._init_save_button()
         self.person_counter = Div(text=f"Number of people: {self._n_people()}")
@@ -28,9 +29,10 @@ class LandingPageFiltering:
     def get_roots(self) -> list[Model]:
         return [
             self.age_slider,
+            self.min_age_last_exam_slider,
             self.checkbox_buttons,
-            self.save_button,
             self.person_counter,
+            self.save_button,
             self.go_button,
         ]
 
@@ -44,10 +46,14 @@ class LandingPageFiltering:
         self.reset_pid_list()
         age_pids = self.age_slider_pids()
         button_pids = self.checkbox_button_pids()
+        min_age_last_exam_pids = self.min_age_last_exam_slider_pids()
 
-        self.pid_list = [
-            int(num) for num in list(set(age_pids).intersection(set(button_pids)))
-        ]
+        self.pid_list = list(
+            map(
+                int,
+                list(set(age_pids) & set(button_pids) & set(min_age_last_exam_pids)),
+            )
+        )
         self.person_counter.text = f"Number of people: {self._n_people()}"
         self.save_pids()
 
@@ -66,7 +72,12 @@ class LandingPageFiltering:
         birthyears = self.person_df[self.column_names.birthdate].dt.year
         start, end = birthyears.min(), birthyears.max()
         age_slider = RangeSlider(
-            name="age_slider", start=start, end=end, value=(start, end), step=1
+            name="age_slider",
+            start=start,
+            end=end,
+            value=(start, end),
+            step=1,
+            title="Birth Year",
         )
         return age_slider
 
@@ -105,8 +116,29 @@ class LandingPageFiltering:
     def _init_checkbox_buttons(self) -> CheckboxButtonGroup:
         labels = ["Has HPV+", "Has High Risk Result"]
 
-        buttons = CheckboxButtonGroup(name="checkbox_buttons", labels=labels)
+        buttons = CheckboxButtonGroup(
+            name="checkbox_buttons",
+            labels=labels,
+        )
         return buttons
+
+    def min_age_last_exam_slider_pids(self) -> list[int]:
+        """Function to get the pids that have the selected attributes"""
+        min_age_last_exam = self.min_age_last_exam_slider.value
+        return self.person_df[
+            self.person_df[self.column_names.age_last_exam] >= min_age_last_exam
+        ].index.to_list()
+
+    def _init_min_age_last_exam_slider(self) -> Slider:
+        min_age_last_exam_slider = Slider(
+            name="min_age_last_exam",
+            start=0,
+            end=100,
+            value=0,
+            step=1,
+            title="Minimum age at last exam",
+        )
+        return min_age_last_exam_slider
 
     def _load_data_manager(self) -> DataManager:
         """Function to load the dataframe from the parquet file.
