@@ -1,6 +1,6 @@
 import itertools
 from enum import Enum, auto
-from typing import Callable, Collection, Generator, Iterable, Sequence, cast
+from typing import Any, Callable, Collection, Generator, Iterable, Sequence, cast
 
 import numpy as np
 
@@ -425,6 +425,8 @@ class LabelSelectedMixin:
 
 
 class HistogramPlot(LabelSelectedMixin):
+    """Display a histogram of the selected results."""
+
     def __init__(self, source_manager: SourceManager):
         self.source_manager = source_manager
         self._number_of_individuals = len(
@@ -456,8 +458,9 @@ class HistogramPlot(LabelSelectedMixin):
 
         self._set_properties()
 
-    def _set_properties(self):
-        properties = {
+    def _set_properties(self) -> None:
+        """Set properties of the figure."""
+        properties: dict[str, dict[str, Any]] = {
             "y_range": {"start": 0},
             "xaxis": {
                 "axis_label": "State",
@@ -472,7 +475,11 @@ class HistogramPlot(LabelSelectedMixin):
             for option, value in module_options.items():
                 setattr(getattr(self.figure, module), option, value)
 
-    def compute_histogram_data(self, selected_indices: Iterable[int]):
+    def compute_histogram_data(self, selected_indices: Iterable[int]) -> list[int]:
+        """Compute histogram data from selected indices.
+
+        The output is a list of counts for each state, sorted by state. The length is
+        the number of states, which is 4."""
         state_occurrences = self._count_state_occurrences(
             [
                 [
@@ -488,7 +495,9 @@ class HistogramPlot(LabelSelectedMixin):
         ]
 
     @staticmethod
-    def _count_state_occurrences(nested_list_of_states):
+    def _count_state_occurrences(
+        nested_list_of_states: list[list[int]],
+    ) -> dict[int, int]:
         out = {1: 0, 2: 0, 3: 0, 4: 0}
         for list_of_states in nested_list_of_states:
             for state in list_of_states:
