@@ -5,11 +5,9 @@ import itertools
 import operator
 from collections import defaultdict
 from collections.abc import Callable, Container, Iterable, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Any, TypeVar, cast, overload
 
-import numpy as np
-import numpy.typing as npt
 from bokeh.models import AllIndices, CDSView, ColumnDataSource, CustomJS
 from bokeh.models import Filter as BokehFilter
 from bokeh.models import (
@@ -20,13 +18,8 @@ from bokeh.models import (
     UnionFilter,
 )
 
-from .exam_data import ExamResult, VaccineType
-from .faker import faker
-from .settings import settings
 
 ## Time Converter ##
-
-
 @dataclass
 class TimeConverter:
     """Convert between time point index and age."""
@@ -115,154 +108,6 @@ def _calculate_delta(
     return max(incorrect_estimates, default=0) - probabilities[correct_index]
 
 
-@dataclass
-class Person:
-    index: int
-    year_of_birth: float  # Float to allow granular date
-    vaccine_age: float | None
-    vaccine_type: VaccineType | None
-    exam_results: Sequence[int]
-    detailed_exam_results: Sequence[ExamResult | None]
-    predicted_exam_result: int
-    prediction_time: int
-    prediction_probabilities: Sequence[float]
-
-    def as_source_dict(self) -> dict[str, Any]:
-        """Return a dict representation appropriate for a ColumnDataSource."""
-        base_dict = asdict(self)
-
-        # We must have explicit x-values for the plotting
-        exam_time_age = list(
-            time_converter.time_point_to_age(range(len(self.exam_results)))
-        )
-
-        # Delta score of the prediction
-        delta = _calculate_delta(
-            self.prediction_probabilities,
-            self.exam_results[self.prediction_time] - 1,
-        )
-
-        # Generate the predicted states
-        predicted_exam_results = list(self.exam_results)
-        predicted_exam_results[self.prediction_time] = self.predicted_exam_result
-
-        return (
-            base_dict
-            | {
-                "exam_time_age": exam_time_age,
-                "delta": delta,
-                "predicted_exam_results": predicted_exam_results,
-            }
-            | self.get_lexis_endpoints()
-        )
-
-    def get_lexis_endpoints(self):
-        """Return endpoints for the lexis life line"""
-        lexis_line_endpoints_person_index = [self.index] * 2
-
-        # The endpoints' indices in the exam result list
-        endpoints_indices = _get_endpoint_indices(self.exam_results)
-        # Indices to age
-        endpoints_age = list(time_converter.time_point_to_age(endpoints_indices))
-        endpoints_year = [self.year_of_birth + age for age in endpoints_age]
-
-        # Vaccine life line endpoints
-        endpoints_age_vaccine = (
-            (self.vaccine_age, endpoints_age[-1])
-            if self.vaccine_age is not None
-            else ()
-        )
-        endpoints_year_vaccine = [
-            self.year_of_birth + age for age in endpoints_age_vaccine
-        ]
-
-        return {
-            "lexis_line_endpoints_person_index": lexis_line_endpoints_person_index,
-            "lexis_line_endpoints_age": endpoints_age,
-            "lexis_line_endpoints_year": endpoints_year,
-            "vaccine_line_endpoints_age": endpoints_age_vaccine,
-            "vaccine_line_endpoints_year": endpoints_year_vaccine,
-        }
-
-    def as_scatter_source_dict(self) -> dict[str, list[Any]]:
-        exam_time_age = list(
-            time_converter.time_point_to_age(range(len(self.exam_results)))
-        )
-        exam_time_year = (self.year_of_birth + age for age in exam_time_age)
-
-        def get_nonzero(seq):
-            return [
-                element for i, element in enumerate(seq) if self.exam_results[i] != 0
-            ]
-
-        return {
-            key: get_nonzero(value)
-            for key, value in (
-                ("age", exam_time_age),
-                ("year", exam_time_year),
-                ("state", self.exam_results),
-                # Used for legend generation
-                (
-                    "state_label",
-                    [settings.label_map[state] for state in self.exam_results],
-                ),
-                ("person_index", itertools.repeat(self.index, len(self.exam_results))),
-            )
-        } | {
-            "exam_type": [
-                exam.type.value for exam in self.detailed_exam_results if exam
-            ],
-            "exam_result": [
-                exam.result.value for exam in self.detailed_exam_results if exam
-            ],
-        }
-
-
-@dataclass
-class PredictionData:
-    X_train: npt.NDArray[np.int_]
-    X_test: npt.NDArray[np.int_]
-    X_test_masked: npt.NDArray[np.int_]
-    time_of_prediction: Sequence[int]
-    true_state_at_prediction: int
-    predicted_probabilities: Sequence[Sequence[float]]
-    predicted_states: Sequence[int]
-
-    def extract_people(self) -> list[Person]:
-        # We take the individuals from the test set, not the train set, as
-        # it is for these people we have prediction results.
-        number_of_individuals, number_of_time_steps = self.X_test.shape
-
-        people = []
-        for i in range(number_of_individuals):
-            # Generate the predicted exam history by changing the state at exam time
-            exam_result = self.X_test[i]
-            prediction_time = self.time_of_prediction[i]
-            prediction_state = self.predicted_states[i]
-
-            detailed_exam_result = faker.get_fake_detailed_result(exam_result)
-
-            year_of_birth = faker.get_fake_year_of_birth(i)
-            vaccine_age = faker.get_fake_vaccine_age()
-            vaccine_type = faker.get_fake_vaccine_type() if vaccine_age else None
-
-            people.append(
-                Person(
-                    index=i,
-                    year_of_birth=year_of_birth,
-                    vaccine_age=vaccine_age,
-                    vaccine_type=vaccine_type,
-                    exam_results=exam_result,
-                    detailed_exam_results=detailed_exam_result,
-                    predicted_exam_result=prediction_state,
-                    prediction_time=prediction_time,
-                    prediction_probabilities=self.predicted_probabilities[i],
-                )
-            )
-
-        return people
-
-
 def _combine_dicts(dictionaries: Iterable[dict]) -> dict:
     """Combine dictionaries by making lists of observed values.
 
@@ -297,24 +142,37 @@ def _combine_scatter_dicts(dictionaries: Sequence[dict]) -> dict:
 def link_sources(
     person_source: ColumnDataSource, exam_source: ColumnDataSource
 ) -> None:
-    def select_person_callback(attr, old, selected_people):
-        all_indices = [
+    def find_and_set_indices(selected_people):
+        exam_indices = [
+            exam_inds
+            for exam_inds, pid in zip(
+                person_source.data["exam_idx"], person_source.data["PID"]
+            )
+            if pid in selected_people
+        ]
+        exam_indices = [item for sublist in exam_indices for item in sublist]
+
+        exam_source.selected.indices = exam_indices
+        person_source.selected.indices = [
             i
-            for i, person_index in enumerate(exam_source.data["person_index"])
-            if person_index in selected_people
+            for i, pid in enumerate(person_source.data["PID"])
+            if pid in selected_people
         ]
 
-        exam_source.selected.indices = all_indices
-        person_source.selected.indices = selected_people
-
-    def set_group_selected_callback(attr, old, new):
+    def exam_selector_callback(attr, old, new):
         if new == []:  # Avoid unsetting when hitting a line in scatter plot
             return
-        selected_people = list({exam_source.data["person_index"][i] for i in new})
-        select_person_callback(None, None, selected_people)
+        selected_people = list({exam_source.data["PID"][i] for i in new})
+        find_and_set_indices(selected_people)
 
-    exam_source.selected.on_change("indices", set_group_selected_callback)  # type: ignore
-    person_source.selected.on_change("indices", select_person_callback)  # type: ignore
+    def person_selector_callback(attr, old, new):
+        if new == []:  # Avoid unsetting when hitting a line in scatter plot
+            return
+        selected_people = list({person_source.data["PID"][i] for i in new})
+        find_and_set_indices(selected_people)
+
+    exam_source.selected.on_change("indices", exam_selector_callback)  # type: ignore
+    person_source.selected.on_change("indices", person_selector_callback)  # type: ignore
 
 
 @dataclass
@@ -376,7 +234,7 @@ class BaseFilter:
 
         exam_to_person_mapping : a sequence with the person index of each exam, i.e.
             element number n contains the index of the person belonging to exam n.
-            Typically, this is retrieved from a source as `exam_source.data["person_index"]`
+            Typically, this is retrieved from a source as `exam_source.data["PID"]`
         """
         return [
             i
@@ -392,7 +250,7 @@ class BaseFilter:
 
         exam_to_person_mapping : a sequence with the person index of each exam, i.e.
             element number n contains the index of the person belonging to exam n.
-            Typically, this is retrieved from a source as `exam_source.data["person_index"]`
+            Typically, this is retrieved from a source as `exam_source.data["PID"]`
         """
         return list({exam_to_person_mapping[i] for i in exam_indices})
 
@@ -437,9 +295,7 @@ class PersonSimpleFilter(SimpleFilter):
         active: bool = False,
         inverted: bool = False,
     ) -> None:
-        exam_to_person = cast(
-            Sequence[int], source_manager.exam_source.data["person_index"]
-        )
+        exam_to_person = cast(Sequence[int], source_manager.exam_source.data["PID"])
         exam_indices = self._person_to_exam_indices(person_indices, exam_to_person)
         super().__init__(
             person_indices,
@@ -460,9 +316,7 @@ class ExamSimpleFilter(SimpleFilter):
         active: bool = False,
         inverted: bool = False,
     ) -> None:
-        exam_to_person = cast(
-            Sequence[int], source_manager.exam_source.data["person_index"]
-        )
+        exam_to_person = cast(Sequence[int], source_manager.exam_source.data["PID"])
         person_indices = self._exam_to_person_indices(exam_indices, exam_to_person)
         super().__init__(
             person_indices,
@@ -494,7 +348,7 @@ class RangeFilter(BaseFilter):
         self.field = field
         self.selected = self._get_selection_indices()
         self.exams_selected = self._person_to_exam_indices(
-            self.selected, self.source_manager.exam_source.data["person_index"]
+            self.selected, self.source_manager.exam_source.data["PID"]
         )
 
     def _get_selection_indices(self) -> list[int]:
@@ -516,7 +370,7 @@ class RangeFilter(BaseFilter):
             self._range = new
             self.selected = self._get_selection_indices()
             self.exams_selected = self._person_to_exam_indices(
-                self.selected, self.source_manager.exam_source.data["person_index"]
+                self.selected, self.source_manager.exam_source.data["PID"]
             )
             self.source_manager.update_views()
 
@@ -580,7 +434,7 @@ class CategoricalFilter(BaseFilter):
 
         self.selected = self._get_selection_indices()
         self.exams_selected = self._person_to_exam_indices(
-            self.selected, self.source_manager.exam_source.data["person_index"]
+            self.selected, self.source_manager.exam_source.data["PID"]
         )
 
     def _get_selection_indices(self) -> list[int]:
@@ -597,7 +451,7 @@ class CategoricalFilter(BaseFilter):
             self._categories = new
             self.selected = self._get_selection_indices()
             self.exams_selected = self._person_to_exam_indices(
-                self.selected, self.source_manager.exam_source.data["person_index"]
+                self.selected, self.source_manager.exam_source.data["PID"]
             )
             self.source_manager.update_views()
 
@@ -812,25 +666,6 @@ class SourceManager:
             ]
             or [AllIndices()]
         )
-
-    @classmethod
-    def from_people(cls, people: Sequence[Person]) -> SourceManager:
-        """Generate a SourceManger from a sequence of `Person`s"""
-        return SourceManager(
-            cls.source_from_people(people), cls.scatter_source_from_people(people)
-        )
-
-    @staticmethod
-    def source_from_people(people: Sequence[Person]) -> ColumnDataSource:
-        source_dict = _combine_dicts((person.as_source_dict() for person in people))
-        return ColumnDataSource(source_dict)
-
-    @staticmethod
-    def scatter_source_from_people(people: Sequence[Person]) -> ColumnDataSource:
-        source_dict = _combine_scatter_dicts(
-            [person.as_scatter_source_dict() for person in people]
-        )
-        return ColumnDataSource(source_dict)
 
     def get_vaccine_range(self) -> tuple[float, float]:
         """Return min and max age of vaccine administration."""

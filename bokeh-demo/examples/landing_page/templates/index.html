@@ -43,18 +43,21 @@
         margin-bottom: 1em;
         width: 100%;
       }
-      button[type="submit"] {
-        background: #333;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        font-size: 1.2em;
-        padding: 0.5em 2em;
-        cursor: pointer;
-        transition: all 0.3s ease;
+      .footer {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        width: 200px;
+        text-align: right;
+        margin-bottom: 20px;
+        margin-right: 20px;
       }
-      button[type="submit"]:hover {
-        background: #777;
+
+      /* Style for the footer image */
+      .footer img {
+        width: 100%;
+        height: 100%;
+        object-fit: scale-down;
       }
     </style>
   </head>
@@ -69,6 +72,10 @@
       </div>
       {%        endfor %}
       {%      endfor %}
+
+  <div class="footer">
+    <img src="landing_page/static/images/SC_logo.png" alt="Footer Image">
+  </div>
 
   </body>
 </div>

@@ -3,6 +3,7 @@ from enum import Enum, auto
 from typing import Callable, Collection, Generator, Iterable, Sequence, cast
 
 import numpy as np
+import pandas as pd
 
 # mypy complains that bokeh.models does not have these attributes.
 # We were unsuccessful in finding the origin of the bug.
@@ -14,7 +15,6 @@ from bokeh.layouts import column, grid, row
 from bokeh.models import (  # type: ignore
     Circle,
     CustomJSExpr,
-    CustomJSHover,
     DataTable,
     HoverTool,
     Label,
@@ -76,11 +76,12 @@ class LexisPlot(ToolsMixin):
     _lexis_line_x_key: str = "lexis_line_endpoints_age"
     _vaccine_line_x_key: str = "vaccine_line_endpoints_age"
     _vaccine_line_y_key: str = "lexis_line_endpoints_person_index"
-    _scatter_y_key: str = "person_index"
+    _scatter_y_key: str = "PID"
     _scatter_x_key: str = "age"
+    _y_axis_type: str = "auto"
 
-    _marker_key: str = "state"
-    _marker_color_key: str = "state"
+    _marker_key: str = "risk"
+    _marker_color_key: str = "risk"
 
     # TODO: move to config class or settings
     _markers: list[str | None] = [None, "square", "circle", "diamond"]
@@ -94,6 +95,7 @@ class LexisPlot(ToolsMixin):
             title=self._title,
             x_axis_label=self._x_label,
             y_axis_label=self._y_label,
+            y_axis_type=self._y_axis_type,
             tools=self._get_tools(),
             x_range=pad_range(
                 self.get_min_max((self._lexis_line_x_key, self._vaccine_line_x_key))
@@ -108,14 +110,14 @@ class LexisPlot(ToolsMixin):
             source=source_manager.person_source,
             view=source_manager.view,
         )
-        self.vaccine_line = self.figure.multi_line(
-            self._vaccine_line_x_key,
-            self._vaccine_line_y_key,
-            source=source_manager.person_source,
-            view=source_manager.view,
-            line_width=self._vaccine_line_width,
-            color=self._vaccine_line_color,
-        )
+        # self.vaccine_line = self.figure.multi_line(
+        #     self._vaccine_line_x_key,
+        #     self._vaccine_line_y_key,
+        #     source=source_manager.person_source,
+        #     view=source_manager.view,
+        #     line_width=self._vaccine_line_width,
+        #     color=self._vaccine_line_color,
+        # )
 
         # Legend
         # TODO: Make more general by using mixin
@@ -130,7 +132,7 @@ class LexisPlot(ToolsMixin):
         self.figure.add_layout(
             Legend(
                 items=[
-                    LegendItem(label="Vaccine", renderers=[self.vaccine_line], index=0),
+                    # LegendItem(label="Vaccine", renderers=[self.vaccine_line], index=0),
                     *(
                         LegendItem(
                             label=label,
@@ -157,14 +159,14 @@ class LexisPlot(ToolsMixin):
             color={
                 "expr": CustomJSExpr(
                     args={"colors": self._marker_colors},
-                    code=f"return this.data.{self._marker_color_key}.map(i => colors[i]);",  # noqa: E501
+                    code=f"return Array.from(this.data.{self._marker_color_key}).map(i => colors[i]);",  # noqa: E501
                 )
             },
         )
 
         # Tooltip for detailed exam data
         hover_tool = HoverTool(
-            tooltips=[("Type", "@exam_type"), ("Result", "@exam_result")],
+            tooltips=[("Type", "@exam_type"), ("Result", "@exam_diagnosis")],
             renderers=[self.scatter],
         )
         self.figure.add_tools(hover_tool)
@@ -191,9 +193,10 @@ class LexisPlot(ToolsMixin):
 
 class LexisPlotAge(LexisPlot):
     _y_label: str = "Year"
-    _scatter_y_key = "year"
+    _scatter_y_key = "exam_date"
     _lexis_line_y_key = "lexis_line_endpoints_year"
     _vaccine_line_y_key: str = "vaccine_line_endpoints_year"
+    _y_axis_type = "datetime"
 
 
 def get_position_list(array: Sequence) -> Sequence[int]:
@@ -223,7 +226,7 @@ class TrajectoriesPlot(ToolsMixin):
             x_axis_label="Age",
             tools=self._get_tools(),
             x_range=pad_range((min(x_axis_data), max(x_axis_data))),
-            y_range=pad_range((0, len(settings.label_map) - 1)),
+            y_range=pad_range((1, len(settings.label_map) - 1)),
         )
 
         self.exam_plot = self.figure.multi_line(
@@ -232,30 +235,30 @@ class TrajectoriesPlot(ToolsMixin):
             source=source_manager.person_source,
             view=source_manager.combined_view,
             color=self._exam_color,
-            legend_label="Actual observation",
+            legend_label="Observation",
         )
-        self.predicted_exam_plot = self.figure.multi_line(
-            "exam_time_age",
-            "predicted_exam_results",
-            source=source_manager.person_source,
-            view=source_manager.combined_view,
-            color=self._predicted_exam_color,
-            legend_label="Predicted observation",
-        )
+        # self.predicted_exam_plot = self.figure.multi_line(
+        #     "exam_time_age",
+        #     "predicted_exam_results",
+        #     source=source_manager.person_source,
+        #     view=source_manager.combined_view,
+        #     color=self._predicted_exam_color,
+        #     legend_label="Predicted observation",
+        # )
 
         # Simple tooltip
-        list_formatter = CustomJSHover(
-            code="""
-        return `[${value.map(n => n.toFixed(2)).join(', ')}]`
-        """
-        )
+        # list_formatter = CustomJSHover(
+        #     code="""
+        # return `[${value.map(n => n.toFixed(2)).join(', ')}]`
+        # """
+        # )
         hover_tool = HoverTool(
             tooltips=[
                 ("Id", "$index"),
                 ("Vaccine", "@vaccine_age{0.0} (@vaccine_type)"),
-                ("Probabilities", "@prediction_probabilities{custom}"),
+                # ("Probabilities", "@prediction_probabilities{custom}"),
             ],
-            formatters={"@prediction_probabilities": list_formatter},
+            # formatters={"@prediction_probabilities": list_formatter},
         )
         self.figure.add_tools(hover_tool)
 
@@ -395,6 +398,7 @@ class LabelSelectedMixin:
         average_screening_interval = self._compute_average_screening_interval(
             nested_age_at_exam
         )
+
         return (
             f" Individuals selected: {len(selected_indices)} \n"
             f" Individuals with vaccinations: {n_vaccines} \n"
@@ -492,7 +496,8 @@ class HistogramPlot(LabelSelectedMixin):
         out = {1: 0, 2: 0, 3: 0, 4: 0}
         for list_of_states in nested_list_of_states:
             for state in list_of_states:
-                out[state] += 1
+                if pd.notna(state):
+                    out[state] += 1
         return out
 
     def get_update_histogram_callback(self) -> Callable[..., None]:
@@ -564,10 +569,7 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
 
     match (FILTER_TO_FilterValueUIElement_MAPPING[type(filter)]):
         case FilterValueUIElement.RangeSlider:
-            start, end = filter.source_manager.get_vaccine_range()
-            value_element = RangeSlider(
-                value=(0, 100), start=np.floor(start), end=np.ceil(end), width=None
-            )
+            value_element = RangeSlider(value=(0, 100), start=0, end=100, width=None)
             value_element.on_change("value", filter.get_set_value_callback())
         case FilterValueUIElement.MultiChoice:
             # We guarantuee CategoricalFilter inside this match
