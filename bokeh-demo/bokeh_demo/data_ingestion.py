@@ -55,8 +55,10 @@ class CreatePersonSource(BaseEstimator, TransformerMixin):
     """Takes in the exams dataframe and returns another dataframe (with one row per person)
     for plotting Lexis plots."""
 
-    person_results_map: dict[int, list[int]] = {}
-    person_exam_ages_map: dict[int, list[int]] = {}
+    # Create a map from person id to exam results, ages at exams, and the indices of the exams
+    person_results_map: dict[int, list[int]]
+    person_exam_ages_map: dict[int, list[int]]
+    person_exam_inds_map: dict[int, list[int]]
 
     def fit(self, X, y=None) -> CreatePersonSource:
         self.person_results_map = {
