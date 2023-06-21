@@ -174,6 +174,8 @@ def main():
     exams_df = exams_df.drop(columns=["index"]).reset_index(drop=True)
 
     exams_df = exams_pipeline.fit_transform(exams_df)
+    # Warning!
+    # This is not the same DataFrame as `DataManager.person_df`.
     person_df = CreatePersonSource().fit_transform(exams_df)
 
     source_manager = SourceManager(
