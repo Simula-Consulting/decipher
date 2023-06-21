@@ -1,9 +1,9 @@
 import itertools
+from collections import Counter
 from enum import Enum, auto
-from typing import Callable, Collection, Generator, Iterable, Sequence, cast
+from typing import Any, Callable, Collection, Generator, Iterable, Sequence, cast
 
 import numpy as np
-import pandas as pd
 
 # mypy complains that bokeh.models does not have these attributes.
 # We were unsuccessful in finding the origin of the bug.
@@ -434,7 +434,8 @@ class LabelSelectedMixin:
         """Get a callback function for updating the label.
 
         The label update callback is attached to multiple quantities, so we do not
-        use the supplied old/new values, but use directly the state in source_manager."""
+        use the supplied old/new values, but use directly the state in source_manager.
+        """
 
         def update_label_callback(attr, old, new) -> None:
             # If nothing is selected, interpret it as everything is selected.
@@ -454,6 +455,8 @@ class LabelSelectedMixin:
 
 
 class HistogramPlot(LabelSelectedMixin):
+    """Display a histogram of the selected results."""
+
     def __init__(self, source_manager: SourceManager):
         self.source_manager = source_manager
         self._number_of_individuals = len(
@@ -485,8 +488,9 @@ class HistogramPlot(LabelSelectedMixin):
 
         self._set_properties()
 
-    def _set_properties(self):
-        properties = {
+    def _set_properties(self) -> None:
+        """Set properties of the figure."""
+        properties: dict[str, dict[str, Any]] = {
             "y_range": {"start": 0},
             "xaxis": {
                 "axis_label": "State",
@@ -501,29 +505,30 @@ class HistogramPlot(LabelSelectedMixin):
             for option, value in module_options.items():
                 setattr(getattr(self.figure, module), option, value)
 
-    def compute_histogram_data(self, selected_indices: Iterable[int]):
-        state_occurrences = self._count_state_occurrences(
-            [
-                [
-                    yi
-                    for i in selected_indices
-                    for yi in self.source_manager.person_source.data["exam_results"][i]
-                    if yi != 0
-                ]
-            ]
+    def compute_histogram_data(self, selected_indices: Iterable[int]) -> list[int]:
+        """Compute histogram data from selected indices.
+
+        The selected_indices refer to the indices of the person_source.
+        The output is a list of counts for each state, sorted by state. The length is
+        the number of states, which is 4."""
+        return self._compute_histogram_data(
+            selected_indices=selected_indices,
+            class_list=list(range(1, 5)),
+            results_per_person=cast(
+                list[list[int]], self.source_manager.person_source.data["exam_results"]
+            ),
         )
-        return [
-            value for _, value in sorted(state_occurrences.items(), key=lambda x: x[0])
-        ]
 
     @staticmethod
-    def _count_state_occurrences(nested_list_of_states):
-        out = {1: 0, 2: 0, 3: 0, 4: 0}
-        for list_of_states in nested_list_of_states:
-            for state in list_of_states:
-                if pd.notna(state):
-                    out[state] += 1
-        return out
+    def _compute_histogram_data(
+        selected_indices: Iterable[int],
+        class_list: list,
+        results_per_person: list[list[int]],
+    ) -> list[int]:
+        state_occurrences = Counter(
+            yi for i in selected_indices for yi in results_per_person[i] if yi != 0
+        )
+        return [state_occurrences[i] for i in class_list]
 
     def get_update_histogram_callback(self) -> Callable[..., None]:
         """Get a callback function for updating the histogram.
@@ -535,7 +540,9 @@ class HistogramPlot(LabelSelectedMixin):
             # If nothing is selected, interpret it as everything is selected.
             selected_indices = set(
                 self.source_manager.person_source.selected.indices  # type: ignore
-                or range(self._number_of_individuals)
+                or range(
+                    self._number_of_individuals
+                )  # TODO: will likely fail on non-consecutive PIDs
             )
             filtered_indices = set(
                 parse_filter_to_indices(
