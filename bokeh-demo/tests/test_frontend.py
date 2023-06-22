@@ -30,6 +30,9 @@ histogram_test_data = namedtuple(
         histogram_test_data([1], [1, 2, 3, 4], [[1, 3], [2, 4]], [0, 1, 0, 1]),
         histogram_test_data([0], [3, 4], [[1, 3], [2, 4]], [1, 0]),
         histogram_test_data([0, 1], [1, 2, 3, 4], [[1, 3], [2, 4]], [1, 1, 1, 1]),
+        histogram_test_data(
+            [0], ["fish", "no-fish", "dog"], [["dog", "dog"], ["fish"]], [0, 0, 2]
+        ),
     ],
 )
 def test_histogram_plot(test_case: histogram_test_data) -> None:
