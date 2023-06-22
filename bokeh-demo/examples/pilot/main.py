@@ -38,11 +38,15 @@ from bokeh_demo.frontend import (
 from bokeh_demo.settings import settings
 
 
-def example_app(source_manager):
+def example_app(source_manager: SourceManager):
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
     traj = TrajectoriesPlot(source_manager)
-    hist = HistogramPlot(source_manager)
+    hist = HistogramPlot(
+        source_manager.person_source.data["exam_results"],
+        [1, 2, 3, 4],
+        source_manager,
+    )
 
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
