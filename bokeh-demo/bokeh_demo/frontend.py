@@ -68,13 +68,16 @@ class ToolsMixin:
         return settings.default_tools + settings.extra_tools
 
 
-timedelta_tick_formatter = CustomJSTickFormatter(
-    code="""
+def get_timedelta_tick_formatter() -> CustomJSTickFormatter:
+    """Format a timedelta axis to years.
+
+    Must be a factory, if not multiple documents at the same time will fail."""
+    return CustomJSTickFormatter(
+        code="""
             const millisecondsInYear = 365.25 * 24 * 60 * 60 * 1000;
             return (tick / millisecondsInYear).toFixed(1);
         """
-)
-"""Format a timedelta axis to years."""
+    )
 
 
 class LexisPlot(ToolsMixin):
@@ -91,8 +94,8 @@ class LexisPlot(ToolsMixin):
     _y_axis_type: str = "linear"
     _x_axis_type: str = "datetime"
 
-    _y_axis_tick_formatter = None
-    _x_axis_tick_formatter = timedelta_tick_formatter
+    _y_axis_tick_format_getter = None
+    _x_axis_tick_format_getter = get_timedelta_tick_formatter
 
     _marker_key: str = "risk"
     _marker_color_key: str = "risk"
@@ -119,10 +122,10 @@ class LexisPlot(ToolsMixin):
                 self.get_min_max((self._lexis_line_y_key, self._vaccine_line_y_key))
             ),
         )
-        if self._x_axis_tick_formatter is not None:
-            self.figure.xaxis.formatter = self._x_axis_tick_formatter
-        if self._y_axis_tick_formatter is not None:
-            self.figure.yaxis.formatter = self._y_axis_tick_formatter
+        if self.__class__._x_axis_tick_format_getter is not None:
+            self.figure.xaxis.formatter = self.__class__._x_axis_tick_format_getter()
+        if self.__class__._y_axis_tick_format_getter is not None:
+            self.figure.yaxis.formatter = self.__class__._y_axis_tick_format_getter()
         self.life_line = self.figure.multi_line(
             self._lexis_line_x_key,
             self._lexis_line_y_key,
