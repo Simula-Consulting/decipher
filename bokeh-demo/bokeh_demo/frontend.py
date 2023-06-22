@@ -15,6 +15,7 @@ from bokeh.layouts import column, grid, row
 from bokeh.models import (  # type: ignore
     Circle,
     CustomJSExpr,
+    CustomJSTickFormatter,
     DataTable,
     HoverTool,
     Label,
@@ -67,6 +68,18 @@ class ToolsMixin:
         return settings.default_tools + settings.extra_tools
 
 
+def get_timedelta_tick_formatter() -> CustomJSTickFormatter:
+    """Format a timedelta axis to years.
+
+    Must be a factory, if not multiple documents at the same time will fail."""
+    return CustomJSTickFormatter(
+        code="""
+            const millisecondsInYear = 365.25 * 24 * 60 * 60 * 1000;
+            return (tick / millisecondsInYear).toFixed(1);
+        """
+    )
+
+
 class LexisPlot(ToolsMixin):
     _title: str = "Lexis plot"
     _x_label: str = "Age"
@@ -78,7 +91,11 @@ class LexisPlot(ToolsMixin):
     _vaccine_line_y_key: str = "lexis_line_endpoints_person_index"
     _scatter_y_key: str = "PID"
     _scatter_x_key: str = "age"
-    _y_axis_type: str = "auto"
+    _y_axis_type: str = "linear"
+    _x_axis_type: str = "datetime"
+
+    _y_axis_tick_format_getter = None
+    _x_axis_tick_format_getter = get_timedelta_tick_formatter
 
     _marker_key: str = "risk"
     _marker_color_key: str = "risk"
@@ -96,6 +113,7 @@ class LexisPlot(ToolsMixin):
             x_axis_label=self._x_label,
             y_axis_label=self._y_label,
             y_axis_type=self._y_axis_type,
+            x_axis_type=self._x_axis_type,
             tools=self._get_tools(),
             x_range=pad_range(
                 self.get_min_max((self._lexis_line_x_key, self._vaccine_line_x_key))
@@ -104,6 +122,10 @@ class LexisPlot(ToolsMixin):
                 self.get_min_max((self._lexis_line_y_key, self._vaccine_line_y_key))
             ),
         )
+        if self.__class__._x_axis_tick_format_getter is not None:
+            self.figure.xaxis.formatter = self.__class__._x_axis_tick_format_getter()
+        if self.__class__._y_axis_tick_format_getter is not None:
+            self.figure.yaxis.formatter = self.__class__._y_axis_tick_format_getter()
         self.life_line = self.figure.multi_line(
             self._lexis_line_x_key,
             self._lexis_line_y_key,
