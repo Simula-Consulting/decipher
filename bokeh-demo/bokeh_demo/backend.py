@@ -234,7 +234,7 @@ class BaseFilter:
 
         exam_to_person_mapping : a sequence with the person index of each exam, i.e.
             element number n contains the index of the person belonging to exam n.
-            Typically, this is retrieved from a source as `exam_source.data["PID"]`
+            Typically, this is retrieved from a source as `exam_source.data["person_index"]`
         """
         return [
             i
@@ -250,7 +250,7 @@ class BaseFilter:
 
         exam_to_person_mapping : a sequence with the person index of each exam, i.e.
             element number n contains the index of the person belonging to exam n.
-            Typically, this is retrieved from a source as `exam_source.data["PID"]`
+            Typically, this is retrieved from a source as `exam_source.data["person_index"]`
         """
         return list({exam_to_person_mapping[i] for i in exam_indices})
 
@@ -295,7 +295,9 @@ class PersonSimpleFilter(SimpleFilter):
         active: bool = False,
         inverted: bool = False,
     ) -> None:
-        exam_to_person = cast(Sequence[int], source_manager.exam_source.data["PID"])
+        exam_to_person = cast(
+            Sequence[int], source_manager.exam_source.data["person_index"]
+        )
         exam_indices = self._person_to_exam_indices(person_indices, exam_to_person)
         super().__init__(
             person_indices,
@@ -316,7 +318,9 @@ class ExamSimpleFilter(SimpleFilter):
         active: bool = False,
         inverted: bool = False,
     ) -> None:
-        exam_to_person = cast(Sequence[int], source_manager.exam_source.data["PID"])
+        exam_to_person = cast(
+            Sequence[int], source_manager.exam_source.data["person_index"]
+        )
         person_indices = self._exam_to_person_indices(exam_indices, exam_to_person)
         super().__init__(
             person_indices,
@@ -348,7 +352,7 @@ class RangeFilter(BaseFilter):
         self.field = field
         self.selected = self._get_selection_indices()
         self.exams_selected = self._person_to_exam_indices(
-            self.selected, self.source_manager.exam_source.data["PID"]
+            self.selected, self.source_manager.exam_source.data["person_index"]
         )
 
     def _get_selection_indices(self) -> list[int]:
@@ -370,7 +374,7 @@ class RangeFilter(BaseFilter):
             self._range = new
             self.selected = self._get_selection_indices()
             self.exams_selected = self._person_to_exam_indices(
-                self.selected, self.source_manager.exam_source.data["PID"]
+                self.selected, self.source_manager.exam_source.data["person_index"]
             )
             self.source_manager.update_views()
 
@@ -434,7 +438,7 @@ class CategoricalFilter(BaseFilter):
 
         self.selected = self._get_selection_indices()
         self.exams_selected = self._person_to_exam_indices(
-            self.selected, self.source_manager.exam_source.data["PID"]
+            self.selected, self.source_manager.exam_source.data["person_index"]
         )
 
     def _get_selection_indices(self) -> list[int]:
@@ -451,7 +455,7 @@ class CategoricalFilter(BaseFilter):
             self._categories = new
             self.selected = self._get_selection_indices()
             self.exams_selected = self._person_to_exam_indices(
-                self.selected, self.source_manager.exam_source.data["PID"]
+                self.selected, self.source_manager.exam_source.data["person_index"]
             )
             self.source_manager.update_views()
 

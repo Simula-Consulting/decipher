@@ -98,12 +98,16 @@ def example_app(source_manager):
         curdoc().add_root(element)
 
 
+HIGH_RISK_STATES = {3, 4}
+"""Risk levels that are considered high risk."""
+
+
 def _at_least_one_high_risk(person_source):
     """Return people with at least one high risk"""
     return [
         i
         for i, exam_results in enumerate(person_source.data["exam_results"])
-        if 3 in exam_results
+        if not set(exam_results).isdisjoint(HIGH_RISK_STATES)
     ]
 
 
@@ -118,7 +122,7 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
             exam_indices=[
                 i
                 for i, state in enumerate(source_manager.exam_source.data["risk"])
-                if state == 3
+                if state in HIGH_RISK_STATES
             ],
         ),
     }
@@ -177,6 +181,11 @@ def main():
     # Warning!
     # This is not the same DataFrame as `DataManager.person_df`.
     person_df = CreatePersonSource().fit_transform(exams_df)
+
+    # Add column in exams_df referring to the index of a person in person_df, _not_
+    # the PID. This is for simpler lookups later
+    pid_to_index = {pid: i for i, pid in enumerate(person_df["PID"])}
+    exams_df["person_index"] = exams_df["PID"].map(pid_to_index)
 
     source_manager = SourceManager(
         ColumnDataSource(person_df),
