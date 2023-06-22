@@ -560,6 +560,7 @@ class HistogramPlot(LabelSelectedMixin):
                 "axis_label": "State",
                 "ticker": list(range(len(self.class_list))),
                 "major_label_overrides": tick_labels_map,
+                "major_label_orientation": np.pi / 4,
             },
             "yaxis": {"axis_label": "Count"},
             "grid": {"grid_line_color": "white"},
