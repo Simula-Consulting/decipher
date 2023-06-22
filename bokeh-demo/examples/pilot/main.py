@@ -42,11 +42,8 @@ def example_app(source_manager: SourceManager):
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
     traj = TrajectoriesPlot(source_manager)
-    hist = HistogramPlot(
-        source_manager.person_source.data["exam_results"],
-        [1, 2, 3, 4],
-        source_manager,
-    )
+    histogram_cyt = HistogramPlot.from_person_field(source_manager, "cyt_diagnosis")
+    histogram_hist = HistogramPlot.from_person_field(source_manager, "hist_diagnosis")
 
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
@@ -93,7 +90,8 @@ def example_app(source_manager: SourceManager):
     for element in (
         lp.figure,
         lpa.figure,
-        hist.figure,
+        histogram_cyt.figure,
+        histogram_hist.figure,
         traj.figure,
         filter_grid,
         # Prediction related
@@ -169,6 +167,10 @@ def extract_people_from_pids(pid_list, exams_df):
     return exams_df
 
 
+def _get_exam_diagnosis(exams_subset):
+    return exams_subset.groupby("PID")["exam_diagnosis"].apply(lambda x: x.values)
+
+
 def main():
     # PIDS = get_selected_pids_from_landing_page()
     try:
@@ -195,6 +197,14 @@ def main():
     # the PID. This is for simpler lookups later
     pid_to_index = {pid: i for i, pid in enumerate(person_df["PID"])}
     exams_df["person_index"] = exams_df["PID"].map(pid_to_index)
+
+    # Make data for histogram
+    person_df["cyt_diagnosis"] = _get_exam_diagnosis(
+        exams_df.query("exam_type == 'cytology'")
+    ).reindex(person_df.index, fill_value=[])
+    person_df["hist_diagnosis"] = _get_exam_diagnosis(
+        exams_df.query("exam_type == 'histology'")
+    ).reindex(person_df.index, fill_value=[])
 
     source_manager = SourceManager(
         ColumnDataSource(person_df),
