@@ -165,7 +165,7 @@ test-no-images = ["pytest", "pytest-cov", "wurlitzer"]
 
 [[package]]
 name = "decipher"
-version = "0.1.34"
+version = "0.1.35"
 description = "Utilities for Decipher"
 category = "main"
 optional = false
@@ -189,8 +189,8 @@ pyarrow = ["pyarrow (>=11.0.0,<12.0.0)"]
 [package.source]
 type = "git"
 url = "https://github.com/Simula-Consulting/decipher_data_handler"
-reference = "0.1.34"
-resolved_reference = "d48cdda87ea3af31a2470556386c8da4725913ab"
+reference = "0.1.35"
+resolved_reference = "b99ed48286e233265d4eebca0da181c9720290f3"
 
 [[package]]
 name = "exceptiongroup"
@@ -1100,4 +1100,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "565713db63b570442a7063a4dbb6cf62756aa83774edc98228c5888842c1a5d6"
+content-hash = "ae394fec46a553ef25cd97513fa26d63dbda64b81db764dd46ee6f215fd10dc5"
