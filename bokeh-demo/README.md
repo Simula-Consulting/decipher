@@ -15,3 +15,17 @@
    bokeh serve examples/pilot examples/landing_page
    ```
    from a Poetry environment.
+
+
+## Tailwind
+
+We use tailwind for our CSS.
+Install Tailwind CLI with
+```bash
+npm install -D tailwindcss
+```
+and then
+```bash
+npx tailwindcss -i examples/pilot/static/style_tailwind.css -o examples/pilot/static/style.css
+```
+to build new CSS.
