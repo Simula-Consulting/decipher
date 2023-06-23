@@ -58,7 +58,7 @@ def example_app(source_manager: SourceManager):
         source_manager, "cyt_diagnosis", label_mapper=try_abbreviate_diagnosis
     )
     histogram_hist = HistogramPlot.from_person_field(source_manager, "hist_diagnosis")
-    source_manager.person_source.data["cyt_diagnosis"]
+    histogram_hpv = HistogramPlot.from_person_field(source_manager, "hpv_test_type")
 
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
@@ -107,6 +107,7 @@ def example_app(source_manager: SourceManager):
         lpa.figure,
         histogram_cyt.figure,
         histogram_hist.figure,
+        histogram_hpv.figure,
         traj.figure,
         filter_grid,
         # Prediction related
@@ -220,6 +221,12 @@ def main():
     person_df["hist_diagnosis"] = _get_exam_diagnosis(
         exams_df.query("exam_type == 'histology'")
     ).reindex(person_df.index, fill_value=[])
+    person_df["hpv_test_type"] = (
+        exams_df.query("exam_type == 'HPV' & exam_diagnosis == 'positiv'")
+        .groupby("PID")["detailed_exam_type"]
+        .apply(lambda x: x.values)
+        .reindex(person_df.index, fill_value=[])
+    )
 
     source_manager = SourceManager(
         ColumnDataSource(person_df),
