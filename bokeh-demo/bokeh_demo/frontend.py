@@ -520,18 +520,28 @@ class HistogramPlot(LabelSelectedMixin):
 
     @classmethod
     def from_person_field(
-        cls, source_manager: SourceManager, field: str
+        cls,
+        source_manager: SourceManager,
+        field: str,
+        label_mapper: Callable[[Hashable], str] | None = None,
     ) -> "HistogramPlot":
         """Create a HistogramPlot from a field in the person_source.
 
-        Assuems the values of the field are hashable.
+        Assumes the values of the field are hashable.
         Automatically handles the class list.
+
+        label_mapper: function to map the labels to something more readable
         """
         results_per_person = cast(
             list[list[Hashable]], source_manager.person_source.data[field]
         )
-        labels = set(itertools.chain.from_iterable(results_per_person))
-        return cls(results_per_person, list(labels), source_manager)
+        classes = set(itertools.chain.from_iterable(results_per_person))
+        labels: list[Hashable] | dict[Hashable, str] = (
+            {class_: label_mapper(class_) for class_ in classes}
+            if label_mapper
+            else list(classes)
+        )
+        return cls(results_per_person, labels, source_manager)
 
     def _set_up_quad(self) -> Quad:
         number_of_classes = len(self.class_list)
