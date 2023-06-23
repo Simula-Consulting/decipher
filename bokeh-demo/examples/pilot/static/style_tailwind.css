@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.card {
+    color: black;
+    width: 650px;
+    @apply p-6 bg-white border border-gray-200 rounded-lg shadow-md
+}
+
+body {
+    color: #fff;
+    background: #2F2F2F;
+}

@@ -1,49 +1,7 @@
 {% extends base %}
 {% from macros import embed %}
 {% block preamble %}
-<script src="https://cdn.tailwindcss.com"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<style type="text/tailwindcss">
-  .card {
-    color: black;
-    width: 650px;
-    @apply p-6 bg-white border border-gray-200 rounded-lg shadow-md
-  }
-</style>
-<style>
-  body {
-    color: #fff;
-    background: #2F2F2F;
-  }
-</style>
-<script>
-  tailwind.config = {
-    theme: {
-      fontFamily: {
-        'sans': ['Avenir'],
-      },
-      extend: {
-        keyframes: {
-          bounceX: {
-            '0%, 100%': {
-              left: '0',
-              'animation-timing-function': 'cubic-bezier(0, 0, 0.2, 1)'
-            },
-            '50%': {
-              left: '3px',
-              'animation-timing-function': 'cubic-bezier(0.8, 0, 1, 1)'
-            }
-          }
-        },
-        animation: {
-          bounceX: 'bounceX 1s infinite',
-        }
-        // keyframes: {
-        // }
-      }
-    }
-  }
-</script>
+<link rel="stylesheet" href="pilot/static/style.css">
 {% endblock %}
 
 {% block contents %}
