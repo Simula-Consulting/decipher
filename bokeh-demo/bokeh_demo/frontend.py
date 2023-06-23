@@ -189,7 +189,7 @@ class LexisPlot(ToolsMixin):
         # Tooltip for detailed exam data
         hover_tool = HoverTool(
             tooltips=[
-                ("Type", "@exam_detailed_type"),
+                ("Type", "@detailed_exam_type"),
                 ("Result", "@exam_detailed_results"),
             ],
             renderers=[self.scatter],
