@@ -23,7 +23,11 @@ from bokeh_demo.backend import (
     PersonSimpleFilter,
     SourceManager,
 )
-from bokeh_demo.data_ingestion import CreatePersonSource, exams_pipeline
+from bokeh_demo.data_ingestion import (
+    CreatePersonSource,
+    add_hpv_detailed_information,
+    exams_pipeline,
+)
 from bokeh_demo.frontend import (
     HistogramPlot,
     LexisPlot,
@@ -172,7 +176,8 @@ def main():
         data_manager = DataManager.read_from_csv(
             settings.data_paths.screening_data_path, settings.data_paths.dob_data_path
         )
-    exams_df = data_manager.exams_df
+    # Add detailed test type and results information to exams_df
+    exams_df = add_hpv_detailed_information(data_manager.exams_df, data_manager.hpv_df)
 
     exams_df = extract_people_from_pids([], exams_df)
     exams_df = exams_df.drop(columns=["index"]).reset_index(drop=True)
