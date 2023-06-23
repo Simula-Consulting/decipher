@@ -89,7 +89,7 @@ class LexisPlot(ToolsMixin):
     _lexis_line_x_key: str = "lexis_line_endpoints_age"
     _vaccine_line_x_key: str = "vaccine_line_endpoints_age"
     _vaccine_line_y_key: str = "lexis_line_endpoints_person_index"
-    _scatter_y_key: str = "PID"
+    _scatter_y_key: str = "person_index"
     _scatter_x_key: str = "age"
     _y_axis_type: str = "linear"
     _x_axis_type: str = "datetime"
