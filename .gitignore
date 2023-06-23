@@ -133,5 +133,9 @@ dmypy.json
 node_modules
 .vscode
 
+# We're not doing JS...
+package.json
+package-lock.json
+
 # jupyter notebooks
 *.ipynb
