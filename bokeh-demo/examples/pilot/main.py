@@ -37,13 +37,28 @@ from bokeh_demo.frontend import (
 )
 from bokeh_demo.settings import settings
 
+DIAGNOSIS_ABBREVIATIONS = {
+    "Normal m betennelse eller blod": "Normal w.b",
+    "Cancer Cervix cancer andre/usp": "Cancer",
+    "Normal uten sylinder": "Normal u s",
+}
+"""Abbreviations for diagnosis names."""
+
+
+def try_abbreviate_diagnosis(diagnosis: str) -> str:
+    """Abbreviates diagnosis names if they are in the DIAGNOSIS_ABBREVIATIONS dictionary."""
+    return DIAGNOSIS_ABBREVIATIONS.get(diagnosis, diagnosis)
+
 
 def example_app(source_manager: SourceManager):
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
     traj = TrajectoriesPlot(source_manager)
-    histogram_cyt = HistogramPlot.from_person_field(source_manager, "cyt_diagnosis")
+    histogram_cyt = HistogramPlot.from_person_field(
+        source_manager, "cyt_diagnosis", label_mapper=try_abbreviate_diagnosis
+    )
     histogram_hist = HistogramPlot.from_person_field(source_manager, "hist_diagnosis")
+    source_manager.person_source.data["cyt_diagnosis"]
 
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
