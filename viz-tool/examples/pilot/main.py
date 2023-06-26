@@ -14,18 +14,18 @@ from bokeh.plotting import curdoc
 from decipher.data import DataManager
 from loguru import logger
 
-from bokeh_demo.backend import (
+from viz_tool.backend import (
     BaseFilter,
     BooleanFilter,
     ExamToggleFilter,
     SourceManager,
 )
-from bokeh_demo.data_ingestion import (
+from viz_tool.data_ingestion import (
     CreatePersonSource,
     add_hpv_detailed_information,
     exams_pipeline,
 )
-from bokeh_demo.settings import settings
+from viz_tool.settings import settings
 
 from .components import (
     get_filter_control_panel,

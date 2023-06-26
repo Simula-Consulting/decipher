@@ -185,7 +185,7 @@ class BaseFilter:
         through `get_filter` and `get_exam_filter`, however, they are not interchangeable.
 
     !!! tip "See also"
-        See [bokeh_demo.frontend.get_filter_element][] on how callbacks may be used.
+        See [viz_tool.frontend.get_filter_element][] on how callbacks may be used.
     """
 
     source_manager: SourceManager

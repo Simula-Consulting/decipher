@@ -6,8 +6,8 @@ from bokeh.models.widgets import Button, CheckboxButtonGroup, Div, RangeSlider, 
 from decipher.data import DataManager
 from loguru import logger
 
-from bokeh_demo.data_ingestion import add_hpv_detailed_information
-from bokeh_demo.settings import settings
+from viz_tool.data_ingestion import add_hpv_detailed_information
+from viz_tool.settings import settings
 
 
 def format_number(number):
