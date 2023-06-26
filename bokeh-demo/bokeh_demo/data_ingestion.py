@@ -126,3 +126,32 @@ exams_pipeline = Pipeline(
         ("category_converter", CategoryColumnConverter()),
     ]
 )
+
+
+def add_hpv_detailed_information(
+    exams_df: pd.DataFrame, hpv_df: pd.DataFrame
+) -> pd.DataFrame:
+    """Add detailed results to exams_df, under the key "exam_detailed_results"."""
+
+    # Find the exam_index -> exams_df.index map
+    # exam_index is not unique in exams_df, because one exam may give
+    # cyt, hist, and HPV results
+    # Therefore, we find the indices where there is an HPV test
+    hpv_indices = exams_df.query("exam_type == 'HPV'")["index"]
+    mapping = pd.Series(data=hpv_indices.index, index=hpv_indices.values)
+
+    hpv_details = hpv_df.groupby("exam_index")["genotype"].apply(",".join)
+    hpv_details.index = hpv_details.index.map(mapping)
+
+    exams_df["exam_detailed_results"] = hpv_details
+
+    # Set the Cytology and Histology results
+    def _fill(base_series: pd.Series, fill_series: pd.Series) -> pd.Series:
+        """Fill base series with fill series where base series is nan. Handles category data."""
+        return base_series.astype("string").fillna(fill_series.astype("string"))
+
+    exams_df["exam_detailed_results"] = _fill(
+        exams_df["exam_detailed_results"], exams_df["exam_diagnosis"]
+    )
+
+    return exams_df
