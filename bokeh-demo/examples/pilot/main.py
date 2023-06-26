@@ -188,6 +188,8 @@ def main():
     exams_df = data_manager.exams_df
     try:
         selected_pids = get_selected_pids_from_landing_page()
+        if not len(selected_pids) > 0:
+            raise FileNotFoundError("No pids were selected in the landing page.")
         exams_df = extract_people_from_pids(selected_pids, exams_df)
     except FileNotFoundError as e:
         print(str(e))
