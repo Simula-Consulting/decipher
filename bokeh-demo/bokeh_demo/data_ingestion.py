@@ -94,7 +94,7 @@ class CreatePersonSource(BaseEstimator, TransformerMixin):
             }
         )
 
-        person_df["lexis_line_endpoints_person_index"] = person_df["PID"].transform(
+        person_df["lexis_line_endpoints_person_index"] = person_df.index.map(
             lambda pid: (pid, pid)
         )
 
