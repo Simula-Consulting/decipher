@@ -13,3 +13,8 @@ body {
     color: #fff;
     background: #2F2F2F;
 }
+
+@font-face {
+    font-family: 'Avenir';
+    src: url('Avenir\ Regular.ttf');
+}
