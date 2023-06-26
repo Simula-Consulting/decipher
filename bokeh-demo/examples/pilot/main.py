@@ -77,10 +77,20 @@ class LexisPlotYearAge(LexisPlot):
     _x_axis_tick_format_getter = None
 
 
+def _link_ranges(lexis_plots):
+    lexis_plots["age_index"].figure.x_range = lexis_plots["age_year"].figure.x_range
+    lexis_plots["year_age"].figure.y_range = lexis_plots["age_year"].figure.x_range
+    lexis_plots["age_year"].figure.y_range = lexis_plots["year_age"].figure.x_range
+
+
 def example_app(source_manager: SourceManager):
-    lp = LexisPlot(source_manager)
-    lpa = LexisPlotAge(source_manager)
-    lpy = LexisPlotYearAge(source_manager)
+    lexis_plots = {
+        "age_index": LexisPlot(source_manager),
+        "age_year": LexisPlotAge(source_manager),
+        "year_age": LexisPlotYearAge(source_manager),
+    }
+    _link_ranges(lexis_plots)
+
     traj = TrajectoriesPlot(source_manager)
     histogram_cyt = HistogramPlot.from_person_field(
         source_manager,
@@ -112,7 +122,6 @@ def example_app(source_manager: SourceManager):
     # table.person_table.styles = {"border": "1px solid #e6e6e6", "border-radius": "5px"}
     # table.person_table.height = 500
 
-    lp.figure.x_range = lpa.figure.x_range
     high_risk_person_group = get_filter_element_from_source_manager(
         "High risk - Person", source_manager
     )
@@ -149,9 +158,7 @@ def example_app(source_manager: SourceManager):
     ]
 
     for element in (
-        lp.figure,
-        lpa.figure,
-        lpy.figure,
+        *(plot.figure for plot in lexis_plots.values()),
         histogram_cyt.figure,
         histogram_hist.figure,
         histogram_hpv.figure,
