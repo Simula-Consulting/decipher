@@ -24,6 +24,8 @@ class FeatureColumnNames(BaseModel):
     exam_type: str = "exam_type"
     hr_cytology: str = "high_risk_cytology"
     hr_histology: str = "high_risk_histology"
+    exam_details: str = "exam_detailed_results"
+    exam_diagnosis: str = "exam_diagnosis"
 
 
 class Settings(BaseSettings):

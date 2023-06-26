@@ -7,6 +7,7 @@ from bokeh.models.callbacks import CustomJS
 from bokeh.models.widgets import Button, CheckboxButtonGroup, Div, RangeSlider, Slider
 from decipher.data import DataManager
 
+from bokeh_demo.data_ingestion import add_hpv_detailed_information
 from bokeh_demo.settings import settings
 
 
@@ -16,7 +17,9 @@ class LandingPageFiltering:
 
         self.data_manager = self._load_data_manager()
         self.person_df = self.data_manager.person_df
-        self.exams_df = self.data_manager.exams_df
+        self.exams_df = add_hpv_detailed_information(
+            self.data_manager.exams_df, self.data_manager.hpv_df
+        )
         self._add_HR_screening_indicator()
 
         self.pid_list = self.person_df.index.to_list()
@@ -116,6 +119,21 @@ class LandingPageFiltering:
 
     def checkbox_button_pids(self) -> list[int]:
         """Function to get the pids that have the selected attributes"""
+
+        def _get_hpv_pids(hpv_type: str) -> list[int]:
+            """Function to get the pids that have the selected HPV type"""
+            hpv_filter = (self.exams_df[self.column_names.exam_type] == "HPV") & (
+                self.exams_df[self.column_names.exam_diagnosis] == "positiv"
+            )
+
+            hpv_results = self.exams_df[hpv_filter][
+                self.column_names.exam_details
+            ].str.split(",")
+            hpv_inds = hpv_results[hpv_results.apply(lambda x: hpv_type in x)].index
+            hpv_pids = self.exams_df.loc[hpv_inds, self.column_names.PID].tolist()
+
+            return hpv_pids
+
         buttons_active: list[int] = self.checkbox_buttons.active
         button_pids = set(self.pid_list)
         if 0 in buttons_active:
@@ -142,10 +160,26 @@ class LandingPageFiltering:
             button_pids = button_pids.intersection(
                 self.person_df[self.person_df[self.column_names.hr_histology]].index
             )
+        if 4 in buttons_active:
+            # Has HPV16+
+            hpv16_pids = _get_hpv_pids("16")
+            button_pids = button_pids.intersection(set(hpv16_pids))
+        if 5 in buttons_active:
+            # Has HPV18+
+            hpv_18_pids = _get_hpv_pids("18")
+            button_pids = button_pids.intersection(set(hpv_18_pids))
+
         return list(button_pids)
 
     def _init_checkbox_buttons(self) -> CheckboxButtonGroup:
-        labels = ["HPV+", "HR Result", "HR Cytology", "HR Histology"]
+        labels = [
+            "HPV+",
+            "HR Result",
+            "HR Cytology",
+            "HR Histology",
+            "HPV16+",
+            "HPV18+",
+        ]
 
         buttons = CheckboxButtonGroup(
             name="checkbox_buttons",
