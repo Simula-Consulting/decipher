@@ -871,6 +871,12 @@ body {
   background: #2F2F2F;
 }
 
+@font-face {
+  font-family: 'Avenir';
+
+  src: url('Avenir\ Regular.ttf');
+}
+
 .hover\:translate-x-0:hover {
   --tw-translate-x: 0px;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
