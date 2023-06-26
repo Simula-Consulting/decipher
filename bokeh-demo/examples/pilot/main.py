@@ -35,6 +35,7 @@ from bokeh_demo.frontend import (
     LexisPlotAge,
     TrajectoriesPlot,
     get_filter_element_from_source_manager,
+    get_timedelta_tick_formatter,
 )
 from bokeh_demo.settings import settings
 
@@ -56,9 +57,30 @@ def try_abbreviate(abbreviations: dict[str, str], diagnosis: str) -> str:
     return abbreviations.get(diagnosis, diagnosis)
 
 
+class LexisPlotYearAge(LexisPlot):
+    """Lexis plot with year on x-axis and age on y-axis."""
+
+    _y_label: str = "Age"
+    _scatter_y_key: str = "age"
+    _x_label: str = "Year"
+    _scatter_x_key: str = "exam_date"
+
+    _lexis_line_x_key: str = "lexis_line_endpoints_year"
+    _lexis_line_y_key: str = "lexis_line_endpoints_age"
+    _vaccine_line_x_key: str = "vaccine_line_endpoints_year"
+    _vaccine_line_y_key: str = "vaccine_line_endpoints_age"
+
+    _y_axis_type = "linear"
+    _x_axis_type = "datetime"
+
+    _y_axis_tick_format_getter = get_timedelta_tick_formatter
+    _x_axis_tick_format_getter = None
+
+
 def example_app(source_manager: SourceManager):
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
+    lpy = LexisPlotYearAge(source_manager)
     traj = TrajectoriesPlot(source_manager)
     histogram_cyt = HistogramPlot.from_person_field(
         source_manager,
@@ -129,6 +151,7 @@ def example_app(source_manager: SourceManager):
     for element in (
         lp.figure,
         lpa.figure,
+        lpy.figure,
         histogram_cyt.figure,
         histogram_hist.figure,
         histogram_hpv.figure,
