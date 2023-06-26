@@ -4,11 +4,6 @@
    ```
    poetry install
    ```
-   for bare dependencies or
-   ```
-   poetry install --with examples
-   ```
-   to be able to run the example sites.
 
 2. To serve the page, run
    ```
