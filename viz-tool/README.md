@@ -7,7 +7,7 @@
 
 2. To serve the page, run
    ```
-   bokeh serve examples/pilot examples/landing_page
+   bokeh serve apps/pilot apps/landing_page
    ```
    from a Poetry environment.
 

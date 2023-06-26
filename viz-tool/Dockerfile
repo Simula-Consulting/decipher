@@ -20,4 +20,4 @@ RUN pip install -r requirements.txt
 COPY . .
 RUN pip install -e .
 
-CMD data_paths='{"base_path": "/mnt"}' transfer_path='/mnt' selected_pids_path='/mnt/selected_pids.json' bokeh serve examples/pilot examples/landing_page
+CMD data_paths='{"base_path": "/mnt"}' transfer_path='/mnt' selected_pids_path='/mnt/selected_pids.json' bokeh serve apps/pilot apps/landing_page
