@@ -23,6 +23,7 @@ class LandingPageFiltering:
         self._add_HR_screening_indicator()
 
         self.pid_list = self.person_df.index.to_list()
+        """PID selection from currently active filters"""
 
         self.birthyear_slider = self._init_birthyear_slider()
         self.checkbox_buttons = self._init_checkbox_buttons()
@@ -56,7 +57,11 @@ class LandingPageFiltering:
                 continue
             column_name = f"high_risk_{exam_type.lower()}"
             self.person_df.loc[
-                df[df[self.column_names.risk] > 2][self.column_names.PID].unique(),
+                df[
+                    df[self.column_names.risk] > 2
+                ][  # 3 and above are considered high risk
+                    self.column_names.PID
+                ].unique(),
                 column_name,
             ] = True
             self.person_df[column_name].fillna(False, inplace=True)
@@ -234,10 +239,10 @@ class LandingPageFiltering:
                 settings.data_paths.dob_data_path,
                 read_hpv=True,
             )
-        # Add column for age in years
         return data_manager
 
     def save_pids(self):
+        """Save pid_list as json in `settings.selected_pids_path`."""
         with open(settings.selected_pids_path, "w") as f:
             json.dump(self.pid_list, f)
 
