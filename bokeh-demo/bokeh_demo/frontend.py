@@ -112,7 +112,7 @@ class LexisPlot(ToolsMixin):
 
     # TODO: move to config class or settings
     _markers: list[str | None] = [None, "square", "circle", "diamond"]
-    _marker_colors: list[str | None] = [None, *settings.color_palette]
+    _marker_colors: dict[int | float, str] = settings.color_palette
     _vaccine_line_width: int = 3
     _vaccine_line_color: str = "rgba(143, 148, 9, 0.5)"
 
@@ -167,16 +167,17 @@ class LexisPlot(ToolsMixin):
                     # LegendItem(label="Vaccine", renderers=[self.vaccine_line], index=0),
                     *(
                         LegendItem(
-                            label=label,
+                            label=settings.label_map[risk_level],
                             renderers=[
                                 self.figure.circle(
-                                    [0], [0], color=[color], visible=False
+                                    [0],
+                                    [0],
+                                    color=[self._marker_colors[risk_level]],
+                                    visible=False,
                                 )
                             ],
                         )
-                        for label, color in zip(
-                            settings.label_map[1:], self._marker_colors[1:]
-                        )
+                        for risk_level in range(1, 5)
                     ),
                 ],
                 orientation="horizontal",
@@ -191,7 +192,7 @@ class LexisPlot(ToolsMixin):
             color={
                 "expr": CustomJSExpr(
                     args={"colors": self._marker_colors},
-                    code=f"return Array.from(this.data.{self._marker_color_key}).map(i => colors[i]);",  # noqa: E501
+                    code=f"return Array.from(this.data.{self._marker_color_key}).map(i => colors.get(i));",  # noqa: E501
                 )
             },
         )
@@ -246,8 +247,8 @@ def get_position_list(array: Sequence) -> Sequence[int]:
 
 
 class TrajectoriesPlot(ToolsMixin):
-    _exam_color: str = settings.color_palette[0]
-    _predicted_exam_color: str = settings.color_palette[2]
+    _exam_color: str = settings.color_palette[1]
+    _predicted_exam_color: str = settings.color_palette[3]
 
     def __init__(self, source_manager: SourceManager):
         # Find min/max on x-axis
@@ -301,7 +302,7 @@ class TrajectoriesPlot(ToolsMixin):
         self.figure.yaxis.ticker = FixedTicker(
             ticks=list(range(len(settings.label_map)))
         )
-        self.figure.yaxis.major_label_overrides = dict(enumerate(settings.label_map))
+        self.figure.yaxis.major_label_overrides = settings.label_map
 
 
 class DeltaScatter(ToolsMixin):
