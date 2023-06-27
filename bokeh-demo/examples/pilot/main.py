@@ -10,6 +10,7 @@ import copy
 import json
 import warnings
 from enum import Enum
+from functools import partial
 
 from bokeh.layouts import column, grid, row
 from bokeh.models import ColumnDataSource, Div, SymmetricDifferenceFilter
@@ -37,12 +38,51 @@ from bokeh_demo.frontend import (
 )
 from bokeh_demo.settings import settings
 
+DIAGNOSIS_ABBREVIATIONS = {
+    "Normal m betennelse eller blod": "Normal w.b",
+    "Cancer Cervix cancer andre/usp": "Cancer",
+    "Normal uten sylinder": "Normal u s",
+}
+"""Abbreviations for diagnosis names."""
 
-def example_app(source_manager):
+HPV_TEST_ABBREVIATIONS = {
+    "Abbott RealTime High Risk HPV": "Abbott HR",
+    "Cobas 4800 System": "Cobas 4800",
+}
+
+
+def try_abbreviate(abbreviations: dict[str, str], diagnosis: str) -> str:
+    """Abbreviates diagnosis names if they are in the DIAGNOSIS_ABBREVIATIONS dictionary."""
+    return abbreviations.get(diagnosis, diagnosis)
+
+
+def example_app(source_manager: SourceManager):
     lp = LexisPlot(source_manager)
     lpa = LexisPlotAge(source_manager)
     traj = TrajectoriesPlot(source_manager)
-    hist = HistogramPlot(source_manager)
+    histogram_cyt = HistogramPlot.from_person_field(
+        source_manager,
+        "cyt_diagnosis",
+        label_mapper=partial(try_abbreviate, DIAGNOSIS_ABBREVIATIONS),
+    )
+    histogram_hist = HistogramPlot.from_person_field(source_manager, "hist_diagnosis")
+    histogram_hpv = HistogramPlot.from_person_field(
+        source_manager,
+        "hpv_test_type",
+        label_mapper=partial(try_abbreviate, HPV_TEST_ABBREVIATIONS),
+    )
+
+    # Set up labels and titles
+    histogram_cyt.figure.title.text = "Cytology diagnosis"
+    histogram_hist.figure.title.text = "Histology diagnosis"
+    histogram_hpv.figure.title.text = "HPV test type"
+    histogram_cyt.figure.xaxis.axis_label = None
+    histogram_hist.figure.xaxis.axis_label = None
+    histogram_hpv.figure.xaxis.axis_label = None
+
+    # Adjust label positions
+    histogram_cyt.label.y -= 20
+    histogram_hpv.label.y -= 20
 
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
@@ -89,7 +129,9 @@ def example_app(source_manager):
     for element in (
         lp.figure,
         lpa.figure,
-        hist.figure,
+        histogram_cyt.figure,
+        histogram_hist.figure,
+        histogram_hpv.figure,
         traj.figure,
         filter_grid,
         # Prediction related
@@ -165,6 +207,10 @@ def extract_people_from_pids(pid_list, exams_df):
     return exams_df
 
 
+def _get_exam_diagnosis(exams_subset):
+    return exams_subset.groupby("PID")["exam_diagnosis"].apply(lambda x: x.values)
+
+
 def main():
     # PIDS = get_selected_pids_from_landing_page()
     try:
@@ -191,6 +237,20 @@ def main():
     # the PID. This is for simpler lookups later
     pid_to_index = {pid: i for i, pid in enumerate(person_df["PID"])}
     exams_df["person_index"] = exams_df["PID"].map(pid_to_index)
+
+    # Make data for histogram
+    person_df["cyt_diagnosis"] = _get_exam_diagnosis(
+        exams_df.query("exam_type == 'cytology'")
+    ).reindex(person_df.index, fill_value=[])
+    person_df["hist_diagnosis"] = _get_exam_diagnosis(
+        exams_df.query("exam_type == 'histology'")
+    ).reindex(person_df.index, fill_value=[])
+    person_df["hpv_test_type"] = (
+        exams_df.query("exam_type == 'HPV' & exam_diagnosis == 'positiv'")
+        .groupby("PID")["detailed_exam_type"]
+        .apply(lambda x: x.values)
+        .reindex(person_df.index, fill_value=[])
+    )
 
     source_manager = SourceManager(
         ColumnDataSource(person_df),

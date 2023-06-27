@@ -1,9 +1,18 @@
 import itertools
+from collections import Counter
 from enum import Enum, auto
-from typing import Callable, Collection, Generator, Iterable, Sequence, cast
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Generator,
+    Hashable,
+    Iterable,
+    Sequence,
+    cast,
+)
 
 import numpy as np
-import pandas as pd
 
 # mypy complains that bokeh.models does not have these attributes.
 # We were unsuccessful in finding the origin of the bug.
@@ -24,6 +33,7 @@ from bokeh.models import (  # type: ignore
     LegendItem,
     MultiChoice,
     Paragraph,
+    Quad,
     RangeSlider,
     Row,
     Switch,
@@ -434,7 +444,8 @@ class LabelSelectedMixin:
         """Get a callback function for updating the label.
 
         The label update callback is attached to multiple quantities, so we do not
-        use the supplied old/new values, but use directly the state in source_manager."""
+        use the supplied old/new values, but use directly the state in source_manager.
+        """
 
         def update_label_callback(attr, old, new) -> None:
             # If nothing is selected, interpret it as everything is selected.
@@ -454,23 +465,45 @@ class LabelSelectedMixin:
 
 
 class HistogramPlot(LabelSelectedMixin):
-    def __init__(self, source_manager: SourceManager):
+    """Display a histogram of the selected results.
+
+    The selection and filters will be applied to the outer list, yielding only
+    results for the selected and filtered individuals.
+
+    Args:
+        results_per_person: the outer list corresponds to the individuals, and the inner
+          list corresponds to the results to be plotted. The selection and filters will
+          be applied to the outer list, yielding only results for the selected and
+          filtered individuals.
+        class_list: List of classes to be plotted. Does not need to include all the
+          classes in the data. Histogram plotted in the order the classes are given.
+          If a dictionary is given, the keys are the classes and the values are the
+          labels on the ticks.
+        source_manager: SourceManager to which selection and filter events will be attached.
+
+    !!! note
+        If some results should not be shown, like nan or zero risk, invalid diagnoses,
+        etc, remove these data points before passing the data to this class.
+
+    !!! important
+        The index of the outer list, is assumed to correspond to the index of the
+        individual in source_manager.person_source.
+    """
+
+    def __init__(
+        self,
+        results_per_person: list[list[Hashable]],
+        class_list: list[Hashable] | dict[Hashable, str],
+        source_manager: SourceManager,
+    ):
+        self.results_per_person = results_per_person
+        self.class_list = class_list
         self.source_manager = source_manager
-        self._number_of_individuals = len(
-            self.source_manager.person_source.data["index"]
-        )
+
+        self._number_of_individuals = len(results_per_person)
 
         self.figure = figure(tools=[])
-        self.quad = self.figure.quad(
-            top=self.compute_histogram_data(range(self._number_of_individuals)),
-            bottom=0,
-            left=np.arange(0, 4) + 0.5,
-            right=np.arange(1, 5) + 0.5,
-            fill_color="navy",
-            line_color="white",
-            alpha=0.5,
-            name="quad",
-        )
+        self.quad = self._set_up_quad()
 
         # Mistakenly reports no attribute on_change
         self.source_manager.person_source.selected.on_change(  # type: ignore
@@ -485,13 +518,59 @@ class HistogramPlot(LabelSelectedMixin):
 
         self._set_properties()
 
-    def _set_properties(self):
-        properties = {
+    @classmethod
+    def from_person_field(
+        cls,
+        source_manager: SourceManager,
+        field: str,
+        label_mapper: Callable[[Hashable], str] | None = None,
+    ) -> "HistogramPlot":
+        """Create a HistogramPlot from a field in the person_source.
+
+        Assumes the values of the field are hashable.
+        Automatically handles the class list.
+
+        label_mapper: function to map the labels to something more readable
+        """
+        results_per_person = cast(
+            list[list[Hashable]], source_manager.person_source.data[field]
+        )
+        classes = set(itertools.chain.from_iterable(results_per_person))
+        labels: list[Hashable] | dict[Hashable, str] = (
+            {class_: label_mapper(class_) for class_ in classes}
+            if label_mapper
+            else list(classes)
+        )
+        return cls(results_per_person, labels, source_manager)
+
+    def _set_up_quad(self) -> Quad:
+        number_of_classes = len(self.class_list)
+        return self.figure.quad(
+            top=self.compute_histogram_data(range(self._number_of_individuals)),
+            bottom=0,
+            left=np.arange(0, number_of_classes) - 0.5,
+            right=np.arange(1, number_of_classes + 1) - 0.5,
+            fill_color="navy",
+            line_color="white",
+            alpha=0.5,
+            name="quad",
+        )
+
+    def _set_properties(self) -> None:
+        """Set properties of the figure."""
+        tick_labels = (
+            self.class_list.values()
+            if isinstance(self.class_list, dict)
+            else self.class_list
+        )
+        tick_labels_map = {i: str(label) for i, label in enumerate(tick_labels)}
+        properties: dict[str, dict[str, Any]] = {
             "y_range": {"start": 0},
             "xaxis": {
                 "axis_label": "State",
-                "ticker": list(range(len(settings.label_map))),
-                "major_label_overrides": dict(enumerate(settings.label_map)),
+                "ticker": list(range(len(self.class_list))),
+                "major_label_overrides": tick_labels_map,
+                "major_label_orientation": np.pi / 4,
             },
             "yaxis": {"axis_label": "Count"},
             "grid": {"grid_line_color": "white"},
@@ -501,29 +580,30 @@ class HistogramPlot(LabelSelectedMixin):
             for option, value in module_options.items():
                 setattr(getattr(self.figure, module), option, value)
 
-    def compute_histogram_data(self, selected_indices: Iterable[int]):
-        state_occurrences = self._count_state_occurrences(
-            [
-                [
-                    yi
-                    for i in selected_indices
-                    for yi in self.source_manager.person_source.data["exam_results"][i]
-                    if yi != 0
-                ]
-            ]
+    def compute_histogram_data(self, selected_indices: Iterable[int]) -> list[int]:
+        """Compute histogram data from selected indices.
+
+        The selected_indices refer to the indices of the person_source.
+        The output is a list of counts for each state, sorted by state. The length is
+        the number of states, which is 4."""
+        return self._compute_histogram_data(
+            selected_indices=selected_indices,
+            class_list=self.class_list,
+            results_per_person=self.results_per_person,
         )
-        return [
-            value for _, value in sorted(state_occurrences.items(), key=lambda x: x[0])
-        ]
 
     @staticmethod
-    def _count_state_occurrences(nested_list_of_states):
-        out = {1: 0, 2: 0, 3: 0, 4: 0}
-        for list_of_states in nested_list_of_states:
-            for state in list_of_states:
-                if pd.notna(state):
-                    out[state] += 1
-        return out
+    def _compute_histogram_data(
+        selected_indices: Iterable[int],
+        class_list: Iterable[Hashable],
+        results_per_person: list[list[Hashable]],
+    ) -> list[int]:
+        state_occurrences = Counter(
+            itertools.chain.from_iterable(
+                results_per_person[i] for i in selected_indices
+            )
+        )
+        return [state_occurrences[i] for i in class_list]
 
     def get_update_histogram_callback(self) -> Callable[..., None]:
         """Get a callback function for updating the histogram.
