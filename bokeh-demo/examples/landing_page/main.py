@@ -2,7 +2,6 @@ import json
 
 from bokeh.io import curdoc
 from bokeh.models import Model
-from bokeh.models.callbacks import CustomJS
 from bokeh.models.widgets import Button, CheckboxButtonGroup, Div, RangeSlider, Slider
 from decipher.data import DataManager
 from loguru import logger
@@ -32,7 +31,6 @@ class LandingPageFiltering:
 
         self.save_button = self._init_save_button()
         self.person_counter = Div(text=f"Number of people: {self._n_people()}")
-        self.go_button = self._init_go_button()
 
     def get_roots(self) -> list[Model]:
         return [
@@ -42,7 +40,6 @@ class LandingPageFiltering:
             self.checkbox_buttons,
             self.person_counter,
             self.save_button,
-            self.go_button,
         ]
 
     def reset_pid_list(self) -> None:
@@ -86,11 +83,6 @@ class LandingPageFiltering:
         )
         self.person_counter.text = f"Number of people: {self._n_people()}"
         self.save_pids()
-
-    def _init_go_button(self) -> Button:
-        go_button = Button(label="Go")
-        go_button.js_on_click(CustomJS(code="window.location.href = '/pilot'"))
-        return go_button
 
     def _init_save_button(self) -> Button:
         save_button = Button(name="save_button", label="Save")

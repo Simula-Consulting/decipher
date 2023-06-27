@@ -62,6 +62,23 @@
     width: 650px;
     @apply p-6 bg-white border border-gray-200 rounded-lg shadow-md
   }
+  .button {
+  display: inline-block;
+  padding: 10px 20px;
+  font-family: "Avenir", sans-serif;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #fff;
+  background-color: #f3a200;
+  border-radius: 5px;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  background-color: #be7f00;
+}
 </style>
 
 <title>Landing Page</title>
@@ -81,6 +98,10 @@
     </div>
     {%        endfor %}
     {%      endfor %}
+  </div>
+  <br>
+  <div style="text-align:center;">
+    <a href="/pilot" class="button justify-center"]>GO</a>
   </div>
 
 </div>
