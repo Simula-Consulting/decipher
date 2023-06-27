@@ -24,7 +24,7 @@ class LandingPageFiltering:
 
         self.pid_list = self.person_df.index.to_list()
 
-        self.age_slider = self._init_age_slider()
+        self.birthyear_slider = self._init_birthyear_slider()
         self.checkbox_buttons = self._init_checkbox_buttons()
         self.min_age_last_exam_slider = self._init_min_age_last_exam_slider()
         self.min_n_screenings_slider = self._init_min_n_screenings_slider()
@@ -35,7 +35,7 @@ class LandingPageFiltering:
 
     def get_roots(self) -> list[Model]:
         return [
-            self.age_slider,
+            self.birthyear_slider,
             self.min_age_last_exam_slider,
             self.min_n_screenings_slider,
             self.checkbox_buttons,
@@ -63,7 +63,7 @@ class LandingPageFiltering:
 
     def apply_filters_and_save(self) -> None:
         self.reset_pid_list()
-        age_pids = self.age_slider_pids()
+        birthyear_pids = self.birthyear_slider_pids()
         button_pids = self.checkbox_button_pids()
         min_age_last_exam_pids = self.min_age_last_exam_slider_pids()
         min_n_screenings_pids = self.min_n_screenings_slider_pids()
@@ -72,7 +72,7 @@ class LandingPageFiltering:
             map(
                 int,
                 list(
-                    set(age_pids)
+                    set(birthyear_pids)
                     & set(button_pids)
                     & set(min_age_last_exam_pids)
                     & set(min_n_screenings_pids)
@@ -92,30 +92,27 @@ class LandingPageFiltering:
         save_button.on_click(self.apply_filters_and_save)
         return save_button
 
-    def _init_age_slider(self) -> RangeSlider:
+    def _init_birthyear_slider(self) -> RangeSlider:
         birthyears = self.person_df[self.column_names.birthdate].dt.year
         start, end = birthyears.min(), birthyears.max()
-        age_slider = RangeSlider(
-            name="age_slider",
+        return RangeSlider(
+            name="birthyear_slider",
             start=start,
             end=end,
             value=(start, end),
             step=1,
             title="Birth Year",
         )
-        return age_slider
 
-    def age_slider_pids(self) -> list[int]:
-        age_min, age_max = self.age_slider.value
-
-        age_pids = list(
+    def birthyear_slider_pids(self) -> list[int]:
+        year_min, year_max = self.birthyear_slider.value
+        return list(
             self.person_df[
                 self.person_df[self.column_names.birthdate].dt.year.between(
-                    age_min, age_max
+                    year_min, year_max
                 )
             ].index
         )
-        return age_pids
 
     def checkbox_button_pids(self) -> list[int]:
         """Function to get the pids that have the selected attributes"""
@@ -125,13 +122,12 @@ class LandingPageFiltering:
             hpv_filter = (self.exams_df[self.column_names.exam_type] == "HPV") & (
                 self.exams_df[self.column_names.exam_diagnosis] == "positiv"
             )
-
             hpv_results = self.exams_df[hpv_filter][
                 self.column_names.exam_details
             ].str.split(",")
+
             hpv_inds = hpv_results[hpv_results.apply(lambda x: hpv_type in x)].index
             hpv_pids = self.exams_df.loc[hpv_inds, self.column_names.PID].tolist()
-
             return hpv_pids
 
         buttons_active: list[int] = self.checkbox_buttons.active
@@ -180,12 +176,10 @@ class LandingPageFiltering:
             "HPV16+",
             "HPV18+",
         ]
-
-        buttons = CheckboxButtonGroup(
+        return CheckboxButtonGroup(
             name="checkbox_buttons",
             labels=labels,
         )
-        return buttons
 
     def min_age_last_exam_slider_pids(self) -> list[int]:
         """Function to get the pids that have the selected attributes"""
@@ -195,7 +189,7 @@ class LandingPageFiltering:
         ].index.to_list()
 
     def _init_min_age_last_exam_slider(self) -> Slider:
-        min_age_last_exam_slider = Slider(
+        return Slider(
             name="min_age_last_exam",
             start=0,
             end=100,
@@ -203,7 +197,6 @@ class LandingPageFiltering:
             step=1,
             title="Minimum age at last exam",
         )
-        return min_age_last_exam_slider
 
     def min_n_screenings_slider_pids(self) -> list[int]:
         """Function to get the pids that have the selected attributes"""
@@ -213,7 +206,7 @@ class LandingPageFiltering:
         ].index.to_list()
 
     def _init_min_n_screenings_slider(self) -> Slider:
-        min_n_screenings_slider = Slider(
+        return Slider(
             name="min_n_screenings",
             start=0,
             end=10,
@@ -221,10 +214,9 @@ class LandingPageFiltering:
             step=1,
             title="Minimum number of screenings",
         )
-        return min_n_screenings_slider
 
     def _load_data_manager(self) -> DataManager:
-        """Function to load the dataframe from the parquet file.
+        """Function to load the DataFrame from the parquet file.
         If the parquet file is not found, it will fall back to loading the csv file.
         """
         try:

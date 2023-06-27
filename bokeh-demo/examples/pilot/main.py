@@ -10,6 +10,7 @@ import copy
 import json
 from enum import Enum
 
+import pandas as pd
 from bokeh.layouts import column, grid, row
 from bokeh.models import ColumnDataSource, Div, SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
@@ -161,7 +162,9 @@ def get_selected_pids_from_landing_page():
     return pid_list
 
 
-def extract_people_from_pids(pid_list, exams_df):
+def extract_people_from_pids(
+    pid_list: list[int], exams_df: pd.DataFrame
+) -> pd.DataFrame:
     return exams_df[exams_df[settings.feature_column_names.PID].isin(pid_list)]
 
 
@@ -188,7 +191,7 @@ def main():
     exams_df = data_manager.exams_df
     try:
         selected_pids = get_selected_pids_from_landing_page()
-        if not len(selected_pids) > 0:
+        if len(selected_pids) <= 0:
             raise FileNotFoundError("No pids were selected in the landing page.")
         exams_df = extract_people_from_pids(selected_pids, exams_df)
     except FileNotFoundError as e:
