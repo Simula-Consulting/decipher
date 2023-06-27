@@ -19,8 +19,21 @@ class Settings(BaseSettings):
 
     data_paths: DataPaths = DataPaths()
 
-    label_map: list[str] = ["", "Normal", "Low risk", "High risk", "Cancer"]
-    color_palette: list[str] = ["#13D697", "#0B6BB3", "#FFB60A", "#EF476F"]
+    label_map: dict[int | float, str] = {
+        1: "Normal",
+        2: "Low risk",
+        3: "High risk",
+        4: "Cancer",
+        float("nan"): "Unknown",
+    }
+    color_palette: dict[int | float, str] = {
+        1: "#13D697",
+        2: "#0B6BB3",
+        3: "#FFB60A",
+        4: "#EF476F",
+        float("nan"): "gray",
+    }
+    """Color palette for the different risk levels."""
     default_tools: list[str] = [
         "pan",
         "wheel_zoom",
