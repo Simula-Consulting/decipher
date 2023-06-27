@@ -59,8 +59,6 @@ class Settings(BaseSettings):
         "box_zoom",
         "save",
         "reset",
-        "help",
-        "examine",  # For debugging
     ]
     extra_tools: list[str] = ["tap", "lasso_select"]
     range_padding: float = 0.1
