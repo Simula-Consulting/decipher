@@ -61,6 +61,8 @@ def try_abbreviate(abbreviations: dict[str, str], diagnosis: str) -> str:
 class LexisPlotYearAge(LexisPlot):
     """Lexis plot with year on x-axis and age on y-axis."""
 
+    _title: str = "Year vs. Age"
+
     _y_label: str = "Age"
     _scatter_y_key: str = "age"
     _x_label: str = "Year"

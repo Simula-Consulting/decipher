@@ -91,7 +91,7 @@ def get_timedelta_tick_formatter() -> CustomJSTickFormatter:
 
 
 class LexisPlot(ToolsMixin):
-    _title: str = "Lexis plot"
+    _title: str = "Age vs. Individual"
     _x_label: str = "Age"
     _y_label: str = "Individual #"
 
@@ -234,6 +234,7 @@ class LexisPlot(ToolsMixin):
 
 
 class LexisPlotAge(LexisPlot):
+    _title: str = "Age vs. Year"
     _y_label: str = "Year"
     _scatter_y_key = "exam_date"
     _lexis_line_y_key = "lexis_line_endpoints_year"
