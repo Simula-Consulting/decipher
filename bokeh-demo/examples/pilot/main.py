@@ -80,6 +80,10 @@ def example_app(source_manager: SourceManager):
     histogram_hist.figure.xaxis.axis_label = None
     histogram_hpv.figure.xaxis.axis_label = None
 
+    # Adjust label positions
+    histogram_cyt.label.y -= 20
+    histogram_hpv.label.y -= 20
+
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
     # table = PersonTable(source_manager)
