@@ -12,6 +12,8 @@ class DataPaths(BaseModel):
 
 
 class FeatureColumnNames(BaseModel):
+    """Class to hold the names of the columns in the dataframes."""
+
     exam_date: str = "exam_date"
     age: str = "age"
     birthdate: str = "FOEDT"
