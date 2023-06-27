@@ -112,7 +112,7 @@ class LexisPlot(ToolsMixin):
 
     # TODO: move to config class or settings
     _markers: list[str | None] = [None, "square", "circle", "diamond"]
-    _marker_colors: dict[int | float, str] = settings.color_palette
+    _marker_colors: dict[int | None, str] = settings.color_palette
     _vaccine_line_width: int = 3
     _vaccine_line_color: str = "rgba(143, 148, 9, 0.5)"
 
@@ -177,7 +177,7 @@ class LexisPlot(ToolsMixin):
                                 )
                             ],
                         )
-                        for risk_level in range(1, 5)
+                        for risk_level in (None, *range(1, 5))
                     ),
                 ],
                 orientation="horizontal",
@@ -191,7 +191,12 @@ class LexisPlot(ToolsMixin):
             view=source_manager.exam_view,
             color={
                 "expr": CustomJSExpr(
-                    args={"colors": self._marker_colors},
+                    args={
+                        "colors": self._marker_colors
+                        | {
+                            float("nan"): self._marker_colors[None]
+                        }  # Bokeh uses nan not None
+                    },
                     code=f"return Array.from(this.data.{self._marker_color_key}).map(i => colors.get(i));",  # noqa: E501
                 )
             },
@@ -302,7 +307,11 @@ class TrajectoriesPlot(ToolsMixin):
         self.figure.yaxis.ticker = FixedTicker(
             ticks=list(range(len(settings.label_map)))
         )
-        self.figure.yaxis.major_label_overrides = settings.label_map
+        self.figure.yaxis.major_label_overrides = {
+            state: label
+            for state, label in settings.label_map.items()
+            if state is not None
+        }
 
 
 class DeltaScatter(ToolsMixin):
