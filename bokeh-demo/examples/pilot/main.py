@@ -8,13 +8,13 @@ The app consist of two main "parts"
 
 import copy
 import json
-import warnings
 from enum import Enum
 
 from bokeh.layouts import column, grid, row
 from bokeh.models import ColumnDataSource, Div, SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
 from decipher.data import DataManager
+from loguru import logger
 
 from bokeh_demo.backend import (
     BaseFilter,
@@ -169,8 +169,8 @@ def load_data_manager() -> DataManager:
     try:
         data_manager = DataManager.from_parquet(settings.data_paths.base_path)
     except (FileNotFoundError, ImportError, ValueError) as e:
-        warnings.warn(str(e))
-        print("Falling back to .csv loading. This will affect performance.")
+        logger.exception(e)
+        logger.warning("Falling back to .csv loading. This will affect performance.")
         data_manager = DataManager.read_from_csv(
             settings.data_paths.screening_data_path,
             settings.data_paths.dob_data_path,
@@ -192,8 +192,8 @@ def main():
             raise FileNotFoundError("No pids were selected in the landing page.")
         exams_df = extract_people_from_pids(selected_pids, exams_df)
     except FileNotFoundError as e:
-        print(str(e))
-        print("Falling back to displaying all people.")
+        logger.exception(e)
+        logger.info("Falling back to displaying all people.")
     exams_df = exams_df.drop(columns=["index"]).reset_index(drop=True)
 
     exams_df = exams_pipeline.fit_transform(exams_df)

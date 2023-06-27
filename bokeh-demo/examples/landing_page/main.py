@@ -1,11 +1,11 @@
 import json
-import warnings
 
 from bokeh.io import curdoc
 from bokeh.models import Model
 from bokeh.models.callbacks import CustomJS
 from bokeh.models.widgets import Button, CheckboxButtonGroup, Div, RangeSlider, Slider
 from decipher.data import DataManager
+from loguru import logger
 
 from bokeh_demo.data_ingestion import add_hpv_detailed_information
 from bokeh_demo.settings import settings
@@ -230,11 +230,14 @@ class LandingPageFiltering:
         try:
             data_manager = DataManager.from_parquet(settings.data_paths.base_path)
         except (FileNotFoundError, ImportError, ValueError) as e:
-            warnings.warn(str(e))
-            print("Falling back to .csv loading. This will affect performance.")
+            logger.exception(e)
+            logger.warning(
+                "Falling back to .csv loading. This will affect performance."
+            )
             data_manager = DataManager.read_from_csv(
                 settings.data_paths.screening_data_path,
                 settings.data_paths.dob_data_path,
+                read_hpv=True,
             )
         # Add column for age in years
         return data_manager
