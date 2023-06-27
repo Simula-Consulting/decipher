@@ -72,6 +72,14 @@ def example_app(source_manager: SourceManager):
         label_mapper=partial(try_abbreviate, HPV_TEST_ABBREVIATIONS),
     )
 
+    # Set up labels and titles
+    histogram_cyt.figure.title.text = "Cytology diagnosis"
+    histogram_hist.figure.title.text = "Histology diagnosis"
+    histogram_hpv.figure.title.text = "HPV test type"
+    histogram_cyt.figure.xaxis.axis_label = None
+    histogram_hist.figure.xaxis.axis_label = None
+    histogram_hpv.figure.xaxis.axis_label = None
+
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
     # table = PersonTable(source_manager)
