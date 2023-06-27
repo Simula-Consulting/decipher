@@ -114,8 +114,8 @@ class LandingPageFiltering:
             ].index
         )
 
-    def checkbox_button_pids(self) -> list[int]:
-        """Function to get the pids that have the selected attributes"""
+    def _pids_from_button(self, button_name: str) -> list[int]:
+        """Function to get a list of pids for the people that have the selected attribute."""
 
         def _get_hpv_pids(hpv_type: str) -> list[int]:
             """Function to get the pids that have the selected HPV type"""
@@ -130,41 +130,43 @@ class LandingPageFiltering:
             hpv_pids = self.exams_df.loc[hpv_inds, self.column_names.PID].tolist()
             return hpv_pids
 
-        buttons_active: list[int] = self.checkbox_buttons.active
-        button_pids = set(self.pid_list)
-        if 0 in buttons_active:
-            # Has HPV+
-            button_pids = button_pids.intersection(
-                set(
+        match button_name:
+            case "HPV+":
+                return list(
                     self.person_df[
                         self.person_df[self.column_names.hpv_pos_count] > 0
                     ].index
                 )
-            )
-        if 1 in buttons_active:
-            # Has High Risk Result
-            button_pids = button_pids.intersection(
-                self.person_df[self.person_df[self.column_names.risk_max] > 2].index
-            )
-        if 2 in buttons_active:
-            # Has High Risk Cytology
-            button_pids = button_pids.intersection(
-                self.person_df[self.person_df[self.column_names.hr_cytology]].index
-            )
-        if 3 in buttons_active:
-            # Has High Risk Histology
-            button_pids = button_pids.intersection(
-                self.person_df[self.person_df[self.column_names.hr_histology]].index
-            )
-        if 4 in buttons_active:
-            # Has HPV16+
-            hpv16_pids = _get_hpv_pids("16")
-            button_pids = button_pids.intersection(set(hpv16_pids))
-        if 5 in buttons_active:
-            # Has HPV18+
-            hpv_18_pids = _get_hpv_pids("18")
-            button_pids = button_pids.intersection(set(hpv_18_pids))
+            case "HR Result":
+                return list(
+                    self.person_df[self.person_df[self.column_names.risk_max] > 2].index
+                )
+            case "HR Cytology":
+                return list(
+                    self.person_df[self.person_df[self.column_names.hr_cytology]].index
+                )
+            case "HR Histology":
+                return list(
+                    self.person_df[self.person_df[self.column_names.hr_histology]].index
+                )
+            case "HPV16+":
+                return _get_hpv_pids("16")
+            case "HPV18+":
+                return _get_hpv_pids("18")
+            case _:
+                return []
 
+    def checkbox_button_pids(self) -> list[int]:
+        """Function to get the pids that have the selected attributes"""
+        active_button_names: list[str] = [
+            self.button_positions[i] for i in self.checkbox_buttons.active
+        ]
+
+        button_pids = set(self.pid_list)
+        for button_name in active_button_names:
+            button_pids = button_pids.intersection(
+                set(self._pids_from_button(button_name))
+            )
         return list(button_pids)
 
     def _init_checkbox_buttons(self) -> CheckboxButtonGroup:
@@ -176,6 +178,7 @@ class LandingPageFiltering:
             "HPV16+",
             "HPV18+",
         ]
+        self.button_positions = {i: label for i, label in enumerate(labels)}
         return CheckboxButtonGroup(
             name="checkbox_buttons",
             labels=labels,
