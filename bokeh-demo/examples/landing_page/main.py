@@ -93,7 +93,7 @@ class LandingPageFiltering:
         return go_button
 
     def _init_save_button(self) -> Button:
-        save_button = Button(label="Save")
+        save_button = Button(name="save_button", label="Save")
         save_button.on_click(self.apply_filters_and_save)
         return save_button
 
