@@ -10,6 +10,7 @@ import copy
 import json
 import warnings
 from enum import Enum
+from functools import partial
 
 from bokeh.layouts import column, grid, row
 from bokeh.models import ColumnDataSource, Div, SymmetricDifferenceFilter
@@ -44,10 +45,15 @@ DIAGNOSIS_ABBREVIATIONS = {
 }
 """Abbreviations for diagnosis names."""
 
+HPV_TEST_ABBREVIATIONS = {
+    "Abbott RealTime High Risk HPV": "Abbott HR",
+    "Cobas 4800 System": "Cobas 4800",
+}
 
-def try_abbreviate_diagnosis(diagnosis: str) -> str:
+
+def try_abbreviate(abbreviations: dict[str, str], diagnosis: str) -> str:
     """Abbreviates diagnosis names if they are in the DIAGNOSIS_ABBREVIATIONS dictionary."""
-    return DIAGNOSIS_ABBREVIATIONS.get(diagnosis, diagnosis)
+    return abbreviations.get(diagnosis, diagnosis)
 
 
 def example_app(source_manager: SourceManager):
@@ -55,10 +61,16 @@ def example_app(source_manager: SourceManager):
     lpa = LexisPlotAge(source_manager)
     traj = TrajectoriesPlot(source_manager)
     histogram_cyt = HistogramPlot.from_person_field(
-        source_manager, "cyt_diagnosis", label_mapper=try_abbreviate_diagnosis
+        source_manager,
+        "cyt_diagnosis",
+        label_mapper=partial(try_abbreviate, DIAGNOSIS_ABBREVIATIONS),
     )
     histogram_hist = HistogramPlot.from_person_field(source_manager, "hist_diagnosis")
-    histogram_hpv = HistogramPlot.from_person_field(source_manager, "hpv_test_type")
+    histogram_hpv = HistogramPlot.from_person_field(
+        source_manager,
+        "hpv_test_type",
+        label_mapper=partial(try_abbreviate, HPV_TEST_ABBREVIATIONS),
+    )
 
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
