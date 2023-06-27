@@ -35,6 +35,7 @@ from bokeh_demo.frontend import (
     LexisPlotAge,
     TrajectoriesPlot,
     get_filter_element_from_source_manager,
+    get_timedelta_tick_formatter,
 )
 from bokeh_demo.settings import settings
 
@@ -56,9 +57,40 @@ def try_abbreviate(abbreviations: dict[str, str], diagnosis: str) -> str:
     return abbreviations.get(diagnosis, diagnosis)
 
 
+class LexisPlotYearAge(LexisPlot):
+    """Lexis plot with year on x-axis and age on y-axis."""
+
+    _y_label: str = "Age"
+    _scatter_y_key: str = "age"
+    _x_label: str = "Year"
+    _scatter_x_key: str = "exam_date"
+
+    _lexis_line_x_key: str = "lexis_line_endpoints_year"
+    _lexis_line_y_key: str = "lexis_line_endpoints_age"
+    _vaccine_line_x_key: str = "vaccine_line_endpoints_year"
+    _vaccine_line_y_key: str = "vaccine_line_endpoints_age"
+
+    _y_axis_type = "linear"
+    _x_axis_type = "datetime"
+
+    _y_axis_tick_format_getter = get_timedelta_tick_formatter
+    _x_axis_tick_format_getter = None
+
+
+def _link_ranges(lexis_plots):
+    lexis_plots["age_index"].figure.x_range = lexis_plots["age_year"].figure.x_range
+    lexis_plots["year_age"].figure.y_range = lexis_plots["age_year"].figure.x_range
+    lexis_plots["age_year"].figure.y_range = lexis_plots["year_age"].figure.x_range
+
+
 def example_app(source_manager: SourceManager):
-    lp = LexisPlot(source_manager)
-    lpa = LexisPlotAge(source_manager)
+    lexis_plots = {
+        "age_index": LexisPlot(source_manager),
+        "age_year": LexisPlotAge(source_manager),
+        "year_age": LexisPlotYearAge(source_manager),
+    }
+    _link_ranges(lexis_plots)
+
     traj = TrajectoriesPlot(source_manager)
     histogram_cyt = HistogramPlot.from_person_field(
         source_manager,
@@ -90,7 +122,6 @@ def example_app(source_manager: SourceManager):
     # table.person_table.styles = {"border": "1px solid #e6e6e6", "border-radius": "5px"}
     # table.person_table.height = 500
 
-    lp.figure.x_range = lpa.figure.x_range
     high_risk_person_group = get_filter_element_from_source_manager(
         "High risk - Person", source_manager
     )
@@ -127,8 +158,7 @@ def example_app(source_manager: SourceManager):
     ]
 
     for element in (
-        lp.figure,
-        lpa.figure,
+        *(plot.figure for plot in lexis_plots.values()),
         histogram_cyt.figure,
         histogram_hist.figure,
         histogram_hpv.figure,
