@@ -62,7 +62,8 @@ class CreatePersonSource(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None) -> CreatePersonSource:
         self.person_results_map = {
-            pid: sub_df["risk"].to_list() for pid, sub_df in X.groupby("PID")
+            pid: sub_df["risk"].dropna().astype("int").to_list()
+            for pid, sub_df in X.groupby("PID")
         }
         self.person_exam_ages_map = {
             pid: (sub_df["age"] / pd.Timedelta(days=365)).to_list()
