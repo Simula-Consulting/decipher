@@ -26,6 +26,7 @@ from bokeh.models import (  # type: ignore
     CustomJSExpr,
     CustomJSTickFormatter,
     DataTable,
+    Div,
     HoverTool,
     Label,
     LayoutDOM,
@@ -47,6 +48,7 @@ from .backend import (
     BooleanFilter,
     CategoricalFilter,
     ExamSimpleFilter,
+    ExamToggleFilter,
     PersonSimpleFilter,
     RangeFilter,
     SimpleFilter,
@@ -653,6 +655,7 @@ FILTER_TO_FilterValueUIElement_MAPPING = {
     SimpleFilter: FilterValueUIElement.NoValue,
     PersonSimpleFilter: FilterValueUIElement.NoValue,
     ExamSimpleFilter: FilterValueUIElement.NoValue,
+    ExamToggleFilter: FilterValueUIElement.NoValue,
     RangeFilter: FilterValueUIElement.RangeSlider,
     BooleanFilter: FilterValueUIElement.BoolCombination,
 }
@@ -723,7 +726,14 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
 
     label = Paragraph(text=label_text)
 
-    base_row = cast(Row, row([label, activation_toggle, inversion_toggle]))
+    if isinstance(filter, ExamToggleFilter):
+        toggle_type = Switch(active=False)
+        toggle_type.on_change("active", filter.get_toggle_type_callback())
+    else:
+        toggle_type = Div()  # Placeholder to make layout consistent
+    row_elements = [label, activation_toggle, inversion_toggle, toggle_type]
+
+    base_row = cast(Row, row(row_elements))
     return (
         column(
             base_row,

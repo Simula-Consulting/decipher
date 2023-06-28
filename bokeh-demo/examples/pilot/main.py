@@ -24,8 +24,7 @@ from loguru import logger
 from bokeh_demo.backend import (
     BaseFilter,
     BooleanFilter,
-    ExamSimpleFilter,
-    PersonSimpleFilter,
+    ExamToggleFilter,
     SourceManager,
 )
 from bokeh_demo.data_ingestion import (
@@ -149,11 +148,12 @@ def example_app(source_manager: SourceManager):
     # table.person_table.styles = {"border": "1px solid #e6e6e6", "border-radius": "5px"}
     # table.person_table.height = 500
 
-    high_risk_person_group = get_filter_element_from_source_manager(
-        "High risk - Person", source_manager
+    hpv_exam = get_filter_element_from_source_manager("HPV", source_manager)
+    high_risk_hist_exam = get_filter_element_from_source_manager(
+        "High risk - Histology", source_manager
     )
-    high_risk_exam_group = get_filter_element_from_source_manager(
-        "High risk - Exam", source_manager
+    high_risk_cyt_exam = get_filter_element_from_source_manager(
+        "High risk - Cytology", source_manager
     )
 
     # Remove vaccine filters as we do not have vaccine data
@@ -167,9 +167,10 @@ def example_app(source_manager: SourceManager):
 
     filter_grid = grid(
         column(
-            row(Div(), Div(text="Active"), Div(text="Invert")),
-            high_risk_person_group,
-            high_risk_exam_group,
+            row(Div(), Div(text="Active"), Div(text="Invert"), Div(text="On person")),
+            hpv_exam,
+            high_risk_hist_exam,
+            high_risk_cyt_exam,
             # vaccine_group,
             # vaccine_type,
             # category_group,
@@ -205,28 +206,41 @@ HIGH_RISK_STATES = {3, 4}
 """Risk levels that are considered high risk."""
 
 
-def _at_least_one_high_risk(person_source):
-    """Return people with at least one high risk"""
+def _high_risk_exam(
+    exam_source_data: dict, risk_states: set[int], exam_type: str
+) -> list[int]:
     return [
         i
-        for i, exam_results in enumerate(person_source.data["exam_results"])
-        if not set(exam_results).isdisjoint(HIGH_RISK_STATES)
+        for i, (state, type_) in enumerate(
+            zip(exam_source_data["risk"], exam_source_data["exam_type"])
+        )
+        if state in risk_states and type_ == exam_type
     ]
 
 
 def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
+    hpv_exam_indices = [
+        i
+        for i, type in enumerate(source_manager.exam_source.data["exam_type"])
+        if type == "HPV"
+    ]
+
     base_filters = {
-        "High risk - Person": PersonSimpleFilter(
+        "High risk - Histology": ExamToggleFilter(
             source_manager=source_manager,
-            person_indices=_at_least_one_high_risk(source_manager.person_source),
+            exam_indices=_high_risk_exam(
+                source_manager.exam_source.data, HIGH_RISK_STATES, "histology"
+            ),
         ),
-        "High risk - Exam": ExamSimpleFilter(
+        "High risk - Cytology": ExamToggleFilter(
             source_manager=source_manager,
-            exam_indices=[
-                i
-                for i, state in enumerate(source_manager.exam_source.data["risk"])
-                if state in HIGH_RISK_STATES
-            ],
+            exam_indices=_high_risk_exam(
+                source_manager.exam_source.data, HIGH_RISK_STATES, "cytology"
+            ),
+        ),
+        "HPV": ExamToggleFilter(
+            source_manager=source_manager,
+            exam_indices=hpv_exam_indices,
         ),
     }
 
