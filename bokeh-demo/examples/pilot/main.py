@@ -105,13 +105,23 @@ def example_app(source_manager: SourceManager):
         label_mapper=partial(try_abbreviate, HPV_TEST_ABBREVIATIONS),
     )
 
+    def _risk_label(risk_level: int) -> str:
+        """Format risk as 'label (risk_level)', e.g. 'Normal (1)'"""
+        return f"{settings.label_map[risk_level]} ({risk_level})"
+
+    histogram_risk = HistogramPlot.from_person_field(
+        source_manager, "exam_results", label_mapper=_risk_label
+    )
+
     # Set up labels and titles
     histogram_cyt.figure.title.text = "Cytology diagnosis"
     histogram_hist.figure.title.text = "Histology diagnosis"
     histogram_hpv.figure.title.text = "HPV test type"
+    histogram_risk.figure.title.text = "Exam risk levels"
     histogram_cyt.figure.xaxis.axis_label = None
     histogram_hist.figure.xaxis.axis_label = None
     histogram_hpv.figure.xaxis.axis_label = None
+    histogram_hist.figure.xaxis.axis_label = None
 
     # Adjust label positions
     histogram_cyt.label.y -= 20
@@ -163,6 +173,7 @@ def example_app(source_manager: SourceManager):
         histogram_cyt.figure,
         histogram_hist.figure,
         histogram_hpv.figure,
+        histogram_risk.figure,
         filter_grid,
         # Prediction related
         # delta.figure,
