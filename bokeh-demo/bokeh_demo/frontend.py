@@ -472,7 +472,7 @@ class LabelSelectedMixin:
         return update_label_callback
 
 
-class HistogramPlot(LabelSelectedMixin):
+class HistogramPlot:
     """Display a histogram of the selected results.
 
     The selection and filters will be applied to the outer list, yielding only
@@ -520,9 +520,6 @@ class HistogramPlot(LabelSelectedMixin):
         self.source_manager.view.on_change(
             "filter", self.get_update_histogram_callback()
         )
-
-        # Add label from LabelSelectedMixin
-        self.register_label()
 
         self._set_properties()
 

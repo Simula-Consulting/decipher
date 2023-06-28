@@ -11,7 +11,7 @@ import itertools
 import json
 from enum import Enum
 from functools import partial
-from typing import Collection
+from typing import Collection, Hashable
 
 import numpy as np
 import pandas as pd
@@ -34,6 +34,7 @@ from bokeh_demo.data_ingestion import (
 )
 from bokeh_demo.frontend import (
     HistogramPlot,
+    LabelSelectedMixin,
     LexisPlot,
     LexisPlotAge,
     get_filter_element_from_source_manager,
@@ -87,7 +88,17 @@ def _link_ranges(lexis_plots):
     lexis_plots["age_year"].figure.y_range = lexis_plots["year_age"].figure.x_range
 
 
-class HistogramWithMean(HistogramPlot):
+class HistogramWithMean(LabelSelectedMixin, HistogramPlot):
+    def __init__(
+        self,
+        results_per_person: list[list[Hashable]],
+        class_list: list[Hashable] | dict[Hashable, str],
+        source_manager: SourceManager,
+    ):
+        super().__init__(results_per_person, class_list, source_manager)
+        # Add label from LabelSelectedMixin
+        self.register_label()
+
     def _get_label_text(self, selected_indices: Collection[int]) -> str:
         selected_results = list(
             itertools.chain.from_iterable(
@@ -141,8 +152,6 @@ def example_app(source_manager: SourceManager):
     histogram_hist.figure.xaxis.axis_label = None
 
     # Adjust label positions
-    histogram_cyt.label.y -= 20
-    histogram_hpv.label.y -= 20
     histogram_risk.label.y -= 20
 
     # Remove delta plot and table as these are related to predictions, which we are not doing
@@ -188,12 +197,70 @@ def example_app(source_manager: SourceManager):
         ":host {grid-template-rows: unset; grid-template-columns: unset;}"
     ]
 
+    ## Statistics ##
+    def _get_stats_text() -> str:
+        """Get text for statistics div."""
+        number_of_individuals = len(source_manager.person_source.data["PID"])
+        # If nothing is selected, interpret it as everything is selected.
+        selected_indices = source_manager.person_source.selected.indices or range(
+            number_of_individuals
+        )
+        number_of_selected = len(selected_indices)
+
+        # Exam info
+        number_of_exams = len(source_manager.exam_source.selected.indices) or len(
+            source_manager.exam_source.data["person_index"]
+        )  # "person_index" chosen arbitrarily, can be any key
+        ages_per_person = [
+            source_manager.person_source.data["exam_time_age"][i]
+            for i in selected_indices
+        ]
+        number_of_exams_per_person = [len(ages) for ages in ages_per_person]
+        number_of_exams_mean = np.mean(number_of_exams_per_person)
+        number_of_exams_std = np.std(number_of_exams_per_person)
+
+        ages_list = list(itertools.chain.from_iterable(ages_per_person))
+        ages_mean = np.mean(ages_list)
+        ages_std = np.std(ages_list)
+
+        # Screening interval
+        screening_intervals = list(
+            itertools.chain.from_iterable(
+                np.diff(ages)
+                for ages in source_manager.person_source.data["exam_time_age"]
+            )
+        )
+        screening_interval_mean = np.mean(screening_intervals)
+        screening_interval_std = np.std(screening_intervals)
+
+        return (
+            "<h2>Statistics</h2>"
+            "<ul>"
+            f"<li>Selected: {number_of_selected} / {number_of_individuals}</li>"
+            f"<li>Exams: {number_of_exams}</li>"
+            f"<li>Screening interval: {screening_interval_mean:.2f} ± {screening_interval_std:.2f} years</li>"
+            f"<li>Number of exams per person: {number_of_exams_mean:.2f} ± {number_of_exams_std:.2f}</li>"
+            f"<li>Age at exam: {ages_mean:.2f} ± {ages_std:.2f} years</li>"
+            "</ul>"
+        )
+
+    def update_stats_text(attr, old, new):
+        """Update the statistics text.
+
+        Bokeh requires the signature of this function to be
+        (attr, old, new), but we do not use any of these."""
+        stats_div.text = _get_stats_text()
+
+    stats_div = Div(text=_get_stats_text())
+    source_manager.person_source.selected.on_change("indices", update_stats_text)
+
     for element in (
         *(plot.figure for plot in lexis_plots.values()),
         histogram_cyt.figure,
         histogram_hist.figure,
         histogram_hpv.figure,
         histogram_risk.figure,
+        stats_div,
         filter_grid,
         # Prediction related
         # delta.figure,
