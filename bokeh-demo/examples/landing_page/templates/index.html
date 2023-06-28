@@ -14,7 +14,18 @@
     font-size: 4em;
     text-align: center;
     margin-top: 2em;
-    color: #fff;
+    color: #ffffff;
+  }
+  h2 {
+    font-size: 1.5em;
+    text-align: center;
+    color: #1e1e1e;
+  }
+  h3 {
+    font-size: 0.8em;
+    text-align: center;
+    color: #727272;
+    margin-bottom: 6px;
   }
   form {
     width: 50%;
@@ -75,9 +86,21 @@
   text-decoration: none;
   transition: all 0.3s ease;
 }
-
-.button:hover {
+  .button:hover {
   background-color: #be7f00;
+}
+.embedded-root-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: auto;
+  width: auto;
+}
+.counter {
+  size: 2em;
+  font-family: "Avenir", sans-serif;
+  font-weight: bold;
+  color: #1e1e1e;
 }
 </style>
 
@@ -89,20 +112,44 @@
 
 <div>
   <h1>Visualisation tool filtering page</h1>
-	<div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5">
-    {%      for doc in docs %}
-    {{        embed(doc) if doc.elementid }}
-    {%-       for root in doc.roots %}
-    <div class="card">
-    {{            embed(root) }}
+	 <div class="card justify-center mx-auto" style="width: 400px">
+    <h2>Person Properties</h2>
+    <h3>Select people who have the following properties.</h3>
+    <div class="embedded-root-container">
+      {{ embed(roots.birthyear_slider) }}
     </div>
-    {%        endfor %}
-    {%      endfor %}
+    <div class="embedded-root-container">
+      {{ embed(roots.min_age_last_exam) }}
+    </div>
+    <div class="embedded-root-container">
+      {{ embed(roots.min_n_screenings) }}
+    </div>
+  </div>
+  <br>
+  <div class="card justify-center mx-auto margin-top" style="width: 545px">
+    <h2>Screening Properties</h2>
+    <h3>Select people who have at least one of the following screening results.</h3>
+    <div class="embedded-root-container">
+      {{ embed(roots.checkbox_buttons) }}
+    </div>
+  </div>
+  <br>
+  <div class="card justify-center mx-auto margin-top" style="width: 545px">
+    <div class="embedded-root-container my-3">
+    {{ embed(roots.save_button) }}
+    </div>
+    <div class="justify-center mx-auto margin-top">
+      <h2>Number of selected people </h2>
+      <div class="embedded-root-container">
+        {{ embed(roots.person_counter) }}
+      </div>
+    </div>
   </div>
   <br>
   <div style="text-align:center;">
     <a href="/pilot" class="button justify-center"]>GO</a>
   </div>
+
 
 </div>
 
