@@ -256,6 +256,13 @@ def example_app(source_manager: SourceManager):
     stats_div = Div(text=_get_stats_text())
     source_manager.person_source.selected.on_change("indices", update_stats_text)
 
+    # Add names to elements for manual placement in html
+    histogram_cyt.figure.name = "histogram_cyt"
+    histogram_hist.figure.name = "histogram_hist"
+    histogram_hpv.figure.name = "histogram_hpv"
+    histogram_risk.figure.name = "histogram_risk"
+    stats_div.name = "stats_div"
+
     for element in (
         *(plot.figure for plot in lexis_plots.values()),
         histogram_cyt.figure,

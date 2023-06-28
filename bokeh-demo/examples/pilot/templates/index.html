@@ -95,6 +95,12 @@
   </div>
   <div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5"
     x-data="{ toggle: false }">
+    <!-- Statistics -->
+    <div class="card col-span-full !w-auto">
+      {{ embed(roots.stats_div) }}
+    </div>
+
+    <!-- Lexis plots -->
     <div class="card">
       {{ embed(roots.lexis__age_index) }}
     </div>
@@ -116,15 +122,14 @@
       </div>
       {{ embed(roots.lexis__year_age) }}
     </div>
-    {% for doc in docs %}
-    {{ embed(doc) if doc.elementid }}
-    {%- for root in doc.roots if root.name not in ["filter_control", "lexis__age_index", "lexis__year_age",
-    "lexis__age_year"] %}
+
+    <!-- Histograms -->
+    {% for card in [roots.histogram_cyt, roots.histogram_hist, roots.histogram_hpv, roots.histogram_risk] %}
     <div class="card">
-      {{ embed(root) }}
+      {{ embed(card) }}
     </div>
     {% endfor %}
-    {% endfor %}
+
   </div>
 </div>
 
