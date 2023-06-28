@@ -87,7 +87,9 @@ def get_timedelta_tick_formatter() -> CustomJSTickFormatter:
     return CustomJSTickFormatter(
         code="""
             const millisecondsInYear = 365.25 * 24 * 60 * 60 * 1000;
-            return (tick / millisecondsInYear).toFixed(1);
+            const diff = ticks[1] - ticks[0];
+            const precision = Math.max(0, 1-Math.log10(diff / millisecondsInYear));
+            return (tick / millisecondsInYear).toFixed(precision);
         """
     )
 
