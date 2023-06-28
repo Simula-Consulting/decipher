@@ -34,7 +34,6 @@ from bokeh_demo.frontend import (
     HistogramPlot,
     LexisPlot,
     LexisPlotAge,
-    TrajectoriesPlot,
     get_filter_element_from_source_manager,
     get_timedelta_tick_formatter,
 )
@@ -94,7 +93,6 @@ def example_app(source_manager: SourceManager):
     }
     _link_ranges(lexis_plots)
 
-    traj = TrajectoriesPlot(source_manager)
     histogram_cyt = HistogramPlot.from_person_field(
         source_manager,
         "cyt_diagnosis",
@@ -165,7 +163,6 @@ def example_app(source_manager: SourceManager):
         histogram_cyt.figure,
         histogram_hist.figure,
         histogram_hpv.figure,
-        traj.figure,
         filter_grid,
         # Prediction related
         # delta.figure,
