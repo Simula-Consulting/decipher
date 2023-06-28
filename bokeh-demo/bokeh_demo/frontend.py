@@ -205,6 +205,7 @@ class LexisPlot(ToolsMixin):
                 )
             },
         )
+        self.figure.title.text_font_size = "15pt"  # type: ignore
 
         # Tooltip for detailed exam data
         hover_tool = HoverTool(
@@ -579,6 +580,7 @@ class HistogramPlot:
                 "major_label_overrides": tick_labels_map,
                 "major_label_orientation": np.pi / 4,
             },
+            "title": {"text_font_size": "15pt"},
             "yaxis": {"axis_label": "Count"},
             "grid": {"grid_line_color": "white"},
         }
