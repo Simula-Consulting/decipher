@@ -106,6 +106,9 @@ def example_app(source_manager: SourceManager):
         "year_age": LexisPlotYearAge(source_manager),
     }
     _link_ranges(lexis_plots)
+    # Add names for reference in the HTML template
+    for name, plot in lexis_plots.items():
+        plot.figure.name = f"lexis__{name}"
 
     histogram_cyt = HistogramPlot.from_person_field(
         source_manager,
