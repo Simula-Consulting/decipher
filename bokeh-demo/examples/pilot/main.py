@@ -161,6 +161,7 @@ def example_app(source_manager: SourceManager):
     # table.person_table.height = 500
 
     hpv_exam = get_filter_element_from_source_manager("HPV", source_manager)
+    hpv_16_exam = get_filter_element_from_source_manager("HPV 16", source_manager)
     high_risk_hist_exam = get_filter_element_from_source_manager(
         "High risk - Histology", source_manager
     )
@@ -181,6 +182,7 @@ def example_app(source_manager: SourceManager):
         column(
             row(Div(), Div(text="Active"), Div(text="Invert"), Div(text="On person")),
             hpv_exam,
+            hpv_16_exam,
             high_risk_hist_exam,
             high_risk_cyt_exam,
             # vaccine_group,
@@ -294,6 +296,13 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
         for i, type in enumerate(source_manager.exam_source.data["exam_type"])
         if type == "HPV"
     ]
+    hpv_16_exam_indices = [
+        i
+        for i, details in enumerate(
+            source_manager.exam_source.data["exam_detailed_results"]
+        )
+        if "16" in details
+    ]
 
     base_filters = {
         "High risk - Histology": ExamToggleFilter(
@@ -311,6 +320,10 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
         "HPV": ExamToggleFilter(
             source_manager=source_manager,
             exam_indices=hpv_exam_indices,
+        ),
+        "HPV 16": ExamToggleFilter(
+            source_manager=source_manager,
+            exam_indices=hpv_16_exam_indices,
         ),
     }
 
