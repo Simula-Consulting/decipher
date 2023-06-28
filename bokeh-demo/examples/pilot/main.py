@@ -7,10 +7,13 @@ The app consist of two main "parts"
 """
 
 import copy
+import itertools
 import json
 from enum import Enum
 from functools import partial
+from typing import Collection
 
+import numpy as np
 import pandas as pd
 from bokeh.layouts import column, grid, row
 from bokeh.models import ColumnDataSource, Div, SymmetricDifferenceFilter
@@ -85,6 +88,18 @@ def _link_ranges(lexis_plots):
     lexis_plots["age_year"].figure.y_range = lexis_plots["year_age"].figure.x_range
 
 
+class HistogramWithMean(HistogramPlot):
+    def _get_label_text(self, selected_indices: Collection[int]) -> str:
+        selected_results = list(
+            itertools.chain.from_iterable(
+                self.results_per_person[i] for i in selected_indices
+            )
+        )
+        mean = np.mean(selected_results)
+        std = np.std(selected_results)
+        return f"Mean: {mean:.2f} \n" f"Std: {std:.2f}"
+
+
 def example_app(source_manager: SourceManager):
     lexis_plots = {
         "age_index": LexisPlot(source_manager),
@@ -109,7 +124,7 @@ def example_app(source_manager: SourceManager):
         """Format risk as 'label (risk_level)', e.g. 'Normal (1)'"""
         return f"{settings.label_map[risk_level]} ({risk_level})"
 
-    histogram_risk = HistogramPlot.from_person_field(
+    histogram_risk = HistogramWithMean.from_person_field(
         source_manager, "exam_results", label_mapper=_risk_label
     )
 
@@ -126,6 +141,7 @@ def example_app(source_manager: SourceManager):
     # Adjust label positions
     histogram_cyt.label.y -= 20
     histogram_hpv.label.y -= 20
+    histogram_risk.label.y -= 20
 
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
