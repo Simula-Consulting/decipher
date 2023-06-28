@@ -436,11 +436,6 @@ class LabelSelectedMixin:
         return cast(float, np.mean(screening_intervals)) * 12
 
     def _get_label_text(self, selected_indices: Collection[int]) -> str:
-        n_vaccines = sum(
-            self.source_manager.person_source.data["vaccine_age"][i] is not None
-            for i in selected_indices
-        )
-
         nested_age_at_exam = self._get_age_at_exam(selected_indices)
         average_screening_interval = self._compute_average_screening_interval(
             nested_age_at_exam
@@ -448,7 +443,6 @@ class LabelSelectedMixin:
 
         return (
             f" Individuals selected: {len(selected_indices)} \n"
-            f" Individuals with vaccinations: {n_vaccines} \n"
             f" Average screening interval: ~{round(average_screening_interval, 2)} months"  # noqa: E501
         )
 
