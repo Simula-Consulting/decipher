@@ -152,7 +152,7 @@ def example_app(source_manager: SourceManager):
     histogram_hist.figure.xaxis.axis_label = None
 
     # Adjust label positions
-    histogram_risk.label.y -= 20
+    histogram_risk.label.y -= 30
 
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
