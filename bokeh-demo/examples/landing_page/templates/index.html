@@ -13,8 +13,11 @@
   h1 {
     font-size: 4em;
     text-align: center;
-    margin-top: 2em;
+    margin-top: 1em;
+    margin-bottom: 20px;
     color: #ffffff;
+    font-family: "Avenir" sans-serif;
+
   }
   h2 {
     font-size: 1.5em;
@@ -75,7 +78,7 @@
   }
   .button {
   display: inline-block;
-  padding: 10px 20px;
+  padding: 10px 54px;
   font-family: "Avenir", sans-serif;
   font-size: 1.5em;
   font-weight: bold;
@@ -87,7 +90,7 @@
   transition: all 0.3s ease;
 }
   .button:hover {
-  background-color: #be7f00;
+  background-color: #c48300;
 }
 .embedded-root-container {
   display: flex;
@@ -134,14 +137,15 @@
     </div>
   </div>
   <br>
-  <div class="card justify-center mx-auto margin-top" style="width: 545px">
-    <div class="embedded-root-container my-3">
-    {{ embed(roots.save_button) }}
-    </div>
+  <div class="card justify-center mx-auto margin-top" style="width: 470px">
+    <h2>Summary</h2>
+    <h3>Total number of people selected for plotting. Apply the filters to update.</h3>
     <div class="justify-center mx-auto margin-top">
-      <h2>Number of selected people </h2>
       <div class="embedded-root-container">
         {{ embed(roots.person_counter) }}
+      </div>
+      <div class="embedded-root-container my-auto">
+      {{ embed(roots.save_button) }}
       </div>
     </div>
   </div>
