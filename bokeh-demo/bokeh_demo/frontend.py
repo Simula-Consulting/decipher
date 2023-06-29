@@ -575,7 +575,6 @@ class HistogramPlot:
         properties: dict[str, dict[str, Any]] = {
             "y_range": {"start": 0},
             "xaxis": {
-                "axis_label": "State",
                 "ticker": list(range(len(self.class_list))),
                 "major_label_overrides": tick_labels_map,
                 "major_label_orientation": np.pi / 4,
