@@ -16,7 +16,12 @@ from typing import Collection, Hashable
 import numpy as np
 import pandas as pd
 from bokeh.layouts import column, grid, row
-from bokeh.models import ColumnDataSource, Div, SymmetricDifferenceFilter
+from bokeh.models import (
+    ColumnDataSource,
+    Div,
+    InlineStyleSheet,
+    SymmetricDifferenceFilter,
+)
 from bokeh.plotting import curdoc
 from decipher.data import DataManager
 from loguru import logger
@@ -235,15 +240,62 @@ def example_app(source_manager: SourceManager):
         screening_interval_mean = np.mean(screening_intervals)
         screening_interval_std = np.std(screening_intervals)
 
+        person_icon = """
+        <svg class="icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 19">
+        <path d="M14.5 0A3.987 3.987 0 0 0 11 2.1a4.977 4.977 0 0 1 3.9 5.858A3.989 3.989 0 0 0 14.5 0ZM9 13h2a4 4 0 0 1 4 4v2H5v-2a4 4 0 0 1 4-4Z"/>
+        <path d="M5 19h10v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2ZM5 7a5.008 5.008 0 0 1 4-4.9 3.988 3.988 0 1 0-3.9 5.859A4.974 4.974 0 0 1 5 7Zm5 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm5-1h-.424a5.016 5.016 0 0 1-1.942 2.232A6.007 6.007 0 0 1 17 17h2a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5ZM5.424 9H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h2a6.007 6.007 0 0 1 4.366-5.768A5.016 5.016 0 0 1 5.424 9Z"/>
+        </svg>"""
+
+        clipboard_icon = """
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
+        <path d="M16 1h-3.278A1.992 1.992 0 0 0 11 0H7a1.993 1.993 0 0 0-1.722 1H2a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2ZM7 2h4v3H7V2Zm5.7 8.289-3.975 3.857a1 1 0 0 1-1.393 0L5.3 12.182a1.002 1.002 0 1 1 1.4-1.436l1.328 1.289 3.28-3.181a1 1 0 1 1 1.392 1.435Z"/>
+        </svg>"""
+
+        left_right_icon = """
+        <svg class="icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 14">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 10H1m0 0 3-3m-3 3 3 3m1-9h10m0 0-3 3m3-3-3-3"/>
+        </svg>"""
+
+        age_icon = """
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+        </svg>"""
+
+        def _format_stats(name, value, help=None):
+            help = (
+                f"<span class='help'>?<span class='tooltip'>{help}</span></span>"
+                if help
+                else ""
+            )
+            return f"<div class='stats'><span class='name'>{name}{help}</span> <span>{value}</span></div>"
+
+        statistics_list = "\n".join(
+            _format_stats(name, value, help)
+            for name, value, help in (
+                (
+                    person_icon,
+                    f"{number_of_selected} / {number_of_individuals}",
+                    "Number of individuals",
+                ),
+                (clipboard_icon, number_of_exams, "Number of exams"),
+                (
+                    left_right_icon,
+                    f"{screening_interval_mean:.2f} ± {screening_interval_std:.2f} years",
+                    "Screening interval",
+                ),
+                (
+                    f"{clipboard_icon} / {person_icon}",
+                    f"{number_of_exams_mean:.2f} ± {number_of_exams_std:.2f}",
+                    "Number of exams per individual",
+                ),
+                (age_icon, f"{ages_mean:.2f} ± {ages_std:.2f} years", "Age at exam"),
+            )
+        )
         return (
-            "<h2>Statistics</h2>"
-            "<ul>"
-            f"<li>Selected: {number_of_selected} / {number_of_individuals}</li>"
-            f"<li>Exams: {number_of_exams}</li>"
-            f"<li>Screening interval: {screening_interval_mean:.2f} ± {screening_interval_std:.2f} years</li>"
-            f"<li>Number of exams per person: {number_of_exams_mean:.2f} ± {number_of_exams_std:.2f}</li>"
-            f"<li>Age at exam: {ages_mean:.2f} ± {ages_std:.2f} years</li>"
-            "</ul>"
+            "<h2>Selection statistics</h2>"
+            "<div class='stats-group' style=''>"
+            f"{statistics_list}"
+            "</div>"
         )
 
     def update_stats_text(attr, old, new):
@@ -253,7 +305,30 @@ def example_app(source_manager: SourceManager):
         (attr, old, new), but we do not use any of these."""
         stats_div.text = _get_stats_text()
 
-    stats_div = Div(text=_get_stats_text())
+    stylesheet = InlineStyleSheet(
+        css="""
+        .stats-group {
+            display: grid;
+            grid-column-gap: 20px;
+            grid-template-columns: 1fr 1fr 1fr;
+            font-size: 18px;
+            width: 80%;
+            margin: 0 auto;
+        }
+        .stats { border-bottom: 1px solid #bdbdbd; display: flex; line-height: 2em; margin-top: 5px;}
+        .stats span.name { flex-grow: 1; }
+        .tooltip { display: none; position: absolute; bottom: 2em; background: #686868; color: white; padding: 5px 10px; border-radius: 4px; opacity: 0; transition: opacity 0.3s; width: max-content;}
+        .help { position: relative; padding: 0 4px; border-radius: 100px; border: 1px solid black; width: 1.2em; height: 1.2em; line-height: 1.2em; display: inline-block; text-align: center; margin-left: 8px; vertical-align: super; font-size: smaller;}
+        .help:hover .tooltip { opacity: 1; display: block;}
+        .icon { width: 1.2em; height: 1.2em; vertical-align: middle; }
+        .bk-clearfix { width: 100% }
+        """
+    )
+    stats_div = Div(
+        text=_get_stats_text(),
+        styles={"color": "#555", "width": "100%"},
+        stylesheets=[stylesheet],
+    )
     source_manager.person_source.selected.on_change("indices", update_stats_text)
 
     # Add names to elements for manual placement in html
