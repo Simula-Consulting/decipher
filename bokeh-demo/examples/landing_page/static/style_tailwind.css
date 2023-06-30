@@ -159,7 +159,7 @@ input[type="text"] {
     display: inline-block;
     width: 16px;
     height: 16px;
-    background: url('landing_page/static/images/question.png') no-repeat;
+    background: url('images/question.png') no-repeat;
     background-size: contain;
     margin-right: 5px;
     vertical-align: middle;
