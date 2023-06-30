@@ -111,6 +111,58 @@
     object-fit: scale-down;
     max-width: 100%;
   }
+  .tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 215px;
+  background-color: rgb(255, 255, 255, 0.95);
+  color: #000000;
+  border-radius: 6px;
+  border-width: 1px;
+  border-color: #000000;
+  padding: 12px;
+  text-align: left;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: small;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+.tooltip .icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background: url('landing_page/static/images/question.png') no-repeat;
+  background-size: contain;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+.aside {
+  text-align: center;
+}
+.aside-item {
+  display: inline-block;
+  vertical-align: middle;
+  padding-left: 4px;
+}
+li {
+    margin-left: 30px;
+    list-style-type: circle;
+ }
 </style>
 
 <title>Landing Page</title>
@@ -136,7 +188,7 @@
   </nav>
 
 <div>
-  <h1>Visualisation tool filtering page</h1>
+  <h1>Person Filtering</h1>
 	 <div class="card justify-center mx-auto" style="width: 400px">
     <h2>Person Properties</h2>
     <h3>Select people who have the following properties.</h3>
@@ -151,14 +203,51 @@
     </div>
   </div>
   <br>
+
   <div class="card justify-center mx-auto margin-top" style="width: 545px">
-    <h2>Screening Properties</h2>
+    <div class="aside">
+      <h2 class="aside-item">Screening Properties</h2>
+      <div class="aside-item tooltip">
+        <span class="icon"></span>
+        <span class="tooltiptext">
+          <text>
+            <b>HR</b>, or "high risk" relates to any of the following diagnosis:
+            <br><br>
+
+            <b>Cytology</b>
+            <ul>
+              <li>ASC-H</li>
+              <li>HSIL</li>
+              <li>AGUS</li>
+              <li>SCC</li>
+              <li>ADC</li>
+            </ul>
+            <br>
+            <b>Histology</b>
+            <ul>
+              <li>74007</li>
+              <li>74009</li>
+              <li>80032</li>
+              <li>80402</li>
+              <li>80703</li>
+              <li>80833</li>
+              <li>81403</li>
+              <li>82103</li>
+            </ul>
+          <br>
+          Any other diagnosis are considered non-HR.
+          </text>
+        </span>
+      </div>
+    </div>
+
     <h3>Select people who have at least one of the following screening results.</h3>
     <div class="embedded-root-container">
       {{ embed(roots.checkbox_buttons) }}
     </div>
   </div>
   <br>
+
   <div class="card justify-center mx-auto margin-top" style="width: 470px">
     <h2>Summary</h2>
     <h3>Total number of people selected for plotting. Apply the filters to update.</h3>
