@@ -8,7 +8,7 @@ from bokeh.layouts import column, grid, row
 from bokeh.models import Div  # type: ignore  # MyPy does not find this import
 from bokeh.models import InlineStyleSheet
 
-from bokeh_demo.backend import SourceManager
+from bokeh_demo.backend import SourceManager, parse_filter_to_indices
 from bokeh_demo.frontend import (
     HistogramPlot,
     LabelSelectedMixin,
@@ -82,6 +82,22 @@ class HistogramWithMean(LabelSelectedMixin, HistogramPlot):
 ### Statistics panel ###
 
 
+def _number_of_exams(
+    source_manager: SourceManager, selected_people_indices: set[int]
+) -> int:
+    exam_to_person_index = source_manager.exam_source.data["person_index"]
+    eligebile_exam_indices = {
+        i
+        for i in range(len(exam_to_person_index))
+        if exam_to_person_index[i] in selected_people_indices
+    }
+    selected_exams = set(
+        source_manager.exam_source.selected.indices  # type: ignore
+        or range(len(exam_to_person_index))
+    )
+    return len(eligebile_exam_indices & selected_exams)
+
+
 def _get_stats_text(source_manager: SourceManager) -> str:
     """Get text for statistics div."""
     number_of_individuals = len(source_manager.person_source.data["PID"])
@@ -89,12 +105,14 @@ def _get_stats_text(source_manager: SourceManager) -> str:
     selected_indices = source_manager.person_source.selected.indices or range(  # type: ignore
         number_of_individuals
     )
+    filtered_indices = set(
+        parse_filter_to_indices(source_manager.view.filter, number_of_individuals)  # type: ignore
+    )
+    selected_indices = set(selected_indices) & filtered_indices
     number_of_selected = len(selected_indices)
 
     # Exam info
-    number_of_exams = len(source_manager.exam_source.selected.indices) or len(  # type: ignore
-        source_manager.exam_source.data["person_index"]
-    )  # "person_index" chosen arbitrarily, can be any key
+    number_of_exams = _number_of_exams(source_manager, selected_indices)
     ages_per_person = [
         source_manager.person_source.data["exam_time_age"][i] for i in selected_indices
     ]
@@ -107,10 +125,11 @@ def _get_stats_text(source_manager: SourceManager) -> str:
     ages_std = np.std(ages_list)
 
     # Screening interval
+    selected_people_ages = (
+        source_manager.person_source.data["exam_time_age"][i] for i in selected_indices
+    )
     screening_intervals = list(
-        itertools.chain.from_iterable(
-            np.diff(ages) for ages in source_manager.person_source.data["exam_time_age"]
-        )
+        itertools.chain.from_iterable(np.diff(ages) for ages in selected_people_ages)
     )
     screening_interval_mean = np.mean(screening_intervals)
     screening_interval_std = np.std(screening_intervals)
@@ -206,7 +225,8 @@ def get_stats_div(source_manager: SourceManager):
         styles={"color": "#555", "width": "100%"},
         stylesheets=[stylesheet],
     )
-    source_manager.person_source.selected.on_change("indices", update_stats_text)  # type: ignore
+    source_manager.exam_source.selected.on_change("indices", update_stats_text)  # type: ignore
+    source_manager.view.on_change("filter", update_stats_text)
     return stats_div
 
 
