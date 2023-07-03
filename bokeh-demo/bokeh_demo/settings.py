@@ -32,7 +32,6 @@ class FeatureColumnNames(BaseModel):
 
 class Settings(BaseSettings):
     number_of_epochs: int = 100
-    dataset_path: DirectoryPath = pathlib.Path(__file__).parents[1] / "data/dataset1"
     transfer_path: DirectoryPath = pathlib.Path(__file__).parents[1] / "data/transfer/"
     selected_pids_path: pathlib.Path = transfer_path / "selected_pids.json"
 
