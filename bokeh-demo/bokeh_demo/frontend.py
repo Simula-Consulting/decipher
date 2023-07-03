@@ -26,6 +26,7 @@ from bokeh.models import (  # type: ignore
     CustomJSExpr,
     CustomJSTickFormatter,
     DataTable,
+    Div,
     HoverTool,
     Label,
     LayoutDOM,
@@ -38,6 +39,7 @@ from bokeh.models import (  # type: ignore
     Row,
     Switch,
     TableColumn,
+    TickFormatter,
 )
 from bokeh.models.tickers import FixedTicker
 from bokeh.plotting import figure
@@ -47,6 +49,7 @@ from .backend import (
     BooleanFilter,
     CategoricalFilter,
     ExamSimpleFilter,
+    ExamToggleFilter,
     PersonSimpleFilter,
     RangeFilter,
     SimpleFilter,
@@ -85,13 +88,23 @@ def get_timedelta_tick_formatter() -> CustomJSTickFormatter:
     return CustomJSTickFormatter(
         code="""
             const millisecondsInYear = 365.25 * 24 * 60 * 60 * 1000;
-            return (tick / millisecondsInYear).toFixed(1);
+            const diff = ticks[1] - ticks[0];
+            const precision = Math.max(0, 1-Math.log10(diff / millisecondsInYear));
+            return (tick / millisecondsInYear).toFixed(precision);
         """
     )
 
 
+TickFormatterGetter = Callable[[], TickFormatter]
+
+
 class LexisPlot(ToolsMixin):
-    _title: str = "Lexis plot"
+    """Lexis plot.
+
+    For making variations of this plot, inherit and override the class attributes as needed.
+    See for example `examples.pilot.components.LexisPlotYearAge` and `examples.pilot.components.LexisPlotAge`."""
+
+    _title: str = "Age vs. Individual"
     _x_label: str = "Age"
     _y_label: str = "Individual #"
 
@@ -104,15 +117,17 @@ class LexisPlot(ToolsMixin):
     _y_axis_type: str = "linear"
     _x_axis_type: str = "datetime"
 
-    _y_axis_tick_format_getter = None
-    _x_axis_tick_format_getter = get_timedelta_tick_formatter
+    _y_axis_tick_format_getter: TickFormatterGetter | None = None
+    _x_axis_tick_format_getter: TickFormatterGetter | None = (
+        get_timedelta_tick_formatter
+    )
 
     _marker_key: str = "risk"
     _marker_color_key: str = "risk"
 
     # TODO: move to config class or settings
     _markers: list[str | None] = [None, "square", "circle", "diamond"]
-    _marker_colors: dict[int | float, str] = settings.color_palette
+    _marker_colors: dict[int | None, str] = settings.color_palette
     _vaccine_line_width: int = 3
     _vaccine_line_color: str = "rgba(143, 148, 9, 0.5)"
 
@@ -177,7 +192,7 @@ class LexisPlot(ToolsMixin):
                                 )
                             ],
                         )
-                        for risk_level in range(1, 5)
+                        for risk_level in (None, *range(1, 5))
                     ),
                 ],
                 orientation="horizontal",
@@ -191,15 +206,22 @@ class LexisPlot(ToolsMixin):
             view=source_manager.exam_view,
             color={
                 "expr": CustomJSExpr(
-                    args={"colors": self._marker_colors},
+                    args={
+                        "colors": self._marker_colors
+                        | {
+                            float("nan"): self._marker_colors[None]
+                        }  # Bokeh uses nan not None
+                    },
                     code=f"return Array.from(this.data.{self._marker_color_key}).map(i => colors.get(i));",  # noqa: E501
                 )
             },
         )
+        self.figure.title.text_font_size = "15pt"  # type: ignore
 
         # Tooltip for detailed exam data
         hover_tool = HoverTool(
             tooltips=[
+                ("PID", "@PID"),
                 ("Type", "@detailed_exam_type"),
                 ("Result", "@exam_detailed_results"),
             ],
@@ -225,14 +247,6 @@ class LexisPlot(ToolsMixin):
             flatten(self.source_manager.person_source.data[key] for key in keys)
         )
         return (min(x_ranges), max(x_ranges))
-
-
-class LexisPlotAge(LexisPlot):
-    _y_label: str = "Year"
-    _scatter_y_key = "exam_date"
-    _lexis_line_y_key = "lexis_line_endpoints_year"
-    _vaccine_line_y_key: str = "vaccine_line_endpoints_year"
-    _y_axis_type = "datetime"
 
 
 def get_position_list(array: Sequence) -> Sequence[int]:
@@ -302,7 +316,11 @@ class TrajectoriesPlot(ToolsMixin):
         self.figure.yaxis.ticker = FixedTicker(
             ticks=list(range(len(settings.label_map)))
         )
-        self.figure.yaxis.major_label_overrides = settings.label_map
+        self.figure.yaxis.major_label_overrides = {
+            state: label
+            for state, label in settings.label_map.items()
+            if state is not None
+        }
 
 
 class DeltaScatter(ToolsMixin):
@@ -425,11 +443,6 @@ class LabelSelectedMixin:
         return cast(float, np.mean(screening_intervals)) * 12
 
     def _get_label_text(self, selected_indices: Collection[int]) -> str:
-        n_vaccines = sum(
-            self.source_manager.person_source.data["vaccine_age"][i] is not None
-            for i in selected_indices
-        )
-
         nested_age_at_exam = self._get_age_at_exam(selected_indices)
         average_screening_interval = self._compute_average_screening_interval(
             nested_age_at_exam
@@ -437,7 +450,6 @@ class LabelSelectedMixin:
 
         return (
             f" Individuals selected: {len(selected_indices)} \n"
-            f" Individuals with vaccinations: {n_vaccines} \n"
             f" Average screening interval: ~{round(average_screening_interval, 2)} months"  # noqa: E501
         )
 
@@ -465,7 +477,7 @@ class LabelSelectedMixin:
         return update_label_callback
 
 
-class HistogramPlot(LabelSelectedMixin):
+class HistogramPlot:
     """Display a histogram of the selected results.
 
     The selection and filters will be applied to the outer list, yielding only
@@ -513,9 +525,6 @@ class HistogramPlot(LabelSelectedMixin):
         self.source_manager.view.on_change(
             "filter", self.get_update_histogram_callback()
         )
-
-        # Add label from LabelSelectedMixin
-        self.register_label()
 
         self._set_properties()
 
@@ -568,11 +577,11 @@ class HistogramPlot(LabelSelectedMixin):
         properties: dict[str, dict[str, Any]] = {
             "y_range": {"start": 0},
             "xaxis": {
-                "axis_label": "State",
                 "ticker": list(range(len(self.class_list))),
                 "major_label_overrides": tick_labels_map,
                 "major_label_orientation": np.pi / 4,
             },
+            "title": {"text_font_size": "15pt"},
             "yaxis": {"axis_label": "Count"},
             "grid": {"grid_line_color": "white"},
         }
@@ -648,6 +657,7 @@ FILTER_TO_FilterValueUIElement_MAPPING = {
     SimpleFilter: FilterValueUIElement.NoValue,
     PersonSimpleFilter: FilterValueUIElement.NoValue,
     ExamSimpleFilter: FilterValueUIElement.NoValue,
+    ExamToggleFilter: FilterValueUIElement.NoValue,
     RangeFilter: FilterValueUIElement.RangeSlider,
     BooleanFilter: FilterValueUIElement.BoolCombination,
 }
@@ -718,7 +728,14 @@ def get_filter_element(filter: BaseFilter, label_text: str = "") -> LayoutDOM:
 
     label = Paragraph(text=label_text)
 
-    base_row = cast(Row, row([label, activation_toggle, inversion_toggle]))
+    if isinstance(filter, ExamToggleFilter):
+        toggle_type = Switch(active=False)
+        toggle_type.on_change("active", filter.get_toggle_type_callback())
+    else:
+        toggle_type = Div()  # Placeholder to make layout consistent
+    row_elements = [label, activation_toggle, inversion_toggle, toggle_type]
+
+    base_row = cast(Row, row(row_elements))
     return (
         column(
             base_row,
