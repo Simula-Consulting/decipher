@@ -8,15 +8,15 @@ from bokeh.layouts import column, grid, row
 from bokeh.models import Div  # type: ignore  # MyPy does not find this import
 from bokeh.models import InlineStyleSheet
 
-from bokeh_demo.backend import SourceManager, parse_filter_to_indices
-from bokeh_demo.frontend import (
+from viz_tool.backend import SourceManager, parse_filter_to_indices
+from viz_tool.frontend import (
     HistogramPlot,
     LabelSelectedMixin,
     LexisPlot,
     get_filter_element_from_source_manager,
     get_timedelta_tick_formatter,
 )
-from bokeh_demo.settings import settings
+from viz_tool.settings import settings
 
 
 class LexisPlotYearAge(LexisPlot):

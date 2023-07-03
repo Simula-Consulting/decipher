@@ -102,7 +102,7 @@ class LexisPlot(ToolsMixin):
     """Lexis plot.
 
     For making variations of this plot, inherit and override the class attributes as needed.
-    See for example `examples.pilot.components.LexisPlotYearAge` and `examples.pilot.components.LexisPlotAge`."""
+    See for example `apps.pilot.components.LexisPlotYearAge` and `apps.pilot.components.LexisPlotAge`."""
 
     _title: str = "Age vs. Individual"
     _x_label: str = "Age"

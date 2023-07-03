@@ -4,14 +4,14 @@ from datetime import datetime
 
 import pytest
 
-from examples.landing_page.main import LandingPageFiltering
+from apps.landing_page.main import LandingPageFiltering
 
 
 @pytest.fixture
 def landing_page_filtering(tmp_path, monkeypatch):
     selected_pids_path = tmp_path / "selected_pids.json"
     monkeypatch.setattr(
-        "examples.landing_page.main.settings.selected_pids_path", selected_pids_path
+        "apps.landing_page.main.settings.selected_pids_path", selected_pids_path
     )
     landing_page_filtering = LandingPageFiltering()
     return landing_page_filtering, selected_pids_path

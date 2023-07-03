@@ -14,12 +14,7 @@ from bokeh.plotting import curdoc
 from decipher.data import DataManager
 from loguru import logger
 
-from viz_tool.backend import (
-    BaseFilter,
-    BooleanFilter,
-    ExamToggleFilter,
-    SourceManager,
-)
+from viz_tool.backend import BaseFilter, BooleanFilter, ExamToggleFilter, SourceManager
 from viz_tool.data_ingestion import (
     CreatePersonSource,
     add_hpv_detailed_information,
