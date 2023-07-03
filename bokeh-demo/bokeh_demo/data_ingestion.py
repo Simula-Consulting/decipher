@@ -53,7 +53,11 @@ class CategoryColumnConverter(BaseEstimator, TransformerMixin):
 
 class CreatePersonSource(BaseEstimator, TransformerMixin):
     """Takes in the exams dataframe and returns another dataframe (with one row per person)
-    for plotting Lexis plots."""
+    for plotting Lexis plots.
+
+    !!! warning
+        The index of the resulting dataframe is _not_ the PID!
+    """
 
     # Create a map from person id to exam results, ages at exams, and the indices of the exams
     person_results_map: dict[int, list[int]]
