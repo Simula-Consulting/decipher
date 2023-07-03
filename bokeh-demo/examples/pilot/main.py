@@ -7,7 +7,6 @@ The app consist of two main "parts"
 
 import copy
 import json
-from enum import Enum
 
 import pandas as pd
 from bokeh.models import ColumnDataSource, SymmetricDifferenceFilter
@@ -152,17 +151,6 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
     )
 
     return base_filters
-
-
-# We want to demonstrate categorical data, so extend Person with a custom type having
-# the categorical field 'home'.
-# We then fake the homes randomly.
-class HomePlaces(str, Enum):
-    South = "south"
-    North = "north"
-    East = "east"
-    West = "west"
-    Other = "other"
 
 
 def get_selected_pids_from_landing_page():
