@@ -2,6 +2,7 @@
 {% from macros import embed %}
 {% block preamble %}
 <script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <style type="text/tailwindcss">
   .card {
     color: black;
@@ -46,59 +47,99 @@
 {% endblock %}
 
 {% block contents %}
-<aside class="animate-bounceX hover:animate-none transition-transform z-10 w-120 bottom-20 -translate-x-[85%] hover:translate-x-0 fixed" aria-label="Sidebar">
+<aside
+  class="animate-bounceX hover:animate-none transition-transform z-10 w-120 bottom-20 -translate-x-[calc(100%-3em)] hover:translate-x-0 fixed"
+  aria-label="Sidebar">
   <div class="pr-12 px-3 py-4 overflow-y-auto rounded bg-gray-800">
     <div class="absolute right-5 top-0 w-0 whitespace-nowrap">
       <h1 class="rotate-90 text-gray-400">Filter Controls</h1>
     </div>
-     {{ embed(roots.filter_control) }}
+    {{ embed(roots.filter_control) }}
   </div>
 </aside>
 
 <div>
-	<div id="info-box" class="w-4/5 mx-auto rounded relative m-10 p-9 bg-gray-700">
-		<h1 class="text-3xl">SC visualization demo</h1>
-		<img class="absolute right-2" src="pilot/static/images/SC_logo.png" width="170px" />
-		<div class="mt-1">
-			<p>
-			Welcome to Simula Consulting's interactive visualization demo!
-			</p>
-      <br>
-      <a href="/landing_page">
-        <button style="background-color:#e98800;
-          border:none;
-          color:white;
-          padding:15px 32px;
-          text-align:center;
-          text-decoration:none;
-          display:inline-block;
-          font-size:16px;
-          margin:4px 2px;
-          cursor:pointer;
-          border-radius:20px;">Back to Landing Page</button>
-      </a>
-		</div>
-	</div>
-	<div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5">
-  {%      for doc in docs %}
-  {{        embed(doc) if doc.elementid }}
-  {%-       for root in doc.roots if root.name != "filter_control" %}
-  <div class="card">
-  {{            embed(root) }}
+  <nav class="flex w-4/5 mx-auto mt-5 mb-3" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+      <li class="inline-flex items-center">
+        <a href="/landing_page"
+          class="inline-flex items-center text-sm font-medium text-gray-400 hover:text-white">
+          <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
+            </path>
+          </svg>
+          Home
+        </a>
+      </li>
+      <li>
+        <div class="flex items-center">
+          <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd"
+              d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+              clip-rule="evenodd"></path>
+          </svg>
+          <a href="#" class="ml-1 text-sm font-medium hover:text-blue-600 md:ml-2 dark:hover:text-white">Plot</a>
+        </div>
+      </li>
+    </ol>
+  </nav>
+  <div id="info-box" class="w-4/5 mx-auto rounded relative mb-10 p-9 bg-gray-700">
+    <h1 class="text-3xl">SC visualization demo</h1>
+    <img class="absolute right-9 top-9" src="pilot/static/images/SC_logo.png" width="170px" />
+    <div class="mt-1">
+      <p>
+        Welcome to Simula Consulting's interactive visualization demo!
+      </p>
+    </div>
   </div>
-  {%        endfor %}
-  {%      endfor %}
-	</div>
+  <div class="grid justify-center justify-center grid-cols-[repeat(auto-fit,_650px)] gap-4 w-4/5 mx-auto mt-5"
+    x-data="{ toggle: false }">
+    <!-- Statistics -->
+    <div class="card col-span-full !w-auto">
+      {{ embed(roots.stats_div) }}
+    </div>
+
+    <!-- Lexis plots -->
+    <div class="card">
+      {{ embed(roots.lexis__age_index) }}
+    </div>
+    <div class="card relative" x-show="toggle">
+      <div class="absolute top-2 right-2 z-10" @click="toggle = !toggle">
+        <button type="button" class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2 text-center inline-flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3" /></svg>
+        </button>
+      </div>
+      {{ embed(roots.lexis__age_year) }}
+    </div>
+    <div class="card relative" x-show="!toggle">
+      <div class="absolute top-2 right-2 z-10" @click="toggle = !toggle">
+        <button type="button" class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2 text-center inline-flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3" /></svg>
+        </button>
+      </div>
+      {{ embed(roots.lexis__year_age) }}
+    </div>
+
+    <!-- Histograms -->
+    {% for card in [roots.histogram_cyt, roots.histogram_hist, roots.histogram_hpv, roots.histogram_risk] %}
+    <div class="card">
+      {{ embed(card) }}
+    </div>
+    {% endfor %}
+
+  </div>
 </div>
 
 
 <footer class="mt-6 p-4 bg-white rounded-lg shadow md:flex md:items-center md:justify-between md:p-6 dark:bg-gray-800">
-  <span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">© 2023 <a href="https://simula.consulting/" class="hover:underline">Simula Consulting</a>. All Rights Reserved.
+  <span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">© 2023 <a href="https://simula.consulting/"
+      class="hover:underline">Simula Consulting</a>. All Rights Reserved.
   </span>
   <ul class="flex flex-wrap items-center mt-3 text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
-      <li>
-          <a href="https://github.com/Simula-Consulting/decipher/" class="hover:underline">GitHub</a>
-      </li>
+    <li>
+      <a href="https://github.com/Simula-Consulting/decipher/" class="hover:underline">GitHub</a>
+    </li>
   </ul>
 </footer>
 
