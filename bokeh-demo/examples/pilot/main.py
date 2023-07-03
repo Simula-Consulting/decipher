@@ -463,8 +463,16 @@ def load_data_manager() -> DataManager:
     return data_manager
 
 
-def _get_exam_diagnosis(exams_subset):
-    return exams_subset.groupby("PID")["exam_diagnosis"].apply(lambda x: x.values)
+def get_exam_results(
+    exams_subset: pd.DataFrame, person_df: pd.DataFrame, exam_field: str
+) -> pd.Series:
+    """Return a Series of exam results as lists for each person."""
+    exam_results = exams_subset.groupby("PID")[exam_field].apply(lambda x: x.tolist())
+    mapped_results = person_df["PID"].map(exam_results)
+    mapped_results[mapped_results.isna()] = mapped_results[mapped_results.isna()].apply(
+        lambda x: []
+    )
+    return mapped_results
 
 
 def main():
@@ -491,17 +499,16 @@ def main():
     exams_df["person_index"] = exams_df["PID"].map(pid_to_index)
 
     # Make data for histogram
-    person_df["cyt_diagnosis"] = _get_exam_diagnosis(
-        exams_df.query("exam_type == 'cytology'")
-    ).reindex(person_df.index, fill_value=[])
-    person_df["hist_diagnosis"] = _get_exam_diagnosis(
-        exams_df.query("exam_type == 'histology'")
-    ).reindex(person_df.index, fill_value=[])
-    person_df["hpv_test_type"] = (
-        exams_df.query("exam_type == 'HPV' & exam_diagnosis == 'positiv'")
-        .groupby("PID")["detailed_exam_type"]
-        .apply(lambda x: x.values)
-        .reindex(person_df.index, fill_value=[])
+    person_df["cyt_diagnosis"] = get_exam_results(
+        exams_df.query("exam_type == 'cytology'"), person_df, "exam_diagnosis"
+    )
+    person_df["hist_diagnosis"] = get_exam_results(
+        exams_df.query("exam_type == 'histology'"), person_df, "exam_diagnosis"
+    )
+    person_df["hpv_test_type"] = get_exam_results(
+        exams_df.query("exam_type == 'HPV' & exam_diagnosis == 'positiv'"),
+        person_df,
+        "detailed_exam_type",
     )
 
     source_manager = SourceManager(
