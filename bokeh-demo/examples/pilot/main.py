@@ -1,4 +1,3 @@
-# type: ignore
 """Example Bokeh server app.
 
 The app consist of two main "parts"
@@ -11,16 +10,13 @@ import itertools
 import json
 from enum import Enum
 from functools import partial
+from typing import Hashable
 
 import numpy as np
 import pandas as pd
 from bokeh.layouts import column, grid, row
-from bokeh.models import (
-    ColumnDataSource,
-    Div,
-    InlineStyleSheet,
-    SymmetricDifferenceFilter,
-)
+from bokeh.models import Div  # type: ignore  # Missing type hint
+from bokeh.models import ColumnDataSource, InlineStyleSheet, SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
 from decipher.data import DataManager
 from loguru import logger
@@ -92,8 +88,10 @@ def example_app(source_manager: SourceManager):
         label_mapper=partial(try_abbreviate, HPV_TEST_ABBREVIATIONS),
     )
 
-    def _risk_label(risk_level: int) -> str:
+    def _risk_label(risk_level: Hashable) -> str:
         """Format risk as 'label (risk_level)', e.g. 'Normal (1)'"""
+        if not isinstance(risk_level, int):
+            return str(risk_level)
         return f"{settings.label_map[risk_level]} ({risk_level})"
 
     histogram_risk = HistogramWithMean.from_person_field(
@@ -101,17 +99,17 @@ def example_app(source_manager: SourceManager):
     )
 
     # Set up labels and titles
-    histogram_cyt.figure.title.text = "Cytology diagnosis"
-    histogram_hist.figure.title.text = "Histology diagnosis"
-    histogram_hpv.figure.title.text = "HPV test type"
-    histogram_risk.figure.title.text = "Exam risk levels"
+    histogram_cyt.figure.title.text = "Cytology diagnosis"  # type: ignore
+    histogram_hist.figure.title.text = "Histology diagnosis"  # type: ignore
+    histogram_hpv.figure.title.text = "HPV test type"  # type: ignore
+    histogram_risk.figure.title.text = "Exam risk levels"  # type: ignore
     histogram_cyt.figure.xaxis.axis_label = None
     histogram_hist.figure.xaxis.axis_label = None
     histogram_hpv.figure.xaxis.axis_label = None
     histogram_hist.figure.xaxis.axis_label = None
 
     # Adjust label positions
-    histogram_risk.label.y -= 30
+    histogram_risk.label.y -= 30  # type: ignore
 
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
@@ -139,7 +137,7 @@ def example_app(source_manager: SourceManager):
 
     filter_grid = grid(
         column(
-            row(Div(), Div(text="Active"), Div(text="Invert"), Div(text="On person")),
+            row([Div(), Div(text="Active"), Div(text="Invert"), Div(text="On person")]),
             hpv_exam,
             hpv_16_exam,
             high_risk_hist_exam,
@@ -156,20 +154,20 @@ def example_app(source_manager: SourceManager):
     filter_grid.name = "filter_control"
     filter_grid.stylesheets = [
         ":host {grid-template-rows: unset; grid-template-columns: unset;}"
-    ]
+    ]  # type: ignore
 
     ## Statistics ##
     def _get_stats_text() -> str:
         """Get text for statistics div."""
         number_of_individuals = len(source_manager.person_source.data["PID"])
         # If nothing is selected, interpret it as everything is selected.
-        selected_indices = source_manager.person_source.selected.indices or range(
+        selected_indices = source_manager.person_source.selected.indices or range(  # type: ignore
             number_of_individuals
         )
         number_of_selected = len(selected_indices)
 
         # Exam info
-        number_of_exams = len(source_manager.exam_source.selected.indices) or len(
+        number_of_exams = len(source_manager.exam_source.selected.indices) or len(  # type: ignore
             source_manager.exam_source.data["person_index"]
         )  # "person_index" chosen arbitrarily, can be any key
         ages_per_person = [
@@ -283,7 +281,7 @@ def example_app(source_manager: SourceManager):
         styles={"color": "#555", "width": "100%"},
         stylesheets=[stylesheet],
     )
-    source_manager.person_source.selected.on_change("indices", update_stats_text)
+    source_manager.person_source.selected.on_change("indices", update_stats_text)  # type: ignore
 
     # Add names to elements for manual placement in html
     histogram_cyt.figure.name = "histogram_cyt"
@@ -340,7 +338,7 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
         if "16" in details
     ]
 
-    base_filters = {
+    base_filters: dict[str, BaseFilter] = {
         "High risk - Histology": ExamToggleFilter(
             source_manager=source_manager,
             exam_indices=_high_risk_exam(
