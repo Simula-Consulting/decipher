@@ -11,7 +11,6 @@ import itertools
 import json
 from enum import Enum
 from functools import partial
-from typing import Collection, Hashable
 
 import numpy as np
 import pandas as pd
@@ -39,13 +38,12 @@ from bokeh_demo.data_ingestion import (
 )
 from bokeh_demo.frontend import (
     HistogramPlot,
-    LabelSelectedMixin,
     LexisPlot,
-    LexisPlotAge,
     get_filter_element_from_source_manager,
-    get_timedelta_tick_formatter,
 )
 from bokeh_demo.settings import settings
+
+from .components import HistogramWithMean, LexisPlotAge, LexisPlotYearAge
 
 DIAGNOSIS_ABBREVIATIONS = {
     "Normal m betennelse eller blod": "Normal w.b",
@@ -65,54 +63,10 @@ def try_abbreviate(abbreviations: dict[str, str], diagnosis: str) -> str:
     return abbreviations.get(diagnosis, diagnosis)
 
 
-class LexisPlotYearAge(LexisPlot):
-    """Lexis plot with year on x-axis and age on y-axis."""
-
-    _title: str = "Year vs. Age"
-
-    _y_label: str = "Age"
-    _scatter_y_key: str = "age"
-    _x_label: str = "Year"
-    _scatter_x_key: str = "exam_date"
-
-    _lexis_line_x_key: str = "lexis_line_endpoints_year"
-    _lexis_line_y_key: str = "lexis_line_endpoints_age"
-    _vaccine_line_x_key: str = "vaccine_line_endpoints_year"
-    _vaccine_line_y_key: str = "vaccine_line_endpoints_age"
-
-    _y_axis_type = "linear"
-    _x_axis_type = "datetime"
-
-    _y_axis_tick_format_getter = get_timedelta_tick_formatter
-    _x_axis_tick_format_getter = None
-
-
 def _link_ranges(lexis_plots):
     lexis_plots["age_index"].figure.x_range = lexis_plots["age_year"].figure.x_range
     lexis_plots["year_age"].figure.y_range = lexis_plots["age_year"].figure.x_range
     lexis_plots["age_year"].figure.y_range = lexis_plots["year_age"].figure.x_range
-
-
-class HistogramWithMean(LabelSelectedMixin, HistogramPlot):
-    def __init__(
-        self,
-        results_per_person: list[list[Hashable]],
-        class_list: list[Hashable] | dict[Hashable, str],
-        source_manager: SourceManager,
-    ):
-        super().__init__(results_per_person, class_list, source_manager)
-        # Add label from LabelSelectedMixin
-        self.register_label()
-
-    def _get_label_text(self, selected_indices: Collection[int]) -> str:
-        selected_results = list(
-            itertools.chain.from_iterable(
-                self.results_per_person[i] for i in selected_indices
-            )
-        )
-        mean = np.mean(selected_results)
-        std = np.std(selected_results)
-        return f"Mean: {mean:.2f} \n" f"Std: {std:.2f}"
 
 
 def example_app(source_manager: SourceManager):

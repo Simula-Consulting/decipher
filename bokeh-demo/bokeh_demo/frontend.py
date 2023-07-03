@@ -39,6 +39,7 @@ from bokeh.models import (  # type: ignore
     Row,
     Switch,
     TableColumn,
+    TickFormatter,
 )
 from bokeh.models.tickers import FixedTicker
 from bokeh.plotting import figure
@@ -94,7 +95,15 @@ def get_timedelta_tick_formatter() -> CustomJSTickFormatter:
     )
 
 
+TickFormatterGetter = Callable[[], TickFormatter]
+
+
 class LexisPlot(ToolsMixin):
+    """Lexis plot.
+
+    For making variations of this plot, inherit and override the class attributes as needed.
+    See for example `examples.pilot.components.LexisPlotYearAge` and `examples.pilot.components.LexisPlotAge`."""
+
     _title: str = "Age vs. Individual"
     _x_label: str = "Age"
     _y_label: str = "Individual #"
@@ -108,8 +117,10 @@ class LexisPlot(ToolsMixin):
     _y_axis_type: str = "linear"
     _x_axis_type: str = "datetime"
 
-    _y_axis_tick_format_getter = None
-    _x_axis_tick_format_getter = get_timedelta_tick_formatter
+    _y_axis_tick_format_getter: TickFormatterGetter | None = None
+    _x_axis_tick_format_getter: TickFormatterGetter | None = (
+        get_timedelta_tick_formatter
+    )
 
     _marker_key: str = "risk"
     _marker_color_key: str = "risk"
@@ -236,15 +247,6 @@ class LexisPlot(ToolsMixin):
             flatten(self.source_manager.person_source.data[key] for key in keys)
         )
         return (min(x_ranges), max(x_ranges))
-
-
-class LexisPlotAge(LexisPlot):
-    _title: str = "Age vs. Year"
-    _y_label: str = "Year"
-    _scatter_y_key = "exam_date"
-    _lexis_line_y_key = "lexis_line_endpoints_year"
-    _vaccine_line_y_key: str = "vaccine_line_endpoints_year"
-    _y_axis_type = "datetime"
 
 
 def get_position_list(array: Sequence) -> Sequence[int]:
