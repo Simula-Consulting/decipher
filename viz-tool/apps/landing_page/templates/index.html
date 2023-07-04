@@ -1,0 +1,113 @@
+{% extends base %}
+{% from macros import embed %}
+{% block preamble %}
+<link rel="stylesheet" href="landing_page/static/style.css">
+<title>Landing Page</title>
+
+{% endblock %}
+
+{% block contents %}
+
+  <nav class="flex w-4/5 mx-auto mt-5 mb-3" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+      <li class="inline-flex items-center ml-0">
+        <a href="#"
+          class="inline-flex items-center text-sm font-medium text-gray-400 hover:text-white">
+          <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
+            </path>
+          </svg>
+          Home
+        </a>
+      </li>
+    </ol>
+  </nav>
+
+<div>
+  <h1>Person Filtering</h1>
+	 <div class="card justify-center mx-auto" style="width: 400px">
+    <h2>Person Properties</h2>
+    <h3>Select people who have the following properties.</h3>
+    <div class="embedded-root-container">
+      {{ embed(roots.birthyear_slider) }}
+    </div>
+    <div class="embedded-root-container">
+      {{ embed(roots.min_age_last_exam) }}
+    </div>
+    <div class="embedded-root-container">
+      {{ embed(roots.min_n_screenings) }}
+    </div>
+  </div>
+  <br>
+
+  <div class="card justify-center mx-auto margin-top" style="width: 545px">
+    <div class="aside">
+      <h2 class="aside-item">Screening Properties</h2>
+      <div class="aside-item tooltip">
+        <span class="icon"></span>
+        <span class="tooltiptext">
+          <text>
+            <b>HR</b>, or "high risk" relates to any of the following diagnosis:
+            <br><br>
+
+            <b>Cytology</b>
+            <ul>
+              <li>ASC-H</li>
+              <li>HSIL</li>
+              <li>AGUS</li>
+              <li>SCC</li>
+              <li>ADC</li>
+            </ul>
+            <br>
+            <b>Histology</b>
+            <ul>
+              <li>74007</li>
+              <li>74009</li>
+              <li>80032</li>
+              <li>80402</li>
+              <li>80703</li>
+              <li>80833</li>
+              <li>81403</li>
+              <li>82103</li>
+            </ul>
+          <br>
+          Any other diagnosis are considered non-HR.
+          </text>
+        </span>
+      </div>
+    </div>
+
+    <h3>Select people who have at least one of the following screening results.</h3>
+    <div class="embedded-root-container">
+      {{ embed(roots.checkbox_buttons) }}
+    </div>
+  </div>
+  <br>
+
+  <div class="card justify-center mx-auto margin-top" style="width: 470px">
+    <h2>Summary</h2>
+    <h3>Total number of people selected for plotting. Apply the filters to update.</h3>
+    <div class="justify-center mx-auto margin-top">
+      <div class="embedded-root-container">
+        {{ embed(roots.person_counter) }}
+      </div>
+      <div class="embedded-root-container my-auto">
+      {{ embed(roots.save_button) }}
+      </div>
+    </div>
+  </div>
+  <br>
+  <div style="text-align:center;">
+    <a href="/pilot" class="button justify-center"]>GO</a>
+  </div>
+
+
+</div>
+
+<footer>
+<div class="footer" style="z-index: -999;">
+  <img src="landing_page/static/images/SC_logo.png" alt="Footer Image">
+</div>
+</footer>
+{% endblock %}

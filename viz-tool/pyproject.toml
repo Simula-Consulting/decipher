@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "viz-tool"
+version = "0.1.0"
+description = ""
+authors = ["Thorvald Molthe Ballestad <thorvald@simula.no>"]
+readme = "README.md"
+packages = [{include = "viz_tool"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+bokeh = "^3.0.2"
+pydantic = "^1.10.2"
+decipher = {git = "https://github.com/Simula-Consulting/decipher_data_handler", extras=["pyarrow"], tag="0.1.35"}
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.3.3"
+mypy = "^0.982"
+flake8 = "^5.0.4"
+black = {version = "^22.10.0", allow-prereleases = true}
+pytest = "^7.2.0"
+hypothesis = "^6.61.0"
+isort = "^5.11.3"
+
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = "^9.1.17"
+mkdocstrings = {extras = ["python"], version = "^0.22.0"}
+pillow = "^10.0.0"
+cairosvg = "^2.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+
+[[tool.mypy.overrides]]
+module = [
+    "sklearn.*",
+    "pandas.*",
+]
+ignore_missing_imports = true

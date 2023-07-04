@@ -1,0 +1,7 @@
+services:
+  viz-tool:
+    build: .
+    ports:
+      - "5006:5006"
+    volumes:
+      - ../processing/tests/test_datasets:/mnt
