@@ -622,7 +622,19 @@ def _(filter: SymmetricDifferenceFilter, number_of_indices: int) -> set[int]:
 
 
 class SourceManager:
+    """Class for wrapping and handling the data sources.
+
+    The class holds the data sources, links the exams to the people, and provides views
+    for looking at the filtered data.
+    """
+
     def __init__(self, person_source: ColumnDataSource, exam_source: ColumnDataSource):
+        """Initialize SourceManager
+
+        Parameters:
+            person_source: The ColumnDataSource corresponding to `person_df`.
+            exam_source: The ColumnDataSource corresponding to `exams_df`.
+        """
         self.person_source = person_source
         self.exam_source = exam_source
         link_sources(self.person_source, self.exam_source)

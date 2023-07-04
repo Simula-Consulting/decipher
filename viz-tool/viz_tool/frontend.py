@@ -101,8 +101,9 @@ TickFormatterGetter = Callable[[], TickFormatter]
 class LexisPlot(ToolsMixin):
     """Lexis plot.
 
+    External link: [https://en.wikipedia.org/wiki/Lexis_diagram](https://en.wikipedia.org/wiki/Lexis_diagram)
     For making variations of this plot, inherit and override the class attributes as needed.
-    See for example `apps.pilot.components.LexisPlotYearAge` and `apps.pilot.components.LexisPlotAge`."""
+    See for example [apps.pilot.components.LexisPlotYearAge][] and `apps.pilot.components.LexisPlotAge`."""
 
     _title: str = "Age vs. Individual"
     _x_label: str = "Age"

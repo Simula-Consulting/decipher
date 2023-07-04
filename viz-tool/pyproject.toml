@@ -21,6 +21,13 @@ pytest = "^7.2.0"
 hypothesis = "^6.61.0"
 isort = "^5.11.3"
 
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = "^9.1.17"
+mkdocstrings = {extras = ["python"], version = "^0.22.0"}
+pillow = "^10.0.0"
+cairosvg = "^2.7.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
