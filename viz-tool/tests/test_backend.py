@@ -6,19 +6,19 @@ from bokeh.models import AllIndices, IndexFilter
 from hypothesis import given
 from hypothesis import strategies as st
 
-from bokeh_demo.backend import (
+from viz_tool.backend import (
     TimeConverter,
     _combine_dicts,
     _combine_scatter_dicts,
     parse_filter_to_indices,
 )
-from bokeh_demo.exam_data import (
+from viz_tool.exam_data import (
     EXAM_RESULT_LOOKUP,
     EXAM_RESULT_MAPPING,
     Diagnosis,
     ExamTypes,
 )
-from bokeh_demo.faker import coarse_to_exam_result
+from viz_tool.faker import coarse_to_exam_result
 
 
 @st.composite

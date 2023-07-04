@@ -1,14 +1,28 @@
 import json
 
 from bokeh.io import curdoc
-from bokeh.models import Model
-from bokeh.models.callbacks import CustomJS
+from bokeh.models import InlineStyleSheet, Model, Styles
 from bokeh.models.widgets import Button, CheckboxButtonGroup, Div, RangeSlider, Slider
 from decipher.data import DataManager
 from loguru import logger
 
-from bokeh_demo.data_ingestion import add_hpv_detailed_information
-from bokeh_demo.settings import settings
+from viz_tool.data_ingestion import add_hpv_detailed_information
+from viz_tool.settings import settings
+
+
+def format_number(number):
+    """Function to format a number with suffixes for prettier printing."""
+    suffixes = ["", "k", "M", "B", "T"]
+    suffix_index = 0
+
+    while number >= 1000 and suffix_index < len(suffixes) - 1:
+        number /= 1000
+        suffix_index += 1
+
+    if suffix_index == 0:
+        return "{:.0f}".format(number)
+    else:
+        return "{:.1f}{}".format(number, suffixes[suffix_index])
 
 
 class LandingPageFiltering:
@@ -21,6 +35,7 @@ class LandingPageFiltering:
             self.data_manager.exams_df, self.data_manager.hpv_df
         )
         self._add_HR_screening_indicator()
+        self.n_total_people = format_number(len(self.person_df))
 
         self.pid_list = self.person_df.index.to_list()
         """PID selection from currently active filters"""
@@ -31,8 +46,7 @@ class LandingPageFiltering:
         self.min_n_screenings_slider = self._init_min_n_screenings_slider()
 
         self.save_button = self._init_save_button()
-        self.person_counter = Div(text=f"Number of people: {self._n_people()}")
-        self.go_button = self._init_go_button()
+        self.person_counter = self._init_person_counter()
 
     def get_roots(self) -> list[Model]:
         return [
@@ -42,7 +56,6 @@ class LandingPageFiltering:
             self.checkbox_buttons,
             self.person_counter,
             self.save_button,
-            self.go_button,
         ]
 
     def reset_pid_list(self) -> None:
@@ -50,6 +63,9 @@ class LandingPageFiltering:
 
     def _n_people(self) -> int:
         return len(self.pid_list)
+
+    def _person_counter_text(self) -> str:
+        return f"{self._n_people()} / {self.n_total_people}"
 
     def _add_HR_screening_indicator(self) -> None:
         for exam_type, df in self.exams_df.groupby(self.column_names.exam_type):
@@ -84,16 +100,41 @@ class LandingPageFiltering:
                 ),
             )
         )
-        self.person_counter.text = f"Number of people: {self._n_people()}"
+        self.person_counter.text = self._person_counter_text()
         self.save_pids()
 
-    def _init_go_button(self) -> Button:
-        go_button = Button(label="Go")
-        go_button.js_on_click(CustomJS(code="window.location.href = '/pilot'"))
-        return go_button
+    def _init_person_counter(self) -> Div:
+        counter_style = Styles(font_size="2em", font_family="Avenir")
+        return Div(
+            name="person_counter",
+            text=self._person_counter_text(),
+            styles=counter_style,
+        )
 
     def _init_save_button(self) -> Button:
-        save_button = Button(label="Save")
+        css_style = """
+        .bk-btn-success {
+            background-color: #df5393;
+            border: none;
+            color: white;
+            font-family: "Avenir", sans-serif;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            }
+        .bk-btn-success:hover {
+            background-color: #a74084;
+            }
+        """
+        stylesheet = InlineStyleSheet(css=css_style)
+        save_button = Button(
+            name="save_button",
+            button_type="success",
+            stylesheets=[stylesheet],
+            label="Apply filters",
+        )
         save_button.on_click(self.apply_filters_and_save)
         return save_button
 
