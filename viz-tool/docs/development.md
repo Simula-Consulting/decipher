@@ -53,6 +53,15 @@ viz-tool
 where `viz-tool` is the name of the Docker image.
 This will create a `.sif` file in your Downloads folder.
 
+??? warning "Access to Apptainer"
+
+    On TSD, Apptainer is not installed on the VMs by default.
+    Ask your administrator to set up Apptainer on the node.
+
+    !!! tip
+
+        The machine used for the project, `p1068-rhel9-01-pool`, already has Apptainer installed.
+
 To use the image on TSD
 
 📥 Import the image to TSD
