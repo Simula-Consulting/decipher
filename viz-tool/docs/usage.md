@@ -3,55 +3,64 @@
 !!! note
 
     This page covers only usage in the web interface!
-    For information on deployment, see [the section on Docker](development.md#docker-image).
+    For information on deployment, see [the section on Docker](development.md#with-docker).
 
 
-The application consists of two pages:[^1]
+The application consists of two pages:[^1] the _landing page_ and _the main page_
 [^1]: Note that technically, they are two separate apps.
 
-**The landing page**
-
-:   Initial filtering of the dataset.
-    Due to the size of the dataset, it is not feasible to plot all the data at once.
-    The landing page offers high-level filters for narrowing down the data set, before moving to the actual application.
-
-    On the default setup, the landing page is located at [http://localhost:5006/landing_page](http://localhost:5006/landing_page).
-
+## The landing page
+By default located at [http://localhost:5006/landing_page](http://localhost:5006/landing_page).
 ![](assets/landing_page_screenshot.png)
 
-**The main page**
+Initial filtering of the dataset.
+Due to the size of the dataset, it is not feasible to plot all the data at once.
+The landing page offers high-level filters for narrowing down the data set, before moving to the actual application.
 
-:   The main application page.
+!!! important
 
-    ![](assets/pilot_screenshot_short.png)
+    Note that these filters _cannot_ exclude on an exam level, only on a person level.
+    In other words, this page allows you to filter all people born between 1990 and 1996, but _not_ show only exams with a CIN2+ diagnosis.
+    For exam level filtering (like high risk exams), see [the filtering panel on the main page](#filter-panel).
 
-    The main application consists of four important parts
 
-    - **The statistics panel**
-        On the top, various statistics about the current selection is shown.
-        Hover over the question mark to get more details.
+## The main page
+By default located at [http://localhost:5006/pilot](http://localhost:5006/pilot).
 
-    - **The Lexis plots**
-        The two first panels display a Lexis diagram and a modified Lexis diagram, where the y axis holds the individual ID instead of the age.
-        In the year vs. age pane, click the
-        <svg style="width: 20px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3" /></svg>
-        icon to swap year and age.
+![](assets/pilot_screenshot_short.png)
 
-        Clicking on a life line or an exam marker, makes all the exams of that person selected.
-        To select multiple people, either hold down shift or select the lasso tool in the right hand toolbar.
+The main application consists of four important parts
 
-    - **The histograms**
-        The histograms show information about the distribution of diagnoses and HPV test types.
+- **The statistics panel**
+    On the top, various statistics about the current selection is shown.
+    Hover over the question mark to get more details.
 
-        !!! warning
+- **The Lexis plots**
+    The two first panels display a Lexis diagram and a modified Lexis diagram, where the y axis holds the individual ID instead of the age.
+    In the year vs. age pane, click the
+    <svg style="width: 20px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3" /></svg>
+    icon to swap year and age.
 
-            The HPV test types _only_ include positive results.
-            Negative and non-conclusive results are disregarded in the histogram.
+    Clicking on a life line or an exam marker, makes all the exams of that person selected.
+    To select multiple people, either hold down shift or select the lasso tool in the right hand toolbar.
 
-    - **The filter side bar**
-        On the left hand side, there is a side bar panel with filters.
-        Hover over the tab to expand the filter panel.
+- **The histograms**
+    The histograms show information about the distribution of diagnoses and HPV test types.
 
+    !!! warning
+
+        The HPV test types _only_ include positive results.
+        Negative and non-conclusive results are disregarded in the histogram.
+
+- **The filter side bar** <a id="filter-panel"></a>
+    On the left hand side, there is a side bar panel with filters.
+    Hover over the tab to expand the filter panel.
+
+    The toggles modifies the filters:
+
+    - **Active** The filter removes exams that does not match the filter
+    - **Invert** Invert the effect of the filter. High risk filtering becomes low risk filtering.
+    - **On person** Instead of filtering on individual exam level, filter on person level. I.e. high risk exam becomes any person with at least one high risk exam.
 
 ## Diagnosis to risk mapping
 

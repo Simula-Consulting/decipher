@@ -8,7 +8,7 @@
 
     !!! note
 
-        To get started, run the app as described in [the section on Docker](development.md#docker-image), and then return to the usage guide.
+        To get started, run the app as described in [the section on Docker](development.md#with-docker), and then return to the usage guide.
 
 
 [**Development**](development.md)
