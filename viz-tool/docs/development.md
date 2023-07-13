@@ -126,3 +126,11 @@ to build the new CSS file.
     Do not touch `apps/pilot/static/style.css` or `apps/landing_page/static/style.css`!
     These are auto-generated files.
     If you require custom css, add this to the appropriate `style_tailwind.css` file.
+
+# TODO on the docs
+
+List of things that should be expanded upon on the docs
+
+- [ ] How to add new filters
+    - [ ] Landing page
+    - [ ] Pilot page
