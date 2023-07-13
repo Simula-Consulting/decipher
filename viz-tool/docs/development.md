@@ -1,41 +1,40 @@
-# Development
+# Development Guide
+
+Welcome to the development guide. In the following sections, you will find detailed instructions on how to install and deploy the application, handle CSS with Tailwind, and add new filters to your application pages.
 
 ## Installation and Deployment :rocket:
 
-!!! tip ""
-
-    For information on how to run on TSD, see [the Apptainer section below](#apptainer-formerly-singularity-support).
+!!! tip "Running on TSD"
+    If you want to run the application on TSD, refer to the [Apptainer section below](#apptainer-formerly-singularity-support).
 
 ### ... with Poetry
 
-We use [Poetry](https://python-poetry.org/) to handle our project and dependencies.
-To get started, run
-```bash
-poetry install
-```
-to set up the environment, and then
-```bash
-poetry run bokeh serve apps/pilot apps/landing_page
-```
-to launch the application.
+Our project and its dependencies are managed with [Poetry](https://python-poetry.org/). Here's how to get it up and running:
+
+1. Run `poetry install` to set up the environment.
+2. Run `poetry run bokeh serve apps/pilot apps/landing_page` to launch the application.
 
 ### ... with Docker
 
-The fastest way to get started, is to use docker compose:
+If you prefer Docker, you can get started quickly with Docker Compose:
 ```bash
-# From viz-tool base folder
+# Navigate to the viz-tool base folder
+cd /path/to/viz-tool
+# Start the application
 docker compose up
 ```
 
-#### Apptainer (formerly Singularity) support
+### Apptainer (formerly Singularity) Support
 
-For running on [TSD](https://www.uio.no/tjenester/it/forskning/sensitiv/) we use [Apptainer](https://apptainer.org/).[^1]
-To convert the Docker image to Apptainer format, run
+To run our application on [TSD](https://www.uio.no/tjenester/it/forskning/sensitiv/), we use [Apptainer](https://apptainer.org/), formerly known as Singularity.
+
+To convert the Docker image to Apptainer format, run the following command, replacing `viz-tool` with the name of your Docker image:
+
 ```bash
 docker run \
 -v /var/run/docker.sock:/var/run/docker.sock \
--v ~/Downloads:/output \  # (1)!
--v /tmp/build_singularity:/tmp \  # (2)!
+-v ~/Downloads:/output \
+-v /tmp/build_singularity:/tmp \
 --privileged -t --rm \
 quay.io/singularity/docker2singularity \
 viz-tool
@@ -44,14 +43,13 @@ viz-tool
 1. Sets the output of the generated image to `~/Downloads`
 2. May not be needed. In some cases the default cache volume runs out of space.
 
-??? note inline end "Using Apptainer to build"
+This command will create a `.sif` file in your `~/Downloads` folder.
 
-    The above approach was chosen as it works well on any system.
+??? question "Why use Docker to build Apptainer image"
+
+    The above approach was chosen as it works well on any system and does not require Apptainer.
     If you have to Apptainer on your local x86 machine, feel free to build directly
     with Apptainer.
-
-where `viz-tool` is the name of the Docker image.
-This will create a `.sif` file in your Downloads folder.
 
 ??? warning "Access to Apptainer"
 
@@ -62,14 +60,16 @@ This will create a `.sif` file in your Downloads folder.
 
         The machine used for the project, `p1068-rhel9-01-pool`, already has Apptainer installed.
 
-To use the image on TSD
+To use the image on TSD:
 
-📥 Import the image to TSD
+**📥 Import the image to TSD**
 
-:   Go to [TSD's import page](https://data.tsd.usit.no/file-import/), and follow the instructions.
+:   Go to [TSD's import page](https://data.tsd.usit.no/file-import/), and follow the instructions to upload your `.sif` image.
     Files will be available at `/tsd/<project-code>/data/durable/file-import/`.
 
-:octicons-terminal-24: Run the image
+    :fire: tip:  Upload to your user's group, not the common group.
+
+**:octicons-terminal-24: Run the image**
 
 :   Move the image to an appropriate location in TSD, and execute
     `apptainer run --no-home -B <data_manager_dir>:/mnt <image_name>` where `image_name` has the extension `.sif`.
@@ -77,7 +77,7 @@ To use the image on TSD
 
 !!! info "Constructing the data"
 
-    The data for the `data_manager_dir` may be simply the `lp_pid_fuzzy.csv` and `Folkereg_PID_fuzzy.csv` files.
+    The data for the `data_manager_dir` may simply be the `lp_pid_fuzzy.csv` and `Folkereg_PID_fuzzy.csv` files.
     However, it is _highly_ recommended to cache the data using `decipher.data.DataManager`s Parquet format, as this gives much faster load times.
 
     Consult the `decipher` package documentation for details, but the easiest way to do this, is to run
@@ -85,6 +85,7 @@ To use the image on TSD
     from pathlib import Path
     from decipher.data import DataManager
 
+    # Set up data paths (2)
     screening_data = Path(<screening_data>)
     dob_data = Path(<dob_data>)
     parquet_dir = Path(<parquet_dir>)
@@ -97,40 +98,37 @@ To use the image on TSD
     ```
 
     1.  :material-lightbulb: Note the `read_hpv=True`.
+    2.  Replace `<screening_data>`, `<dob_data>`, and `<parquet_dir>` with the actual paths to your input CSV files and the directory where you want to save the Parquet files.
 
     which is taken from the [decipher documentation](https://github.com/Simula-Consulting/decipher_data_handler#usage).
 
 
+## Handling CSS and Tailwind
 
+Our project uses [Tailwind](https://tailwindcss.com/docs/installation) for CSS. When you make changes to the HTML templates or need to add custom CSS, please remember to regenerate the CSS files.
 
-[^1]: Formerly known as Singularity.
+To regenerate the CSS files:
 
-## :material-language-css3: CSS and :material-tailwind: Tailwind
+1. Install the Tailwind CLI:
+    ```bash
+    npm install -D tailwindcss
+    ```
+2. Build the new CSS files:
+    ```bash
+    npx tailwindcss -i apps/pilot/static/style_tailwind.css -o apps/pilot/static/style.css
+    npx tailwindcss -i apps/landing_page/static/style_tailwind.css -o apps/landing_page/static/style.css
+    ```
 
-We use [Tailwind](https://tailwindcss.com/docs/installation) for our CSS.
-When making changes to the HTML templates, or if you need to add custom CSS, the generated CSS files must be regenerated.
+!!! note "Note on custom CSS"
+    Please do not modify the `apps/pilot/static/style.css` or `apps/landing_page/static/style.css` files directly. These are auto-generated files. If you need to add custom CSS, add it to the appropriate `style_tailwind.css` file.
 
-Install Tailwind CLI with
-```bash
-npm install -D tailwindcss
-```
-and then run
-```bash
-npx tailwindcss -i apps/pilot/static/style_tailwind.css -o apps/pilot/static/style.css
-npx tailwindcss -i apps/landing_page/static/style_tailwind.css -o apps/landing_page/static/style.css
-```
-to build the new CSS file.
+## Adding New Filters
 
-!!! note
+### On the Landing Page
 
-    Do not touch `apps/pilot/static/style.css` or `apps/landing_page/static/style.css`!
-    These are auto-generated files.
-    If you require custom css, add this to the appropriate `style_tailwind.css` file.
+Each filter on the landing page is custom-built. To add a new filter, you need to extend the code in `apps.landing_page.main.py::LandingPageFilter`.
+For filters that are simply on or off (as opposed to having a value or range of values), the easiest is to modify the checkboxes.
 
-# TODO on the docs
+### On the Main Page
 
-List of things that should be expanded upon on the docs
-
-- [ ] How to add new filters
-    - [ ] Landing page
-    - [ ] Pilot page
+A variety of filter types are defined in `viz_tool.backend`, all inheriting from `viz_tool.backend.BaseFilter`. To utilize these filters, add them to the app's `source_manager`. This is done in the `apps.pilot.main.py::_get_filters` method.
