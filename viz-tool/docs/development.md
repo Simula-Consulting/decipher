@@ -76,38 +76,26 @@ To use the image on TSD:
 
     :fire: tip:  Upload to your user's group, not the common group.
 
+**:octicons-cache-16: Construct the data**
+
+:   The viz-tool may simply use the  `lp_pid_fuzzy.csv` and `Folkereg_PID_fuzzy.csv` files.
+    However, it is _highly_ recommended to cache the data using `decipher.data.DataManager`'s Parquet format, as this gives much faster load times.
+
+    For convenience, this package provides the `viz-tool-cache` command.
+    Run `viz-tool-cache --help` for usage.
+
+    !!! tip
+
+        Use `apptainer shell <image_name>` to start a shell from within the `.sif` image, which will give you access to the `viz-tool-cache` command.
+
 **:octicons-terminal-24: Run the image**
 
 :   Move the image to an appropriate location in TSD, and execute
-    `apptainer run --no-home -B <data_manager_dir>:/mnt <image_name>` where `image_name` has the extension `.sif`.
-    The `data_manager_dir` must be a directory containing either the Parquet cached or raw files for `decipher.data.DataManager`.
-
-!!! info "Constructing the data"
-
-    The data for the `data_manager_dir` may simply be the `lp_pid_fuzzy.csv` and `Folkereg_PID_fuzzy.csv` files.
-    However, it is _highly_ recommended to cache the data using `decipher.data.DataManager`s Parquet format, as this gives much faster load times.
-
-    Consult the `decipher` package documentation for details, but the easiest way to do this, is to run
-    ```python
-    from pathlib import Path
-    from decipher.data import DataManager
-
-    # Set up data paths (2)
-    screening_data = Path(<screening_data>)
-    dob_data = Path(<dob_data>)
-    parquet_dir = Path(<parquet_dir>)
-
-    # Read in from CSV
-    data_manager = DataManager.read_from_csv(screening_data, dob_data, read_hpv=True) # (1)!
-
-    # Store to Parquet
-    data_manager.save_to_parquet(parquet_dir, engine="pyarrow")
+    ```shell
+    apptainer run --no-home -B <data_manager_dir>:/mnt <image_name>
     ```
-
-    1.  :material-lightbulb: Note the `read_hpv=True`.
-    2.  Replace `<screening_data>`, `<dob_data>`, and `<parquet_dir>` with the actual paths to your input CSV files and the directory where you want to save the Parquet files.
-
-    which is taken from the [decipher documentation](https://github.com/Simula-Consulting/decipher_data_handler#usage).
+    where `image_name` has the extension `.sif`.
+    The `data_manager_dir` must be a directory containing either the Parquet cached or raw files for `decipher.data.DataManager`.
 
 
 ## Handling CSS and Tailwind
