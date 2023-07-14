@@ -43,6 +43,18 @@ viz-tool
 1. Sets the output of the generated image to `~/Downloads`
 2. May not be needed. In some cases the default cache volume runs out of space.
 
+!!! warning "Non x86 machines (Apple Silicone)"
+    Docker compose will build `viz-tool` for the current platform.
+
+    However, when exporting the image for use with [Apptainer](https://apptainer.org/) on [TSD](https://www.uio.no/tjenester/it/forskning/sensitiv/), make sure it is built for the `linux/amd64` architecture. On non-x86 machines like Mac M1 and M2 chips, the default architecture is `linux/arm64`.
+
+    To ensure compatibility, manually build the image with the specified platform:
+
+    ```shell
+    docker build --platform linux/amd64 --tag viz-tool .
+    ```
+
+
 This command will create a `.sif` file in your `~/Downloads` folder.
 
 ??? question "Why use Docker to build Apptainer image"
