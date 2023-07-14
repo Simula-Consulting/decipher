@@ -33,8 +33,8 @@ To convert the Docker image to Apptainer format, run the following command, repl
 ```bash
 docker run \
 -v /var/run/docker.sock:/var/run/docker.sock \
--v ~/Downloads:/output \
--v /tmp/build_singularity:/tmp \
+-v ~/Downloads:/output \  # (1)!
+-v /tmp/build_singularity:/tmp \  # (2)!
 --privileged -t --rm \
 quay.io/singularity/docker2singularity \
 viz-tool
