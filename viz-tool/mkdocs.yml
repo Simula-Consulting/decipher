@@ -1,0 +1,36 @@
+site_name: Decipher Visualization Tool
+repo_url: https://github.com/simula-Consulting/decipher
+theme:
+  name: material
+  features:
+  - content.code.copy
+  - content.code.annotate
+  - navigation.instant
+
+markdown_extensions:
+  - pymdownx.snippets
+  - def_list
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+  - footnotes
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+plugins:
+  - search
+  - mkdocstrings
+  - social:
+      enabled: !ENV [CI, false]
+extra_css:
+  - mkdocstrings.css
+nav:
+  - Home: index.md
+  - Usage: usage.md
+  - Development: development.md
+  - Reference: reference.md

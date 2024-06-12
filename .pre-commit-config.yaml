@@ -89,28 +89,28 @@ repos:
         types: [python]
         files: ^processing/
 
-    # bokeh_demo
+    # viz_tool
     -   id: flake8
-        name: flake8 for bokeh-demo
+        name: flake8 for viz-tool
         language: system
-        entry: bash -c 'cd bokeh-demo && poetry run flake8'
+        entry: bash -c 'cd viz-tool && poetry run flake8'
         types: [python]
-        files: ^bokeh-demo/
+        files: ^viz-tool/
     -   id: black
-        name: black for bokeh-demo
+        name: black for viz-tool
         language: system
-        entry: bash -c 'cd bokeh-demo && poetry run black .'
+        entry: bash -c 'cd viz-tool && poetry run black .'
         types: [python]
-        files: ^bokeh-demo/
+        files: ^viz-tool/
     -   id: isort
-        name: isort for bokeh-demo (python)
+        name: isort for viz-tool (python)
         language: system
-        entry: bash -c 'cd bokeh-demo && poetry run isort --profile black .'
+        entry: bash -c 'cd viz-tool && poetry run isort --profile black .'
         types: [python]
-        files: ^bokeh-demo/
+        files: ^viz-tool/
     -   id: mypy
-        name: mypy for bokeh-demo
+        name: mypy for viz-tool
         language: system
-        entry: bash -c 'cd bokeh-demo && poetry run mypy .'
+        entry: bash -c 'cd viz-tool && poetry run mypy .'
         types: [python]
-        files: ^bokeh-demo/
+        files: ^viz-tool/
