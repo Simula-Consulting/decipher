@@ -4,7 +4,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from bokeh_demo.frontend import HistogramPlot, get_position_list
+from viz_tool.frontend import HistogramPlot, get_position_list
 
 
 @given(st.lists(st.integers()))

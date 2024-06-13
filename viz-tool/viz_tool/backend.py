@@ -185,7 +185,7 @@ class BaseFilter:
         through `get_filter` and `get_exam_filter`, however, they are not interchangeable.
 
     !!! tip "See also"
-        See [bokeh_demo.frontend.get_filter_element][] on how callbacks may be used.
+        See [viz_tool.frontend.get_filter_element][] on how callbacks may be used.
     """
 
     source_manager: SourceManager
@@ -329,6 +329,40 @@ class ExamSimpleFilter(SimpleFilter):
             active=active,
             inverted=inverted,
         )
+
+
+class ExamToggleFilter(ExamSimpleFilter):
+    def __init__(
+        self,
+        exam_indices: Sequence[int],
+        source_manager: SourceManager,
+        active: bool = False,
+        inverted: bool = False,
+        use_person: bool = False,
+    ) -> None:
+        super().__init__(exam_indices, source_manager, active, inverted)
+        self.use_person = use_person
+        exam_to_person = cast(
+            Sequence[int], source_manager.exam_source.data["person_index"]
+        )
+        self.exam_person_filter = IndexFilter(
+            self._person_to_exam_indices(self.person_indices, exam_to_person)
+        )
+
+    def get_exam_filter(self) -> BokehFilter:
+        if not self.active:
+            return AllIndices()
+        exam_filter = self.exam_person_filter if self.use_person else self.exam_filter
+        return ~exam_filter if self.inverted else exam_filter
+
+    def get_toggle_type_callback(self) -> Callable[[str, bool, bool], None]:
+        """Return a callback function for activating the filter."""
+
+        def toggle_type(attr: str, old: bool, new: bool) -> None:
+            self.use_person = new
+            self.source_manager.update_views()
+
+        return toggle_type
 
 
 class RangeFilter(BaseFilter):

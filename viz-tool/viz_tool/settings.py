@@ -32,25 +32,24 @@ class FeatureColumnNames(BaseModel):
 
 class Settings(BaseSettings):
     number_of_epochs: int = 100
-    dataset_path: DirectoryPath = pathlib.Path(__file__).parents[1] / "data/dataset1"
     transfer_path: DirectoryPath = pathlib.Path(__file__).parents[1] / "data/transfer/"
     selected_pids_path: pathlib.Path = transfer_path / "selected_pids.json"
 
     data_paths: DataPaths = DataPaths()
 
-    label_map: dict[int | float, str] = {
+    label_map: dict[int | None, str] = {
         1: "Normal",
         2: "Low risk",
         3: "High risk",
         4: "Cancer",
-        float("nan"): "Unknown",
+        None: "Unknown",
     }
-    color_palette: dict[int | float, str] = {
+    color_palette: dict[int | None, str] = {
         1: "#13D697",
         2: "#0B6BB3",
         3: "#FFB60A",
         4: "#EF476F",
-        float("nan"): "gray",
+        None: "gray",
     }
     """Color palette for the different risk levels."""
     default_tools: list[str] = [
@@ -59,8 +58,6 @@ class Settings(BaseSettings):
         "box_zoom",
         "save",
         "reset",
-        "help",
-        "examine",  # For debugging
     ]
     extra_tools: list[str] = ["tap", "lasso_select"]
     range_padding: float = 0.1

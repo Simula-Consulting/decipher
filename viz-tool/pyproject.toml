@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "bokeh-demo"
+name = "viz-tool"
 version = "0.1.0"
 description = ""
 authors = ["Thorvald Molthe Ballestad <thorvald@simula.no>"]
 readme = "README.md"
-packages = [{include = "bokeh_demo"}]
+packages = [{include = "viz_tool"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
