@@ -1,4 +1,3 @@
-# type: ignore
 """Example Bokeh server app.
 
 The app consist of two main "parts"
@@ -8,12 +7,9 @@ The app consist of two main "parts"
 
 import copy
 import json
-from enum import Enum
-from functools import partial
 
 import pandas as pd
-from bokeh.layouts import column, grid, row
-from bokeh.models import ColumnDataSource, Div, SymmetricDifferenceFilter
+from bokeh.models import ColumnDataSource, SymmetricDifferenceFilter
 from bokeh.plotting import curdoc
 from decipher.data import DataManager
 from loguru import logger
@@ -21,8 +17,7 @@ from loguru import logger
 from bokeh_demo.backend import (
     BaseFilter,
     BooleanFilter,
-    ExamSimpleFilter,
-    PersonSimpleFilter,
+    ExamToggleFilter,
     SourceManager,
 )
 from bokeh_demo.data_ingestion import (
@@ -30,105 +25,28 @@ from bokeh_demo.data_ingestion import (
     add_hpv_detailed_information,
     exams_pipeline,
 )
-from bokeh_demo.frontend import (
-    HistogramPlot,
-    LexisPlot,
-    LexisPlotAge,
-    TrajectoriesPlot,
-    get_filter_element_from_source_manager,
-    get_timedelta_tick_formatter,
-)
 from bokeh_demo.settings import settings
 
-DIAGNOSIS_ABBREVIATIONS = {
-    "Normal m betennelse eller blod": "Normal w.b",
-    "Cancer Cervix cancer andre/usp": "Cancer",
-    "Normal uten sylinder": "Normal u s",
-}
-"""Abbreviations for diagnosis names."""
-
-HPV_TEST_ABBREVIATIONS = {
-    "Abbott RealTime High Risk HPV": "Abbott HR",
-    "Cobas 4800 System": "Cobas 4800",
-}
-
-
-def try_abbreviate(abbreviations: dict[str, str], diagnosis: str) -> str:
-    """Abbreviates diagnosis names if they are in the DIAGNOSIS_ABBREVIATIONS dictionary."""
-    return abbreviations.get(diagnosis, diagnosis)
-
-
-class LexisPlotYearAge(LexisPlot):
-    """Lexis plot with year on x-axis and age on y-axis."""
-
-    _y_label: str = "Age"
-    _scatter_y_key: str = "age"
-    _x_label: str = "Year"
-    _scatter_x_key: str = "exam_date"
-
-    _lexis_line_x_key: str = "lexis_line_endpoints_year"
-    _lexis_line_y_key: str = "lexis_line_endpoints_age"
-    _vaccine_line_x_key: str = "vaccine_line_endpoints_year"
-    _vaccine_line_y_key: str = "vaccine_line_endpoints_age"
-
-    _y_axis_type = "linear"
-    _x_axis_type = "datetime"
-
-    _y_axis_tick_format_getter = get_timedelta_tick_formatter
-    _x_axis_tick_format_getter = None
-
-
-def _link_ranges(lexis_plots):
-    lexis_plots["age_index"].figure.x_range = lexis_plots["age_year"].figure.x_range
-    lexis_plots["year_age"].figure.y_range = lexis_plots["age_year"].figure.x_range
-    lexis_plots["age_year"].figure.y_range = lexis_plots["year_age"].figure.x_range
+from .components import (
+    get_filter_control_panel,
+    get_histograms,
+    get_lexis_plots,
+    get_stats_div,
+)
 
 
 def example_app(source_manager: SourceManager):
-    lexis_plots = {
-        "age_index": LexisPlot(source_manager),
-        "age_year": LexisPlotAge(source_manager),
-        "year_age": LexisPlotYearAge(source_manager),
-    }
-    _link_ranges(lexis_plots)
+    lexis_plots = get_lexis_plots(source_manager)
 
-    traj = TrajectoriesPlot(source_manager)
-    histogram_cyt = HistogramPlot.from_person_field(
-        source_manager,
-        "cyt_diagnosis",
-        label_mapper=partial(try_abbreviate, DIAGNOSIS_ABBREVIATIONS),
+    histogram_cyt, histogram_hist, histogram_hpv, histogram_risk = get_histograms(
+        source_manager
     )
-    histogram_hist = HistogramPlot.from_person_field(source_manager, "hist_diagnosis")
-    histogram_hpv = HistogramPlot.from_person_field(
-        source_manager,
-        "hpv_test_type",
-        label_mapper=partial(try_abbreviate, HPV_TEST_ABBREVIATIONS),
-    )
-
-    # Set up labels and titles
-    histogram_cyt.figure.title.text = "Cytology diagnosis"
-    histogram_hist.figure.title.text = "Histology diagnosis"
-    histogram_hpv.figure.title.text = "HPV test type"
-    histogram_cyt.figure.xaxis.axis_label = None
-    histogram_hist.figure.xaxis.axis_label = None
-    histogram_hpv.figure.xaxis.axis_label = None
-
-    # Adjust label positions
-    histogram_cyt.label.y -= 20
-    histogram_hpv.label.y -= 20
 
     # Remove delta plot and table as these are related to predictions, which we are not doing
     # delta = DeltaScatter(source_manager)
     # table = PersonTable(source_manager)
     # table.person_table.styles = {"border": "1px solid #e6e6e6", "border-radius": "5px"}
     # table.person_table.height = 500
-
-    high_risk_person_group = get_filter_element_from_source_manager(
-        "High risk - Person", source_manager
-    )
-    high_risk_exam_group = get_filter_element_from_source_manager(
-        "High risk - Exam", source_manager
-    )
 
     # Remove vaccine filters as we do not have vaccine data
     # vaccine_type = get_filter_element_from_source_manager(
@@ -139,31 +57,26 @@ def example_app(source_manager: SourceManager):
     # )
     # category_group = get_filter_element_from_source_manager("Region", source_manager)
 
-    filter_grid = grid(
-        column(
-            row(Div(), Div(text="Active"), Div(text="Invert")),
-            high_risk_person_group,
-            high_risk_exam_group,
-            # vaccine_group,
-            # vaccine_type,
-            # category_group,
-            # get_filter_element_from_source_manager(
-            #     "symmetric_difference", source_manager, label="XOR"
-            # ),
-        )
-    )
-    # `grid` does not pass kwargs to constructor, so must set attrs here.
-    filter_grid.name = "filter_control"
-    filter_grid.stylesheets = [
-        ":host {grid-template-rows: unset; grid-template-columns: unset;}"
-    ]
+    filter_grid = get_filter_control_panel(source_manager)
+
+    stats_div = get_stats_div(source_manager)
+
+    # Add names to elements for manual placement in html
+    histogram_cyt.figure.name = "histogram_cyt"
+    histogram_hist.figure.name = "histogram_hist"
+    histogram_hpv.figure.name = "histogram_hpv"
+    histogram_risk.figure.name = "histogram_risk"
+    stats_div.name = "stats_div"
+    for name, plot in lexis_plots.items():
+        plot.figure.name = f"lexis__{name}"
 
     for element in (
         *(plot.figure for plot in lexis_plots.values()),
         histogram_cyt.figure,
         histogram_hist.figure,
         histogram_hpv.figure,
-        traj.figure,
+        histogram_risk.figure,
+        stats_div,
         filter_grid,
         # Prediction related
         # delta.figure,
@@ -179,28 +92,52 @@ HIGH_RISK_STATES = {3, 4}
 """Risk levels that are considered high risk."""
 
 
-def _at_least_one_high_risk(person_source):
-    """Return people with at least one high risk"""
+def _high_risk_exam(
+    exam_source_data: dict, risk_states: set[int], exam_type: str
+) -> list[int]:
     return [
         i
-        for i, exam_results in enumerate(person_source.data["exam_results"])
-        if not set(exam_results).isdisjoint(HIGH_RISK_STATES)
+        for i, (state, type_) in enumerate(
+            zip(exam_source_data["risk"], exam_source_data["exam_type"])
+        )
+        if state in risk_states and type_ == exam_type
     ]
 
 
 def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
-    base_filters = {
-        "High risk - Person": PersonSimpleFilter(
+    hpv_exam_indices = [
+        i
+        for i, type in enumerate(source_manager.exam_source.data["exam_type"])
+        if type == "HPV"
+    ]
+    hpv_16_exam_indices = [
+        i
+        for i, details in enumerate(
+            source_manager.exam_source.data["exam_detailed_results"]
+        )
+        if "16" in details
+    ]
+
+    base_filters: dict[str, BaseFilter] = {
+        "High risk - Histology": ExamToggleFilter(
             source_manager=source_manager,
-            person_indices=_at_least_one_high_risk(source_manager.person_source),
+            exam_indices=_high_risk_exam(
+                source_manager.exam_source.data, HIGH_RISK_STATES, "histology"
+            ),
         ),
-        "High risk - Exam": ExamSimpleFilter(
+        "High risk - Cytology": ExamToggleFilter(
             source_manager=source_manager,
-            exam_indices=[
-                i
-                for i, state in enumerate(source_manager.exam_source.data["risk"])
-                if state in HIGH_RISK_STATES
-            ],
+            exam_indices=_high_risk_exam(
+                source_manager.exam_source.data, HIGH_RISK_STATES, "cytology"
+            ),
+        ),
+        "HPV": ExamToggleFilter(
+            source_manager=source_manager,
+            exam_indices=hpv_exam_indices,
+        ),
+        "HPV 16": ExamToggleFilter(
+            source_manager=source_manager,
+            exam_indices=hpv_16_exam_indices,
         ),
     }
 
@@ -214,17 +151,6 @@ def _get_filters(source_manager: SourceManager) -> dict[str, BaseFilter]:
     )
 
     return base_filters
-
-
-# We want to demonstrate categorical data, so extend Person with a custom type having
-# the categorical field 'home'.
-# We then fake the homes randomly.
-class HomePlaces(str, Enum):
-    South = "south"
-    North = "north"
-    East = "east"
-    West = "west"
-    Other = "other"
 
 
 def get_selected_pids_from_landing_page():
@@ -258,8 +184,16 @@ def load_data_manager() -> DataManager:
     return data_manager
 
 
-def _get_exam_diagnosis(exams_subset):
-    return exams_subset.groupby("PID")["exam_diagnosis"].apply(lambda x: x.values)
+def get_exam_results(
+    exams_subset: pd.DataFrame, person_df: pd.DataFrame, exam_field: str
+) -> pd.Series:
+    """Return a Series of exam results as lists for each person."""
+    exam_results = exams_subset.groupby("PID")[exam_field].apply(lambda x: x.tolist())
+    mapped_results = person_df["PID"].map(exam_results)
+    mapped_results[mapped_results.isna()] = mapped_results[mapped_results.isna()].apply(
+        lambda x: []
+    )
+    return mapped_results
 
 
 def main():
@@ -286,17 +220,16 @@ def main():
     exams_df["person_index"] = exams_df["PID"].map(pid_to_index)
 
     # Make data for histogram
-    person_df["cyt_diagnosis"] = _get_exam_diagnosis(
-        exams_df.query("exam_type == 'cytology'")
-    ).reindex(person_df.index, fill_value=[])
-    person_df["hist_diagnosis"] = _get_exam_diagnosis(
-        exams_df.query("exam_type == 'histology'")
-    ).reindex(person_df.index, fill_value=[])
-    person_df["hpv_test_type"] = (
-        exams_df.query("exam_type == 'HPV' & exam_diagnosis == 'positiv'")
-        .groupby("PID")["detailed_exam_type"]
-        .apply(lambda x: x.values)
-        .reindex(person_df.index, fill_value=[])
+    person_df["cyt_diagnosis"] = get_exam_results(
+        exams_df.query("exam_type == 'cytology'"), person_df, "exam_diagnosis"
+    )
+    person_df["hist_diagnosis"] = get_exam_results(
+        exams_df.query("exam_type == 'histology'"), person_df, "exam_diagnosis"
+    )
+    person_df["hpv_test_type"] = get_exam_results(
+        exams_df.query("exam_type == 'HPV' & exam_diagnosis == 'positiv'"),
+        person_df,
+        "detailed_exam_type",
     )
 
     source_manager = SourceManager(
